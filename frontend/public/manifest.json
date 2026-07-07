@@ -1,0 +1,21 @@
+{
+  "short_name": "AetherCast",
+  "name": "AetherCast - Podcast Streaming",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a071e",
+  "theme_color": "#9333ea",
+  "display": "standalone",
+  "orientation": "portrait"
+}

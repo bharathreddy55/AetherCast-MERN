@@ -1,0 +1,352 @@
+.audio-player {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  z-index: 99;
+  padding: 16px 28px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.player-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 24px;
+}
+
+/* Track Details */
+.player-track-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 30%;
+  min-width: 200px;
+}
+
+.player-cover-art {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.player-cover-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.player-track-metadata {
+  overflow: hidden;
+}
+
+.player-track-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-track-podcast {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Controls Section */
+.player-controls-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+  max-width: 600px;
+}
+
+.player-buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.control-btn {
+  color: var(--text-secondary);
+  opacity: 0.8;
+  padding: 6px;
+  border-radius: 50%;
+}
+
+.control-btn:hover:not(:disabled) {
+  color: #ffffff;
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.play-pause-btn {
+  background: #ffffff;
+  color: #0b071e;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.play-pause-btn:hover {
+  transform: scale(1.05);
+  background: var(--text-primary);
+}
+
+.player-timeline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.time-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 32px;
+}
+
+.timeline-slider {
+  flex-grow: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  accent-color: var(--color-primary);
+  transition: height 0.15s ease;
+}
+
+.timeline-slider:hover {
+  height: 6px;
+}
+
+/* Auxiliary Section */
+.player-aux-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  width: 30%;
+  min-width: 220px;
+}
+
+.aux-icon {
+  color: var(--text-muted);
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speed-dropdown {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  outline: none;
+  cursor: pointer;
+}
+
+.speed-dropdown:focus {
+  border-color: var(--color-primary);
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 120px;
+}
+
+.volume-icon-btn {
+  color: var(--text-secondary);
+}
+
+.volume-icon-btn:hover {
+  color: #ffffff;
+}
+
+.volume-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  accent-color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .audio-player {
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 12px 16px;
+  }
+  .player-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .player-track-info, .player-aux-section {
+    width: 100%;
+    justify-content: center;
+  }
+  .player-controls-section {
+    width: 100%;
+  }
+}
+
+/* Subtitles Overlay styling */
+.player-subtitle-bubble {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 10, 36, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 20px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  max-width: 80%;
+  pointer-events: none;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Synced Subtitles Slide-up Panel */
+.lyrics-drawer {
+  position: fixed;
+  bottom: 120px;
+  right: 24px;
+  width: 380px;
+  height: 400px;
+  max-height: 50vh;
+  z-index: 98;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.lyrics-drawer-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lyrics-drawer-header h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.close-lyrics-btn {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close-lyrics-btn:hover {
+  color: #ffffff;
+}
+
+.lyrics-drawer-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.lyric-line {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.lyric-line:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lyric-line.active {
+  background: rgba(147, 51, 234, 0.15);
+  border: 1px solid rgba(147, 51, 234, 0.25);
+  color: var(--color-primary-hover) !important;
+  font-weight: 600;
+}
+
+.lyric-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  padding-top: 2px;
+}
+
+.lyric-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-grow: 1;
+}
+
+.lyric-line.active .lyric-text {
+  color: #ffffff;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
