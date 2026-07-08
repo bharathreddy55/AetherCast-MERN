@@ -345,3 +345,45 @@ Deletes local temp file -> Saves database record with public URL reference
 
 ### Q5: How do you prevent SQL Injection and NoSQL Injection in your query inputs?
 **Answer**: "First, we validate inputs using Mongoose models, which strictly type-cast values and strip out unexpected operators. Second, we use Mongoose queries (like `findOne({ _id: id })`) instead of raw string concatenation. This automatically sanitizes inputs and blocks MongoDB operator injection attacks (like `$gt`)."
+
+---
+
+## 🚀 12. Bespoke Highlights: Custom-Added Features to Show Off
+
+Here is a list of advanced, custom features we added to VOX. These are excellent points to present during a project review because they showcase attention to detail, front-end optimization, and custom UX design:
+
+### 1. Draggable & Floating Mini Audio Player Widget
+* **What to Highlight**: The bottom sticky player can detach on click/drag, transforming from a wide bar into a vertical card layout that can float anywhere on the screen.
+* **How it works**:
+  * Added a `GripVertical` handle and bound an `onMouseDown` handler.
+  * When dragged, the state changes (`isFloating = true`) and the layout shrinks to exactly `170px` wide.
+  * If dropped near the bottom edge (within 80px), it uses snapping calculations to automatically dock back as the wide bottom player bar.
+  * Secondary actions (like sleep timer, share, and like) align side-by-side at the bottom of the card, while the volume slider is hidden to preserve spacing.
+* **Why it's premium**: It gives the user desktop-like fluid control over their player UI.
+
+### 2. Apple/Linear-Inspired Scroll-Morphing Capsule Navbar
+* **What to Highlight**: The navbar changes dynamically from a wide, transparent top header into a floating capsule (pill) menu as the user scrolls down, and automatically expands back when scrolling stops.
+* **How it works**:
+  * Set up an active scroll listener with a `300ms` debounce/timeout (`scrollTimeoutRef.current`).
+  * While scrolling (`isScrolling = true`), the width animates from `95%` -> `72%`, padding shrinks, border-radius changes to `999px`, and the logo scales down.
+  * Nav links collapse into **icon-only items** (hiding their text labels), the search button collapses into a simple icon, and the user button collapses into a clean circular avatar.
+  * Eased using a custom `cubic-bezier(0.22, 1, 0.36, 1)` transition running on the GPU compositor thread for a 60fps frame rate.
+
+### 3. Dual-Layer custom cursor (Glowing Orb & Trailing Ring)
+* **What to Highlight**: A custom mouse cursor system that replaces the browser's default arrow cursor with an interactive dot and trail ring.
+* **How it works**:
+  * Mounted `<CustomCursor />` globally in `App.jsx`.
+  * The inner dot snaps directly to the mouse, while the outer ring tracks behind using a linear interpolation (`lerp`) formula inside `requestAnimationFrame`.
+  * Hovers over buttons, cards, and anchors cause both layers to scale up, change color, and display a glow filter.
+
+### 4. 13-Accent Color Theme Studio
+* **What to Highlight**: Added a full palette of 13 custom colors to customize workspace accents dynamically.
+* **How it works**:
+  * Context API (`ThemeContext.jsx`) stores and applies the selected custom accent key to DOM variables (`--color-primary`, `--grad-accent`, etc.).
+  * Expanded options from 4 basic themes to 13, including Rose, Royal Blue, Amber Gold, and Deep Teal, presented in a clean grid using CSS flex-wrap.
+
+### 5. Creator Drafts Workspace
+* **What to Highlight**: Dedicated space inside the Creator Studio to save shows and episodes as drafts.
+* **How it works**:
+  * Sets the schema status to `draft`. Drafts are only queryable/visible by their authenticated owner (the creator), allowing hosts to plan and edit podcasts privately before making them public.
+
