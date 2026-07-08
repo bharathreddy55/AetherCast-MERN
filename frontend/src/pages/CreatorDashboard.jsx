@@ -13,6 +13,15 @@ export default function CreatorDashboard() {
   
   // State
   const [activeTab, setActiveTab] = useState('analytics'); // analytics, podcasts, create-podcast, add-episode
+  const [notification, setNotification] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
+  };
   const [myPodcasts, setMyPodcasts] = useState([]);
   const [loadingPodcasts, setLoadingPodcasts] = useState(true);
 
@@ -210,45 +219,63 @@ export default function CreatorDashboard() {
   };
 
   // Delete Podcast
-  const handleDeletePodcast = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this podcast? All episodes will be deleted.')) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchMyPodcasts();
+  const handleDeletePodcast = (id) => {
+    setConfirmModal({
+      title: 'Delete Podcast?',
+      message: 'Are you sure you want to delete this podcast? All episodes will be deleted.',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Podcast deleted successfully');
+            fetchMyPodcasts();
+          } else {
+            showNotification(data.message || 'Failed to delete podcast', 'error');
+          }
+        } catch (err) {
+          console.error('Delete podcast failed', err);
+          showNotification('Failed to delete podcast', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error('Delete podcast failed', err);
-    }
+    });
   };
 
   // Publish Podcast
-  const handlePublishPodcast = async (id) => {
-    if (!window.confirm('Are you sure you want to make this podcast show live and visible to all listeners?')) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: 'published' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Podcast published successfully! It is now visible to all listeners.');
-        fetchMyPodcasts();
-      } else {
-        alert(data.message || 'Failed to publish podcast');
+  const handlePublishPodcast = (id) => {
+    setConfirmModal({
+      title: 'Publish Podcast?',
+      message: 'Are you sure you want to make this podcast show live and visible to all listeners?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'published' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Podcast published successfully! It is now visible to all listeners.');
+            fetchMyPodcasts();
+          } else {
+            showNotification(data.message || 'Failed to publish podcast', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to publish podcast', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to publish podcast');
-    }
+    });
   };
 
   return (
@@ -649,6 +676,76 @@ export default function CreatorDashboard() {
 
         </main>
       </div>
+
+      {/* Custom Toast Notification */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          background: notification.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+          backdropFilter: 'blur(8px)',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '12px',
+          border: `1px solid ${notification.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>{notification.message}</span>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999,
+        }}>
+          <div className="glass-panel animate-scale-in" style={{
+            padding: '28px',
+            borderRadius: '16px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ color: '#fff', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
+              {confirmModal.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setConfirmModal(null)}
+                className="btn-secondary" 
+                style={{ padding: '8px 20px', borderRadius: '50px', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmModal.onConfirm}
+                className="btn-primary" 
+                style={{ padding: '8px 20px', borderRadius: '50px', background: '#9333ea', borderColor: '#9333ea', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
