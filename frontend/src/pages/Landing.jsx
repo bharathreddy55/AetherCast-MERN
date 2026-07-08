@@ -27,6 +27,26 @@ export default function Landing() {
     fetchFeatured();
   }, []);
 
+  const getCoverImage = (podcast) => {
+    if (podcast.coverImage) {
+      return window.getMediaUrl(podcast.coverImage);
+    }
+    const cat = (podcast.category || '').toLowerCase();
+    if (cat.includes('tech')) {
+      return window.getMediaUrl('/uploads/defaults/tech_cover.jpg');
+    }
+    if (cat.includes('bus') || cat.includes('fin')) {
+      return window.getMediaUrl('/uploads/defaults/business_cover.jpg');
+    }
+    if (cat.includes('edu') || cat.includes('science')) {
+      return window.getMediaUrl('/uploads/defaults/education_cover.jpg');
+    }
+    if (cat.includes('entertain') || cat.includes('show') || cat.includes('comedy')) {
+      return window.getMediaUrl('/uploads/defaults/entertainment_cover.jpg');
+    }
+    return window.getMediaUrl('/uploads/defaults/default_cover.jpg');
+  };
+
   return (
     <div className="landing-page animate-fade-in">
       
@@ -113,11 +133,7 @@ export default function Landing() {
                   style={{ transitionDelay: `${(idx + 1) * 50}ms`, '--i': idx + 1 }}
                 >
                   <span className="ts-idx">{String(idx + 1).padStart(2, '0')}</span>
-                  {podcast.coverImage ? (
-                    <img src={window.getMediaUrl(podcast.coverImage)} alt={podcast.title} />
-                  ) : (
-                    <div className="fallback-podcast-icon">🎙️</div>
-                  )}
+                  <img src={getCoverImage(podcast)} alt={podcast.title} />
                   <div className="ts-content">
                     <h4>{podcast.title}</h4>
                     <p>by {podcast.creatorId?.name || 'Unknown'} · {podcast.episodeCount} episodes</p>

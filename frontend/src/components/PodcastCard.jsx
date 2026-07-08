@@ -22,20 +22,34 @@ export default function PodcastCard({ podcast }) {
     }
   };
 
+  const getCoverImage = () => {
+    if (podcast.coverImage) {
+      return window.getMediaUrl(podcast.coverImage);
+    }
+    const cat = (podcast.category || '').toLowerCase();
+    if (cat.includes('tech')) {
+      return window.getMediaUrl('/uploads/defaults/tech_cover.jpg');
+    }
+    if (cat.includes('bus') || cat.includes('fin')) {
+      return window.getMediaUrl('/uploads/defaults/business_cover.jpg');
+    }
+    if (cat.includes('edu') || cat.includes('science')) {
+      return window.getMediaUrl('/uploads/defaults/education_cover.jpg');
+    }
+    if (cat.includes('entertain') || cat.includes('show') || cat.includes('comedy')) {
+      return window.getMediaUrl('/uploads/defaults/entertainment_cover.jpg');
+    }
+    return window.getMediaUrl('/uploads/defaults/default_cover.jpg');
+  };
+
   return (
     <div className="podcast-card glass-panel animate-fade-in">
       <Link to={`/podcast/${podcast._id}`} className="card-click-area">
         {/* Background cover image */}
-        {podcast.coverImage ? (
-          <div 
-            className="card-bg-image" 
-            style={{ backgroundImage: `url(${window.getMediaUrl(podcast.coverImage)})` }}
-          />
-        ) : (
-          <div className="card-bg-image-placeholder">
-            <Disc size={60} className="card-placeholder-icon" />
-          </div>
-        )}
+        <div 
+          className="card-bg-image" 
+          style={{ backgroundImage: `url(${getCoverImage()})` }}
+        />
         <div className="card-blur-overlay"></div>
 
         {/* Top category badge */}

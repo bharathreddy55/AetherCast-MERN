@@ -238,17 +238,32 @@ export default function PodcastDetails() {
     (ep) => ep.status === 'published' || (user && (user.role === 'admin' || user.id === podcast.creatorId?._id))
   );
 
+  const getCoverImage = () => {
+    if (!podcast) return '';
+    if (podcast.coverImage) {
+      return window.getMediaUrl(podcast.coverImage);
+    }
+    const cat = (podcast.category || '').toLowerCase();
+    if (cat.includes('tech')) {
+      return window.getMediaUrl('/uploads/defaults/tech_cover.jpg');
+    }
+    if (cat.includes('bus') || cat.includes('fin')) {
+      return window.getMediaUrl('/uploads/defaults/business_cover.jpg');
+    }
+    if (cat.includes('edu') || cat.includes('science')) {
+      return window.getMediaUrl('/uploads/defaults/education_cover.jpg');
+    }
+    if (cat.includes('entertain') || cat.includes('show') || cat.includes('comedy')) {
+      return window.getMediaUrl('/uploads/defaults/entertainment_cover.jpg');
+    }
+    return window.getMediaUrl('/uploads/defaults/default_cover.jpg');
+  };
+
   return (
     <div className="details-page animate-fade-in">
       {/* Podcast Banner/Header */}
       <header className="details-header glass-panel">
-        {podcast.coverImage ? (
-          <img src={window.getMediaUrl(podcast.coverImage)} alt={podcast.title} className="details-cover" />
-        ) : (
-          <div className="details-cover-placeholder">
-            <Disc size={80} />
-          </div>
-        )}
+        <img src={getCoverImage()} alt={podcast.title} className="details-cover" />
 
         <div className="details-info">
           <span className="details-badge">{podcast.category}</span>
