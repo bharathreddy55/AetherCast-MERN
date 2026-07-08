@@ -11,6 +11,7 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
   const [spotPos, setSpotPos] = useState({ x: -999, y: -999 });
   const [spotActive, setSpotActive] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState(null);
   const dirSectionRef = useRef(null);
   const dirRowRefs = useRef([]);
 
@@ -231,34 +232,68 @@ export default function Landing() {
             <div
               key={item.num}
               ref={(el) => (dirRowRefs.current[i] = el)}
+              onMouseEnter={() => setHoveredRow(i)}
+              onMouseLeave={() => setHoveredRow(null)}
               style={{
                 display: 'flex',
-                padding: '28px 16px',
+                padding: '28px 16px 20px',
                 borderBottom: '1px solid var(--border-color)',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '16px',
                 position: 'relative',
-                /* Initial hidden state for scroll-in reveal */
+                cursor: 'default',
                 opacity: 0,
                 transform: 'translateY(24px)',
                 transition: `opacity 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.12}s, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.12}s`,
               }}
             >
-              <span style={{
-                fontSize: '0.85rem',
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--color-primary)',
-                minWidth: '40px',
-                fontWeight: '600',
-              }}>{item.num}</span>
-              <span style={{
-                fontSize: '1.1rem',
-                fontFamily: 'var(--font-serif)',
-                textTransform: 'uppercase',
-                fontWeight: '700',
-                minWidth: '240px',
-              }}>{item.title}</span>
+              {/* Effect 3: Animated Progress Line — grows left-to-right on hover */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                height: '2px',
+                width: hoveredRow === i ? '100%' : '0%',
+                background: 'var(--grad-accent)',
+                transition: 'width 0.5s cubic-bezier(0.16,1,0.3,1)',
+                borderRadius: '1px',
+              }} />
+
+              {/* Effect 2: Sound Pulse — expanding concentric rings from number on hover */}
+              <div style={{ position: 'relative', minWidth: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {hoveredRow === i && <>
+                  <div className="pulse-ring pulse-ring-1" />
+                  <div className="pulse-ring pulse-ring-2" />
+                </>}
+                <span style={{
+                  fontSize: '0.85rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--color-primary)',
+                  fontWeight: '700',
+                  position: 'relative',
+                  zIndex: 1,
+                }}>{item.num}</span>
+              </div>
+
+              {/* Title + Effect 4: Speaker Equalizer bars */}
+              <div style={{ minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{
+                  fontSize: '1.1rem',
+                  fontFamily: 'var(--font-serif)',
+                  textTransform: 'uppercase',
+                  fontWeight: '700',
+                  color: hoveredRow === i ? 'var(--color-primary)' : 'var(--text-primary)',
+                  transition: 'color 0.3s ease',
+                }}>{item.title}</span>
+                {/* Effect 4: Equalizer bars — always animating, more vivid on hover */}
+                <div className={`eq-bars ${hoveredRow === i ? 'eq-active' : ''}`} aria-hidden="true">
+                  {[3,5,8,6,4,7,5,3,6,4].map((h, bi) => (
+                    <div key={bi} className="eq-bar" style={{ '--eq-h': `${h * 2}px`, animationDelay: `${bi * 0.07}s` }} />
+                  ))}
+                </div>
+              </div>
+
               <p style={{
                 color: 'var(--text-secondary)',
                 flexGrow: 1,

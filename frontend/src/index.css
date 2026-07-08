@@ -431,3 +431,48 @@ button {
     transparent 65%
   );
 }
+
+/* Effect 2: Sound Pulse Rings */
+@keyframes pulseRing {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+}
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-primary);
+  animation: pulseRing 1.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  pointer-events: none;
+}
+.pulse-ring-2 {
+  animation-delay: 0.5s;
+}
+
+/* Effect 4: Speaker Equalizer Bars */
+@keyframes eqBounce {
+  0%, 100% { height: 4px; }
+  50%       { height: var(--eq-h, 10px); }
+}
+.eq-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+}
+.eq-bar {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  opacity: 0.35;
+  animation: eqBounce 0.9s ease-in-out infinite alternate;
+  transition: opacity 0.3s ease;
+}
+.eq-bars.eq-active .eq-bar {
+  opacity: 1;
+  animation-duration: 0.55s;
+}
