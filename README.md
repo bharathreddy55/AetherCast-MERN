@@ -128,8 +128,8 @@ From the root directory, install dependencies and start the servers concurrently
 npm run install-all
 npm run dev
 ```
-- Frontend will open at `http://localhost:5173/`
-- Backend API will run at `http://localhost:5000/`
+- Frontend will open at `https://aether-cast-mern.vercel.app/`
+- Backend API will run at `https://podcast-backend-3lt7.onrender.com`
 
 ---
 
