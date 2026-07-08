@@ -27,23 +27,23 @@
   --bg-card-hover: #f8fafc;
   --bg-popover: #ffffff;
   --border-color: rgba(15, 23, 42, 0.08);
-  --border-hover: rgba(194, 65, 12, 0.4);
+  --border-hover: rgba(22, 163, 74, 0.4);
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   
-  --color-primary: #c2410c;
-  --color-primary-hover: #ea580c;
+  --color-primary: #16a34a;
+  --color-primary-hover: #15803d;
   --color-secondary: #0f172a;
-  --grad-accent: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
-  --grad-bg: radial-gradient(circle at 50% 0%, #f8fafc 0%, #f1f5f9 100%);
+  --grad-accent: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #f0fdf4 0%, #f1f5f9 100%);
   
   --glass-bg: #ffffff;
   --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   --glass-border: 1px solid rgba(15, 23, 42, 0.08);
   
-  --hover-bg: rgba(15, 23, 42, 0.04);
+  --hover-bg: rgba(22, 163, 74, 0.06);
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: all 0.15s ease;
