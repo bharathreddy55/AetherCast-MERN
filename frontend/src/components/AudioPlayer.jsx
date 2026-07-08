@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
-  Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon
+  Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
 import AudioVisualizer from './AudioVisualizer';
+import ListeningPartyDrawer from './ListeningPartyDrawer';
 
 export default function AudioPlayer() {
   const {
@@ -28,9 +29,11 @@ export default function AudioPlayer() {
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
+  const [showListeningParty, setShowListeningParty] = useState(false);
   const [liked, setLiked] = useState(false);
   const [sleepTimeRemaining, setSleepTimeRemaining] = useState(null);
   const lyricsContainerRef = useRef(null);
+  const isSyncingRef = useRef(false);
   const { token, user } = useAuth();
 
   // Sleep Timer logic
@@ -113,7 +116,18 @@ export default function AudioPlayer() {
   };
 
   const handleSeekChange = (e) => {
-    seek(parseFloat(e.target.value));
+    const targetTime = parseFloat(e.target.value);
+    seek(targetTime);
+    if (window.listeningPartySocketEmit) {
+      window.listeningPartySocketEmit('sync-seek', targetTime);
+    }
+  };
+
+  const handlePlayClick = () => {
+    if (window.listeningPartySocketEmit) {
+      window.listeningPartySocketEmit(isPlaying ? 'sync-pause' : 'sync-play', currentTime);
+    }
+    togglePlay();
   };
 
   const handleVolumeChange = (e) => {
@@ -196,7 +210,7 @@ export default function AudioPlayer() {
                 <SkipBack size={20} />
               </button>
               <button 
-                onClick={togglePlay} 
+                onClick={handlePlayClick} 
                 className="play-pause-btn"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
@@ -237,6 +251,21 @@ export default function AudioPlayer() {
                 title="Toggle Live Synced Subtitles"
               >
                 <AlignLeft size={18} />
+              </button>
+            )}
+
+            {/* Listening Party Button */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowListeningParty(!showListeningParty);
+                  setShowLyrics(false);
+                }} 
+                className="volume-icon-btn"
+                style={{ color: showListeningParty ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
+                title="Join Listening Party"
+              >
+                <Users size={18} />
               </button>
             )}
 
@@ -345,6 +374,20 @@ export default function AudioPlayer() {
 
         </div>
       </div>
+
+      {/* Listening Party slide-up panel */}
+      {showListeningParty && token && (
+        <ListeningPartyDrawer
+          episodeId={currentEpisode._id}
+          user={user}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          togglePlay={togglePlay}
+          seek={seek}
+          isSyncingRef={isSyncingRef}
+          onClose={() => setShowListeningParty(false)}
+        />
+      )}
     </>
   );
 }
