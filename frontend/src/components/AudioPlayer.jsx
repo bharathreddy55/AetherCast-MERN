@@ -137,6 +137,8 @@ export default function AudioPlayer() {
   const hasNext = playlist.findIndex((ep) => ep._id === currentEpisode._id) < playlist.length - 1;
   const hasPrevious = playlist.findIndex((ep) => ep._id === currentEpisode._id) > 0;
 
+  const percentage = duration ? (currentTime / duration) * 100 : 0;
+
   return (
     <>
       {/* Synced Lyrics slide-up panel */}
@@ -234,7 +236,10 @@ export default function AudioPlayer() {
                 max={duration || 0}
                 value={currentTime}
                 onChange={handleSeekChange}
-                className="timeline-slider"
+                className={`timeline-slider ${isPlaying ? 'playing-track' : ''}`}
+                style={{
+                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${percentage}%, rgba(255, 255, 255, 0.1) ${percentage}%, rgba(255, 255, 255, 0.1) 100%)`
+                }}
               />
               <span className="time-text">{formatTime(duration)}</span>
             </div>
