@@ -148,6 +148,36 @@ svg#curve {
   transition: fill 0.3s ease;
 }
 
+.podcast-card:hover svg#curve {
+  fill: #0f172a; /* Slate-900 in Light Mode */
+}
+
+body.dark-theme .podcast-card:hover svg#curve {
+  fill: #0a0a0c; /* Black obsidian in Dark Mode */
+}
+
+/* Hover text contrast overrides */
+.podcast-card:hover .card-title {
+  color: #ffffff;
+}
+
+.podcast-card:hover .card-creator {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.podcast-card:hover .card-stat-item {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.podcast-card:hover .card-matched-snippet {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.podcast-card:hover .matched-snippet-text {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 /* Text and details slide-up wrapper */
 .card-info-content {
   position: absolute;
