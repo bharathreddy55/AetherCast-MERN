@@ -1,7 +1,7 @@
 /* Shared Layout & Styling for Pages */
 
 /* PAGE CONTAINERS */
-.landing-page, .home-page, .explore-page, .details-page, .creator-dashboard, .auth-page {
+.landing-page, .home-page, .explore-page, .details-page, .creator-dashboard, .auth-page, .playlists-page, .downloads-page {
   max-width: 1400px;
   margin: 40px auto;
   padding: 0 24px;
