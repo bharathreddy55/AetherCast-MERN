@@ -472,7 +472,7 @@ export default function CreatorDashboard() {
                       value={pCategory}
                       onChange={(e) => setPCategory(e.target.value)}
                       className="form-input"
-                      style={{ background: 'rgba(10, 7, 30, 0.9)' }}
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                     >
                       <option value="Technology">Technology</option>
                       <option value="Business">Business</option>
@@ -529,7 +529,7 @@ export default function CreatorDashboard() {
                       value={pStatus}
                       onChange={(e) => setPStatus(e.target.value)}
                       className="form-input"
-                      style={{ background: 'rgba(10, 7, 30, 0.9)' }}
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                     >
                       <option value="published">Published</option>
                       <option value="draft">Draft</option>
@@ -566,7 +566,7 @@ export default function CreatorDashboard() {
                     onChange={(e) => setEpPodcastId(e.target.value)}
                     required
                     className="form-input"
-                    style={{ background: 'rgba(10, 7, 30, 0.9)' }}
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                   >
                     <option value="">-- Choose Podcast --</option>
                     {myPodcasts.map((p) => (
@@ -631,7 +631,7 @@ export default function CreatorDashboard() {
                       value={epStatus}
                       onChange={(e) => setEpStatus(e.target.value)}
                       className="form-input"
-                      style={{ background: 'rgba(10, 7, 30, 0.9)' }}
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                     >
                       <option value="published">Published</option>
                       <option value="draft">Draft</option>
