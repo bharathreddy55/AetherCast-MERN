@@ -237,35 +237,59 @@
   border-color: var(--color-primary);
 }
 
-.volume-control {
+.volume-control-container {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 110px;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
   flex-shrink: 0;
 }
 
-.volume-icon-btn {
-  color: var(--text-secondary);
+.volume-slider-popover {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(18, 18, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 16px 8px;
+  width: 32px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
 }
 
-.volume-icon-btn:hover {
-  color: #ffffff;
+.volume-control-container:hover .volume-slider-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(-10px);
 }
 
-.volume-slider {
-  width: 100%;
+.volume-slider-vertical {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80px;
   height: 4px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.1);
   outline: none;
   cursor: pointer;
-  -webkit-appearance: none;
+  transform: rotate(-90deg);
   accent-color: var(--color-primary);
 }
 
 /* Custom volume slider thumb */
-.volume-slider::-webkit-slider-thumb {
+.volume-slider-vertical::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 10px;
@@ -278,7 +302,7 @@
   transition: transform 0.15s ease;
 }
 
-.volume-slider::-moz-range-thumb {
+.volume-slider-vertical::-moz-range-thumb {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -289,11 +313,11 @@
   transition: transform 0.15s ease;
 }
 
-.volume-slider:hover::-webkit-slider-thumb {
+.volume-slider-vertical:hover::-webkit-slider-thumb {
   transform: scale(1.25);
 }
 
-.volume-slider:hover::-moz-range-thumb {
+.volume-slider-vertical:hover::-moz-range-thumb {
   transform: scale(1.25);
 }
 

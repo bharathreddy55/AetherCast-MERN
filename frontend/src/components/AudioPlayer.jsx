@@ -319,27 +319,30 @@ export default function AudioPlayer() {
               </select>
             </div>
 
-            {/* Volume Control */}
-            <div className="volume-control">
+            {/* Volume Control (Vertical Hover Popover) */}
+            <div className="volume-control-container">
+              <div className="volume-slider-popover">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="volume-slider-vertical"
+                  style={{
+                    background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${volume * 100}%, rgba(255, 255, 255, 0.1) ${volume * 100}%, rgba(255, 255, 255, 0.1) 100%)`
+                  }}
+                />
+              </div>
               <button 
                 onClick={() => changeVolume(volume === 0 ? 0.8 : 0)} 
                 className="volume-icon-btn"
-                style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}
+                style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Volume"
               >
                 {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="volume-slider"
-                style={{
-                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${volume * 100}%, rgba(255, 255, 255, 0.1) ${volume * 100}%, rgba(255, 255, 255, 0.1) 100%)`
-                }}
-              />
             </div>
 
             {/* Share & Like */}
