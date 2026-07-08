@@ -26,7 +26,11 @@ export const AuthProvider = ({ children }) => {
         });
         const data = await res.json();
         if (data.success) {
-          setUser(data.user);
+          setUser({
+            ...data.user,
+            id: data.user.id || data.user._id,
+            _id: data.user._id || data.user.id
+          });
         }
       } catch (err) {
         console.error('Failed to sync profile with MongoDB', err);

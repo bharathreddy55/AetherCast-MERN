@@ -73,7 +73,7 @@ export default function CreatorDashboard() {
   const fetchMyPodcasts = async () => {
     setLoadingPodcasts(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts?creatorId=${user.id}`, {
+      const res = await fetch(`${API_BASE_URL}/podcasts?creatorId=${user.id || user._id}`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
