@@ -74,11 +74,28 @@ export default function Navbar() {
                 className="user-profile-btn" 
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+                style={{
+                  borderColor: user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'
+                }}
               >
                 {user.avatar ? (
-                  <img src={`http://localhost:5000${user.avatar}`} alt="Avatar" className="user-avatar" />
+                  <img 
+                    src={`http://localhost:5000${user.avatar}`} 
+                    alt="Avatar" 
+                    className="user-avatar" 
+                    style={{ 
+                      border: `2px solid ${user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981'}`,
+                      boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                    }} 
+                  />
                 ) : (
-                  <div className="avatar-placeholder">
+                  <div 
+                    className="avatar-placeholder" 
+                    style={{ 
+                      background: user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981',
+                      boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                    }}
+                  >
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -86,16 +103,25 @@ export default function Navbar() {
               </button>
 
               {dropdownOpen && (
-                <div className="user-dropdown glass-panel">
+                <div className="user-dropdown glass-panel" style={{ zIndex: 110 }}>
                   <div className="dropdown-info">
                     <p className="info-name">{user.name}</p>
-                    <p className="info-role">@{user.username} • {user.role}</p>
+                    <p className="info-role" style={{ color: 'var(--text-secondary)' }}>
+                      @{user.username} • <span style={{ 
+                        color: user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981',
+                        fontWeight: '600'
+                      }}>{user.role}</span>
+                    </p>
                   </div>
                   <Link to="/settings" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#ffffff', transition: 'background 0.2s', width: '100%', textAlign: 'left' }}>
                     <Sliders size={16} />
                     <span>Preferences</span>
                   </Link>
-                  <hr className="dropdown-divider" />
+                  <Link to="/explore" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#ffffff', transition: 'background 0.2s', width: '100%', textAlign: 'left' }}>
+                    <Compass size={16} />
+                    <span>Discover Podcasts</span>
+                  </Link>
+                  <hr className="dropdown-divider" style={{ margin: '8px 0', border: 0, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
                   <button onClick={logout} className="dropdown-item logout-btn">
                     <LogOut size={16} />
                     <span>Log Out</span>
