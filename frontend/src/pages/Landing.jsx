@@ -9,7 +9,9 @@ export default function Landing() {
   const { user } = useAuth();
   const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredRow, setHoveredRow] = useState(null);
+  const [spotPos, setSpotPos] = useState({ x: -999, y: -999 });
+  const [spotActive, setSpotActive] = useState(false);
+  const dirSectionRef = useRef(null);
   const dirRowRefs = useRef([]);
 
   // Scroll-in reveal for Info Directory rows
@@ -19,18 +21,22 @@ export default function Landing() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateX(0)';
+            entry.target.style.transform = 'translateY(0)';
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
-    dirRowRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
+    dirRowRefs.current.forEach((el) => { if (el) observer.observe(el); });
     return () => observer.disconnect();
   }, []);
+
+  const handleSpotMove = (e) => {
+    const rect = dirSectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setSpotPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -184,13 +190,39 @@ export default function Landing() {
       </section>
 
       {/* Tabular Console Row Directory (Why Choose Us) */}
-      <section style={{ padding: '80px 0' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '48px' }}>
+      <section
+        ref={dirSectionRef}
+        onMouseMove={handleSpotMove}
+        onMouseEnter={() => setSpotActive(true)}
+        onMouseLeave={() => setSpotActive(false)}
+        style={{
+          padding: '80px 0',
+          position: 'relative',
+          overflow: 'hidden',
+          '--spot-x': `${spotPos.x}px`,
+          '--spot-y': `${spotPos.y}px`,
+        }}
+      >
+        {/* Spotlight radial glow that follows cursor */}
+        <div
+          className="dir-spotlight"
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            pointerEvents: 'none',
+            inset: 0,
+            zIndex: 0,
+            opacity: spotActive ? 1 : 0,
+            transition: 'opacity 0.4s ease',
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '48px' }}>
           <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', letterSpacing: '0.2em' }}>[ SYSTEM SPECIFICATIONS ]</span>
           <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Info Directory</h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-color)' }}>
           {[
             { num: '01', title: 'Smart Playback Engine', desc: 'Pause on any device and resume from the exact microsecond. Our sync engine ensures you never lose your spot.' },
             { num: '02', title: 'Creator Workspaces', desc: 'Upload files seamlessly, manage draft episodes, check listener statistics, and publish to the global audio-verse.' },
@@ -199,8 +231,6 @@ export default function Landing() {
             <div
               key={item.num}
               ref={(el) => (dirRowRefs.current[i] = el)}
-              onMouseEnter={() => setHoveredRow(i)}
-              onMouseLeave={() => setHoveredRow(null)}
               style={{
                 display: 'flex',
                 padding: '28px 16px',
@@ -209,41 +239,18 @@ export default function Landing() {
                 flexWrap: 'wrap',
                 gap: '16px',
                 position: 'relative',
-                overflow: 'hidden',
-                cursor: 'default',
                 /* Initial hidden state for scroll-in reveal */
                 opacity: 0,
-                transform: 'translateX(-40px)',
-                transition: `opacity 0.55s cubic-bezier(0.16,1,0.3,1) ${i * 0.15}s, transform 0.55s cubic-bezier(0.16,1,0.3,1) ${i * 0.15}s`,
+                transform: 'translateY(24px)',
+                transition: `opacity 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.12}s, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.12}s`,
               }}
             >
-              {/* Hover sweep background */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'var(--grad-accent)',
-                opacity: hoveredRow === i ? 0.06 : 0,
-                transition: 'opacity 0.3s ease',
-                pointerEvents: 'none',
-              }} />
-              {/* Left accent bar */}
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: hoveredRow === i ? '0%' : '100%',
-                width: '3px',
-                height: '100%',
-                background: 'var(--color-primary)',
-                transition: 'top 0.35s cubic-bezier(0.16,1,0.3,1)',
-                borderRadius: '0 2px 2px 0',
-              }} />
               <span style={{
                 fontSize: '0.85rem',
                 fontFamily: 'var(--font-mono)',
-                color: hoveredRow === i ? 'var(--color-primary)' : 'var(--text-muted)',
+                color: 'var(--color-primary)',
                 minWidth: '40px',
-                transition: 'color 0.3s ease',
-                fontWeight: hoveredRow === i ? '700' : '400',
+                fontWeight: '600',
               }}>{item.num}</span>
               <span style={{
                 fontSize: '1.1rem',
@@ -251,8 +258,6 @@ export default function Landing() {
                 textTransform: 'uppercase',
                 fontWeight: '700',
                 minWidth: '240px',
-                color: hoveredRow === i ? 'var(--color-primary)' : 'var(--text-primary)',
-                transition: 'color 0.3s ease',
               }}>{item.title}</span>
               <p style={{
                 color: 'var(--text-secondary)',

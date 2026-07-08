@@ -44,6 +44,7 @@
   --glass-border: 1px solid rgba(15, 23, 42, 0.08);
   
   --hover-bg: rgba(22, 163, 74, 0.06);
+  --spot-rgb: 22, 163, 74;
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: all 0.15s ease;
@@ -73,6 +74,7 @@ body.dark-theme {
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
   
   --hover-bg: rgba(255, 255, 255, 0.03);
+  --spot-rgb: 255, 122, 0;
 }
 
 * {
@@ -419,4 +421,13 @@ button {
   justify-content: center;
   flex-shrink: 0;
   color: var(--text-muted);
+}
+
+/* Info Directory Spotlight Effect */
+.dir-spotlight {
+  background: radial-gradient(
+    500px circle at var(--spot-x, -999px) var(--spot-y, -999px),
+    rgba(var(--spot-rgb), 0.13) 0%,
+    transparent 65%
+  );
 }
