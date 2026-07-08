@@ -3,7 +3,11 @@ import { supabase } from '../supabase';
 
 const AuthContext = createContext(null);
 
-export const BACKEND_URL = import.meta.env.VITE_API_URL || window.BACKEND_URL || 'http://localhost:5000';
+let rawBackendUrl = import.meta.env.VITE_API_URL || window.BACKEND_URL || 'http://localhost:5000';
+if (rawBackendUrl.endsWith('/')) {
+  rawBackendUrl = rawBackendUrl.slice(0, -1);
+}
+export const BACKEND_URL = rawBackendUrl;
 export const API_BASE_URL = `${BACKEND_URL}/api`;
 
 export const AuthProvider = ({ children }) => {
