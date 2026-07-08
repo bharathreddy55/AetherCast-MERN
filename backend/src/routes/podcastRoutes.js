@@ -33,7 +33,7 @@ router.route('/')
     ]),
     createPodcast
   )
-  .get(getPodcasts);
+  .get(optionalProtect, getPodcasts);
 
 router.get('/followed', protect, getFollowedPodcasts);
 
