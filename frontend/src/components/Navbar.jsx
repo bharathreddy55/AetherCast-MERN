@@ -13,7 +13,7 @@ export default function Navbar() {
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved === 'dark';
+    return saved !== 'light'; // Defaults to true (dark) if saved is null or 'dark'
   });
 
   useEffect(() => {
