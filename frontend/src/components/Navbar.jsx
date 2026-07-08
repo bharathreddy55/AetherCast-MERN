@@ -227,41 +227,88 @@ export default function Navbar() {
 
       {mobileMenuOpen && (
         <div className="navbar-mobile-menu animate-fade-in">
-          <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`}>
-            <Compass size={18} />
-            <span>Explore</span>
+          {/* Mobile Search */}
+          <Link to="/explore" className="mobile-search-bar">
+            <Search size={16} />
+            <span>Search Broadcasts...</span>
           </Link>
-          {user && (
-            <>
-              <Link to="/home" className={`mobile-nav-link ${isActive('/home') ? 'active' : ''}`}>
-                <Music size={18} />
-                <span>Home</span>
-              </Link>
-              <Link to="/playlists" className={`mobile-nav-link ${isActive('/playlists') ? 'active' : ''}`}>
-                <ListMusic size={18} />
-                <span>Playlists</span>
-              </Link>
-              <Link to="/downloads" className={`mobile-nav-link ${isActive('/downloads') ? 'active' : ''}`}>
-                <Download size={18} />
-                <span>Downloads</span>
-              </Link>
-              <Link to="/library" className={`mobile-nav-link ${isActive('/library') ? 'active' : ''}`}>
-                <Clock size={18} />
-                <span>Library</span>
-              </Link>
-              {user.role === 'creator' && (
-                <Link to="/creator" className={`mobile-nav-link ${isActive('/creator') ? 'active' : ''}`}>
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
+
+          {/* Navigation Links */}
+          <div className="mobile-menu-links">
+            <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`}>
+              <Compass size={18} />
+              <span>Explore</span>
+            </Link>
+            {user && (
+              <>
+                <Link to="/home" className={`mobile-nav-link ${isActive('/home') ? 'active' : ''}`}>
+                  <Music size={18} />
+                  <span>Home</span>
                 </Link>
-              )}
-              {user.role === 'admin' && (
-                <Link to="/admin" className={`mobile-nav-link ${isActive('/admin') ? 'active' : ''}`}>
-                  <ShieldAlert size={18} />
-                  <span>Admin Panel</span>
+                <Link to="/playlists" className={`mobile-nav-link ${isActive('/playlists') ? 'active' : ''}`}>
+                  <ListMusic size={18} />
+                  <span>Playlists</span>
                 </Link>
-              )}
-            </>
+                <Link to="/downloads" className={`mobile-nav-link ${isActive('/downloads') ? 'active' : ''}`}>
+                  <Download size={18} />
+                  <span>Downloads</span>
+                </Link>
+                <Link to="/library" className={`mobile-nav-link ${isActive('/library') ? 'active' : ''}`}>
+                  <Clock size={18} />
+                  <span>Library</span>
+                </Link>
+                {user.role === 'creator' && (
+                  <Link to="/creator" className={`mobile-nav-link ${isActive('/creator') ? 'active' : ''}`}>
+                    <LayoutDashboard size={18} />
+                    <span>Dashboard</span>
+                  </Link>
+                )}
+                {user.role === 'admin' && (
+                  <Link to="/admin" className={`mobile-nav-link ${isActive('/admin') ? 'active' : ''}`}>
+                    <ShieldAlert size={18} />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+
+          <hr className="dropdown-divider" style={{ margin: '12px 0' }} />
+
+          {/* Mobile Theme Toggle */}
+          <button onClick={() => setIsDark(!isDark)} className="mobile-menu-action">
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+
+          {/* Mobile User & Auth Actions */}
+          {user ? (
+            <div className="mobile-user-section">
+              <div className="mobile-user-info">
+                {user.avatar ? (
+                  <img src={window.getMediaUrl(user.avatar)} alt="Avatar" className="user-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div className="avatar-fallback" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--hover-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={18} /></div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span className="user-name" style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.name}</span>
+                  <span className="user-role" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user.role}</span>
+                </div>
+              </div>
+              <Link to="/settings" className="mobile-menu-action">
+                <Sliders size={18} />
+                <span>Preferences</span>
+              </Link>
+              <button onClick={logout} className="mobile-menu-action logout-btn" style={{ width: '100%', textAlign: 'left' }}>
+                <LogOut size={18} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          ) : (
+            <div className="mobile-auth-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              <Link to="/login" className="btn-secondary" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex' }}>Log In</Link>
+              <Link to="/register" className="btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex' }}>Sign Up</Link>
+            </div>
           )}
         </div>
       )}
