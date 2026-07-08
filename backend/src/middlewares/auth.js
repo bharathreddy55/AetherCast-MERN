@@ -95,16 +95,19 @@ const protect = async (req, res, next) => {
 
     // If user profile doesn't exist in MongoDB (first-time Supabase sign up / Google login), sync it
     if (!user) {
-      const username = email.split('@')[0] + Math.floor(100 + Math.random() * 900);
+      const username = decoded.user_metadata?.username || email.split('@')[0] + Math.floor(100 + Math.random() * 900);
       const name = decoded.user_metadata?.full_name || decoded.user_metadata?.name || email.split('@')[0];
       const avatar = decoded.user_metadata?.avatar_url || '';
+      const role = decoded.user_metadata?.role || 'listener';
+      const bio = decoded.user_metadata?.bio || '';
 
       user = await User.create({
         username,
         name,
         email,
         password: Math.random().toString(36).slice(-10), // Random password placeholder
-        role: 'listener',
+        role,
+        bio,
         avatar,
         isVerified: true, // Supabase handles verification
       });

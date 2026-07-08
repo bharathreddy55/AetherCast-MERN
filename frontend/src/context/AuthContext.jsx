@@ -75,6 +75,8 @@ export const AuthProvider = ({ children }) => {
           data: {
             full_name: name,
             username,
+            role,
+            bio
           },
         },
       });
