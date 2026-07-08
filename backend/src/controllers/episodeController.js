@@ -545,4 +545,33 @@ exports.getAllEpisodes = async (req, res) => {
   }
 };
 
+// @desc    Update episode transcript text
+// @route   PUT /api/episodes/:id/transcript
+// @access  Private (Creator/Admin)
+exports.updateEpisodeTranscript = async (req, res) => {
+  try {
+    const { transcript } = req.body;
+    if (transcript === undefined) {
+      return res.status(400).json({ success: false, message: 'Please provide transcript content' });
+    }
+
+    const episode = await Episode.findById(req.params.id).populate('podcastId');
+    if (!episode) {
+      return res.status(404).json({ success: false, message: 'Episode not found' });
+    }
+
+    // Verify creator ownership or admin role
+    if (episode.podcastId.creatorId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized to edit transcripts for this podcast show' });
+    }
+
+    episode.transcript = transcript;
+    await episode.save();
+
+    res.status(200).json({ success: true, message: 'Transcript updated successfully', transcript: episode.transcript });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 

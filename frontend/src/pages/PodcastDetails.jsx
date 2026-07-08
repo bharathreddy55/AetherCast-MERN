@@ -5,6 +5,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { Disc, Play, Bookmark, BookmarkCheck, Calendar, Clock, Music, MessageSquare, Star, FolderPlus, Download, Check, Loader2, Heart, Share2 } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 import RatingWidget from '../components/RatingWidget';
+import TranscriptEditorModal from '../components/TranscriptEditorModal';
 import './Pages.css';
 
 export default function PodcastDetails() {
@@ -19,6 +20,7 @@ export default function PodcastDetails() {
   const [loading, setLoading] = useState(true);
   const [loadingFollow, setLoadingFollow] = useState(false);
   const [activeCommentsEpisode, setActiveCommentsEpisode] = useState(null);
+  const [activeEditTranscriptEpisode, setActiveEditTranscriptEpisode] = useState(null);
 
   // Offline caching states
   const [downloadedIds, setDownloadedIds] = useState([]);
@@ -390,6 +392,26 @@ export default function PodcastDetails() {
                               {loadingAI[ep._id] ? <Loader2 size={10} className="animate-spin" /> : '✨ AI Summarize'}
                             </button>
                           )}
+
+                          {(isCreator || (user && user.role === 'admin')) && (
+                            <button
+                              onClick={() => setActiveEditTranscriptEpisode(ep)}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: '4px',
+                                padding: '2px 8px',
+                                fontSize: '0.7rem',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              📝 Edit Subtitles
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -567,6 +589,24 @@ export default function PodcastDetails() {
 
       {/* Ratings & Reviews Section */}
       <RatingWidget podcastId={podcast._id} onChange={fetchDetails} />
+
+      {/* Transcript Editor Modal Overlay */}
+      {activeEditTranscriptEpisode && (
+        <TranscriptEditorModal
+          episode={activeEditTranscriptEpisode}
+          token={token}
+          onClose={() => setActiveEditTranscriptEpisode(null)}
+          onSaveSuccess={(newTranscript) => {
+            // Update transcript in local episodes list state
+            setEpisodes(prev => prev.map(ep => {
+              if (ep._id === activeEditTranscriptEpisode._id) {
+                return { ...ep, transcript: newTranscript };
+              }
+              return ep;
+            }));
+          }}
+        />
+      )}
     </div>
   );
 }
