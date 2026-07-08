@@ -254,7 +254,7 @@ export default function PodcastDetails() {
           <span className="details-badge">{podcast.category}</span>
           <h1 className="details-title">{podcast.title}</h1>
           <p className="details-creator">
-            Created by <span style={{ color: '#ffffff', fontWeight: '500' }}>{podcast.creatorId?.name}</span> • {podcast.followersCount} followers
+            Created by <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{podcast.creatorId?.name}</span> • {podcast.followersCount} followers
           </p>
           <p className="details-desc">{podcast.description}</p>
           
@@ -335,7 +335,7 @@ export default function PodcastDetails() {
                         <Play size={16} fill={isCurrent && isPlaying ? 'currentColor' : 'none'} />
                       </button>
                       <div className="episode-meta-content" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-secondary)' : '#ffffff', margin: 0 }}>
+                        <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-primary)' : 'var(--text-primary)', margin: 0 }}>
                           {ep.title}
                         </h4>
                         <p className="episode-row-desc" style={{ margin: 0 }}>{ep.description}</p>

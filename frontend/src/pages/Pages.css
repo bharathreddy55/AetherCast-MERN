@@ -418,7 +418,7 @@
 .episode-row-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -464,10 +464,10 @@
 .search-bar-input {
   width: 100%;
   padding: 14px 16px 14px 48px;
-  background: rgba(15, 10, 36, 0.5);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1rem;
   transition: var(--transition-smooth);
 }
@@ -546,13 +546,13 @@
 }
 
 .creator-menu-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .creator-menu-item.active {
-  background: rgba(255, 122, 0, 0.12);
-  color: #ffffff;
+  background: var(--hover-bg);
+  color: var(--color-primary);
   border-left: 3px solid var(--color-primary);
 }
 
@@ -708,7 +708,7 @@
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .animate-scale-up {

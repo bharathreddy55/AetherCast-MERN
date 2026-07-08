@@ -82,7 +82,7 @@ export default function Downloads() {
                   )}
 
                   <div className="episode-meta-content">
-                    <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-secondary)' : '#ffffff' }}>
+                    <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-primary)' : 'var(--text-primary)' }}>
                       {ep.title}
                     </h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>

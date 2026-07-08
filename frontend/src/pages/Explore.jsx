@@ -268,7 +268,7 @@ export default function Explore() {
               fontSize: '1.6rem',
               fontWeight: '700',
               margin: '8px 0 0 0',
-              color: '#fff',
+              color: 'var(--text-primary)',
               fontFamily: 'var(--font-serif)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em'

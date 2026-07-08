@@ -183,7 +183,7 @@ export default function PlaylistDetails() {
                       <Play size={16} fill={isCurrent && isPlaying ? 'currentColor' : 'none'} />
                     </button>
                     <div className="episode-meta-content">
-                      <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-secondary)' : '#ffffff' }}>
+                      <h4 className="episode-row-title" style={{ color: isCurrent ? 'var(--color-primary)' : 'var(--text-primary)' }}>
                         {ep.title}
                       </h4>
                       <p className="episode-row-desc">{ep.podcastId?.title || 'Single Episode'}</p>
