@@ -98,8 +98,11 @@ const COLOR_THEMES = {
 
 export const ThemeProvider = ({ children }) => {
   const [accent, setAccent] = useState(localStorage.getItem('theme-accent') || 'purple');
-  const [opacity, setOpacity] = useState(Number(localStorage.getItem('theme-opacity') || '0.6'));
-  const [blur, setBlur] = useState(Number(localStorage.getItem('theme-blur') || '12'));
+  const [visualizerStyle, setVisualizerStyle] = useState(localStorage.getItem('theme-visualizer-style') || 'bars');
+
+  // Lock glassmorphism to premium visual defaults
+  const opacity = 0.6;
+  const blur = 12;
 
   const applyTheme = () => {
     const root = document.documentElement;
@@ -121,12 +124,11 @@ export const ThemeProvider = ({ children }) => {
     applyTheme();
     // Save preferences
     localStorage.setItem('theme-accent', accent);
-    localStorage.setItem('theme-opacity', opacity.toString());
-    localStorage.setItem('theme-blur', blur.toString());
-  }, [accent, opacity, blur]);
+    localStorage.setItem('theme-visualizer-style', visualizerStyle);
+  }, [accent, visualizerStyle]);
 
   return (
-    <ThemeContext.Provider value={{ accent, setAccent, opacity, setOpacity, blur, setBlur }}>
+    <ThemeContext.Provider value={{ accent, setAccent, visualizerStyle, setVisualizerStyle }}>
       {children}
     </ThemeContext.Provider>
   );
