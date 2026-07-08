@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert } from 'lucide-react';
+import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 import './Navbar.css';
 
@@ -79,33 +79,77 @@ export default function Navbar() {
                 }}
               >
                 {user.avatar ? (
-                  <img 
-                    src={`http://localhost:5000${user.avatar}`} 
-                    alt="Avatar" 
-                    className="user-avatar" 
-                    style={{ 
-                      border: `2px solid ${user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981'}`,
-                      boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
-                    }} 
-                  />
+                  <div style={{ position: 'relative', display: 'flex' }}>
+                    <img 
+                      src={`http://localhost:5000${user.avatar}`} 
+                      alt="Avatar" 
+                      className="user-avatar" 
+                      style={{ 
+                        border: `2px solid ${user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981'}`,
+                        boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                      }} 
+                    />
+                    {user.role === 'admin' && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-4px',
+                        right: '-4px',
+                        background: '#a855f7',
+                        borderRadius: '50%',
+                        padding: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #1a1a1a',
+                        boxShadow: '0 0 4px rgba(0,0,0,0.5)'
+                      }} title="System Admin">
+                        <Bot size={10} style={{ color: '#fff' }} />
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div 
-                    className="avatar-placeholder" 
-                    style={{ 
-                      background: user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981',
-                      boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
-                    }}
-                  >
-                    {user.name.charAt(0).toUpperCase()}
+                  <div style={{ position: 'relative', display: 'flex' }}>
+                    <div 
+                      className="avatar-placeholder" 
+                      style={{ 
+                        background: user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981',
+                        boxShadow: `0 0 8px ${user.role === 'creator' ? 'rgba(249, 115, 22, 0.4)' : user.role === 'admin' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                      }}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    {user.role === 'admin' && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-4px',
+                        right: '-4px',
+                        background: '#a855f7',
+                        borderRadius: '50%',
+                        padding: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #1a1a1a',
+                        boxShadow: '0 0 4px rgba(0,0,0,0.5)'
+                      }} title="System Admin">
+                        <Bot size={10} style={{ color: '#fff' }} />
+                      </div>
+                    )}
                   </div>
                 )}
-                <span className="user-name-text">{user.name}</span>
+                <span className="user-name-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {user.name}
+                  {user.role === 'admin' && <Bot size={14} style={{ color: '#a855f7' }} />}
+                </span>
               </button>
 
               {dropdownOpen && (
                 <div className="user-dropdown glass-panel" style={{ zIndex: 110 }}>
                   <div className="dropdown-info">
-                    <p className="info-name">{user.name}</p>
+                    <p className="info-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {user.name}
+                      {user.role === 'admin' && <Bot size={16} style={{ color: '#a855f7' }} />}
+                    </p>
                     <p className="info-role" style={{ color: 'var(--text-secondary)' }}>
                       @{user.username} • <span style={{ 
                         color: user.role === 'creator' ? '#f97316' : user.role === 'admin' ? '#a855f7' : '#10b981',
