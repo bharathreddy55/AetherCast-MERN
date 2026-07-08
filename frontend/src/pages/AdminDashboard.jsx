@@ -164,6 +164,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user's profile from MongoDB? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        fetchUsers();
+        fetchStats();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleToggleUserStatus = async (userId) => {
     if (!window.confirm("Change status of this user's account?")) return;
     try {
@@ -478,9 +498,25 @@ export default function AdminDashboard() {
                             fontSize: '0.8rem',
                             borderColor: usr.accountStatus === 'active' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                             color: usr.accountStatus === 'active' ? '#f87171' : '#34d399',
+                            cursor: 'pointer'
                           }}
                         >
                           {usr.accountStatus === 'active' ? 'Suspend' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(usr._id)}
+                          disabled={usr._id === user?._id}
+                          className="btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.8rem',
+                            borderColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444',
+                            marginLeft: '8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>

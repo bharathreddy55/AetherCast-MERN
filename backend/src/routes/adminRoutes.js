@@ -14,6 +14,7 @@ const {
   deletePodcastAdmin,
   getEpisodesAdmin,
   deleteEpisodeAdmin,
+  deleteUserAdmin,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middlewares/auth');
 
@@ -27,6 +28,7 @@ router.get('/stats', getAdminStats);
 router.get('/users', getUsers);
 router.put('/users/:id/status', toggleUserStatus);
 router.put('/users/:id/role', changeUserRole);
+router.delete('/users/:id', deleteUserAdmin);
 
 // Podcast & Episode administration
 router.get('/podcasts', getPodcastsAdmin);
