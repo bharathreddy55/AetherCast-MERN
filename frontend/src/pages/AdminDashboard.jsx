@@ -439,7 +439,7 @@ export default function AdminDashboard() {
               <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
                 <Users size={24} style={{ color: 'var(--color-primary-hover)', marginBottom: '12px' }} />
                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Users</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: '#fff' }}>{stats.users.total}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)' }}>{stats.users.total}</p>
                 <div style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                   <span>{stats.users.listeners} Listeners</span> • <span>{stats.users.creators} Creators</span>
                 </div>
@@ -448,7 +448,7 @@ export default function AdminDashboard() {
               <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
                 <Radio size={24} style={{ color: '#06b6d4', marginBottom: '12px' }} />
                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Shows</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: '#fff' }}>{stats.podcasts}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)' }}>{stats.podcasts}</p>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                   {stats.episodes} total published episodes
                 </div>
@@ -457,16 +457,16 @@ export default function AdminDashboard() {
               <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
                 <Eye size={24} style={{ color: '#10b981', marginBottom: '12px' }} />
                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Platform Plays</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: '#fff' }}>{stats.plays}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)' }}>{stats.plays}</p>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                   Sum of all episode playCounts
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: stats.flagged.total > 0 ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: stats.flagged.total > 0 ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid var(--border-color)' }}>
                 <ShieldAlert size={24} style={{ color: '#ef4444', marginBottom: '12px' }} />
                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Flagged Items</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: stats.flagged.total > 0 ? '#ef4444' : '#fff' }}>{stats.flagged.total}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '700', color: stats.flagged.total > 0 ? '#ef4444' : 'var(--text-primary)' }}>{stats.flagged.total}</p>
                 <div style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                   <span>{stats.flagged.comments} Comments</span> • <span>{stats.flagged.reviews} Reviews</span>
                 </div>
@@ -479,8 +479,7 @@ export default function AdminDashboard() {
       {/* TAB 2: USER ACCOUNTS */}
       {activeSubTab === 'users' && (
         <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
-          {/* Filters Row */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          {/* Filters Row            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flexGrow: 1 }}>
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
@@ -489,7 +488,7 @@ export default function AdminDashboard() {
                 value={userSearch}
                 onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
                 onKeyDown={(e) => e.key === 'Enter' && fetchUsers()}
-                style={{ paddingLeft: '36px', height: '40px', width: '100%', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: '#fff' }}
+                style={{ paddingLeft: '36px', height: '40px', width: '100%', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
             <select
@@ -499,17 +498,17 @@ export default function AdminDashboard() {
                 height: '40px', 
                 padding: '0 12px', 
                 borderRadius: '8px', 
-                background: '#1a1a26', 
-                border: '1px solid rgba(255,255,255,0.18)', 
-                color: '#fff',
+                background: 'var(--bg-card)', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontWeight: '500'
               }}
             >
-              <option value="" style={{ background: '#12121a', color: '#fff' }}>All Roles</option>
-              <option value="listener" style={{ background: '#12121a', color: '#fff' }}>Listener</option>
-              <option value="creator" style={{ background: '#12121a', color: '#fff' }}>Creator</option>
-              <option value="admin" style={{ background: '#12121a', color: '#fff' }}>Admin</option>
+              <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>All Roles</option>
+              <option value="listener" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Listener</option>
+              <option value="creator" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Creator</option>
+              <option value="admin" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Admin</option>
             </select>
             <select
               value={userStatusFilter}
@@ -518,16 +517,16 @@ export default function AdminDashboard() {
                 height: '40px', 
                 padding: '0 12px', 
                 borderRadius: '8px', 
-                background: '#1a1a26', 
-                border: '1px solid rgba(255,255,255,0.18)', 
-                color: '#fff',
+                background: 'var(--bg-card)', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontWeight: '500'
               }}
             >
-              <option value="" style={{ background: '#12121a', color: '#fff' }}>All Statuses</option>
-              <option value="active" style={{ background: '#12121a', color: '#fff' }}>Active</option>
-              <option value="suspended" style={{ background: '#12121a', color: '#fff' }}>Suspended</option>
+              <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>All Statuses</option>
+              <option value="active" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Active</option>
+              <option value="suspended" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Suspended</option>
             </select>
             <button onClick={fetchUsers} className="btn-primary" style={{ height: '40px', borderRadius: '8px' }}>Search</button>
           </div>
@@ -539,7 +538,7 @@ export default function AdminDashboard() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     <th style={{ padding: '12px 8px' }}>User</th>
                     <th style={{ padding: '12px 8px' }}>Role</th>
                     <th style={{ padding: '12px 8px' }}>Status</th>
@@ -548,7 +547,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {usersList.map((usr) => (
-                    <tr key={usr._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.9rem' }}>
+                    <tr key={usr._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
                       <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {usr.avatar ? (
                           <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -558,7 +557,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <div>
-                          <p style={{ fontWeight: '600', margin: 0, color: '#fff' }}>{usr.name}</p>
+                          <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-primary)' }}>{usr.name}</p>
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>@{usr.username} • {usr.email}</p>
                         </div>
                       </td>
@@ -570,17 +569,17 @@ export default function AdminDashboard() {
                           style={{ 
                             padding: '6px 12px', 
                             borderRadius: '6px', 
-                            background: '#1a1a26', 
-                            border: '1px solid rgba(255,255,255,0.18)', 
-                            color: '#fff', 
+                            background: 'var(--bg-card)', 
+                            border: '1px solid var(--border-color)', 
+                            color: 'var(--text-primary)', 
                             fontSize: '0.8rem',
                             cursor: 'pointer',
                             fontWeight: '500'
                           }}
                         >
-                          <option value="listener" style={{ background: '#12121a', color: '#fff' }}>Listener</option>
-                          <option value="creator" style={{ background: '#12121a', color: '#fff' }}>Creator</option>
-                          <option value="admin" style={{ background: '#12121a', color: '#fff' }}>Admin</option>
+                          <option value="listener" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Listener</option>
+                          <option value="creator" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Creator</option>
+                          <option value="admin" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Admin</option>
                         </select>
                       </td>
                       <td style={{ padding: '16px 8px' }}>
@@ -661,15 +660,15 @@ export default function AdminDashboard() {
             ) : (
               <div style={{ display: 'grid', gap: '16px' }}>
                 {flaggedComments.map(c => (
-                  <div key={c._id} className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                  <div key={c._id} className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <div>
-                        <span style={{ fontWeight: '600', color: '#fff', fontSize: '0.85rem' }}>{c.userId?.name}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{c.userId?.name}</span>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '6px' }}>@{c.userId?.username}</span>
                       </div>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>On Episode: {c.episodeId?.title}</span>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0', background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0', background: 'var(--bg-main)', padding: '10px', borderRadius: '6px' }}>
                       "{c.content}"
                     </p>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -697,10 +696,10 @@ export default function AdminDashboard() {
             ) : (
               <div style={{ display: 'grid', gap: '16px' }}>
                 {flaggedReviews.map(r => (
-                  <div key={r._id} className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                  <div key={r._id} className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <div>
-                        <span style={{ fontWeight: '600', color: '#fff', fontSize: '0.85rem' }}>{r.userId?.name}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{r.userId?.name}</span>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '6px' }}>@{r.userId?.username}</span>
                       </div>
                       <div className="stars-row">
@@ -710,7 +709,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>On Show: {r.podcastId?.title}</span>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0', background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0', background: 'var(--bg-main)', padding: '10px', borderRadius: '6px' }}>
                       "{r.comment || 'No comment text'}"
                     </p>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -748,16 +747,16 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {podcastsList.map((p) => (
-                    <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.9rem' }}>
+                    <tr key={p._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
                       <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <img src={window.getMediaUrl(p.coverImage)} alt="Cover" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }} />
                         <div>
-                          <p style={{ fontWeight: '600', margin: 0, color: '#fff' }}>{p.title}</p>
+                          <p style={{ fontWeight: '600', margin: 0, color: 'var(--text-primary)' }}>{p.title}</p>
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>{p.status}</p>
                         </div>
                       </td>
                       <td style={{ padding: '16px 8px' }}>
-                        <p style={{ margin: 0, color: '#fff' }}>{p.creatorId?.name}</p>
+                        <p style={{ margin: 0, color: 'var(--text-primary)' }}>{p.creatorId?.name}</p>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>@{p.creatorId?.username}</p>
                       </td>
                       <td style={{ padding: '16px 8px' }}>{p.category}</td>
@@ -794,7 +793,7 @@ export default function AdminDashboard() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     <th style={{ padding: '12px 8px' }}>Episode Title</th>
                     <th style={{ padding: '12px 8px' }}>Podcast Show</th>
                     <th style={{ padding: '12px 8px' }}>Play Count</th>
@@ -804,8 +803,8 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {episodesList.map((e) => (
-                    <tr key={e._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.9rem' }}>
-                      <td style={{ padding: '16px 8px', fontWeight: '600', color: '#fff' }}>{e.title}</td>
+                    <tr key={e._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                      <td style={{ padding: '16px 8px', fontWeight: '600', color: 'var(--text-primary)' }}>{e.title}</td>
                       <td style={{ padding: '16px 8px' }}>{e.podcastId?.title || 'Unknown Podcast'}</td>
                       <td style={{ padding: '16px 8px' }}>{e.playCount} plays</td>
                       <td style={{ padding: '16px 8px' }}>
@@ -880,10 +879,10 @@ export default function AdminDashboard() {
             maxWidth: '400px',
             width: '90%',
             textAlign: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid var(--border-color)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
           }}>
-            <h3 style={{ color: '#fff', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
               {confirmModal.message}
             </p>

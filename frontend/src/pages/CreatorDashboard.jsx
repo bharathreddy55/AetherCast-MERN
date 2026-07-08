@@ -720,10 +720,10 @@ export default function CreatorDashboard() {
             maxWidth: '400px',
             width: '90%',
             textAlign: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid var(--border-color)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
           }}>
-            <h3 style={{ color: '#fff', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
               {confirmModal.message}
             </p>

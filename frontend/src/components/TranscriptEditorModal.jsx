@@ -82,12 +82,12 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
         maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column',
-        border: '1px solid rgba(255,255,255,0.08)'
+        border: '1px solid var(--border-color)'
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h3 style={{ margin: 0, color: '#fff' }}>Interactive Transcript Editor</h3>
+            <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Interactive Transcript Editor</h3>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Episode: {episode.title}
             </p>
@@ -102,10 +102,10 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
           display: 'flex', 
           gap: '12px', 
           marginBottom: '16px', 
-          background: 'rgba(0,0,0,0.2)', 
+          background: 'var(--bg-main)', 
           padding: '12px', 
           borderRadius: '8px', 
-          border: '1px solid rgba(255,255,255,0.03)',
+          border: '1px solid var(--border-color)',
           flexWrap: 'wrap'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexGrow: 1 }}>
@@ -119,9 +119,9 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
                 width: '100%',
                 padding: '6px 10px',
                 borderRadius: '6px',
-                background: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
                 fontSize: '0.8rem'
               }}
             />
@@ -137,9 +137,9 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
                 width: '100%',
                 padding: '6px 10px',
                 borderRadius: '6px',
-                background: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
                 fontSize: '0.8rem'
               }}
             />
@@ -178,9 +178,9 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
               minHeight: '200px',
               padding: '12px',
               borderRadius: '8px',
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              color: '#fff',
+              background: 'var(--bg-main)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
               fontFamily: 'monospace',
               fontSize: '0.85rem',
               lineHeight: '1.5',

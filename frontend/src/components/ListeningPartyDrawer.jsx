@@ -179,14 +179,14 @@ export default function ListeningPartyDrawer({
         justifyContent: 'space-between', 
         alignItems: 'center', 
         padding: '10px 14px', 
-        background: 'rgba(255,255,255,0.02)', 
+        background: 'var(--bg-main)', 
         borderRadius: '8px', 
         margin: '10px 0', 
-        border: '1px solid rgba(255,255,255,0.04)' 
+        border: '1px solid var(--border-color)' 
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Radio size={14} style={{ color: syncPlayback ? '#06b6d4' : 'var(--text-muted)' }} />
-          <span style={{ fontSize: '0.8rem', color: '#fff' }}>Sync Audio Playback</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>Sync Audio Playback</span>
         </div>
         <input 
           type="checkbox" 
@@ -235,8 +235,8 @@ export default function ListeningPartyDrawer({
                   <div style={{
                     padding: '8px 12px',
                     borderRadius: '12px',
-                    background: m.self ? 'var(--color-primary-hover)' : 'rgba(255,255,255,0.05)',
-                    color: '#fff',
+                    background: m.self ? 'var(--color-primary-hover)' : 'var(--bg-main)',
+                    color: m.self ? '#fff' : 'var(--text-primary)',
                     fontSize: '0.8rem',
                     textAlign: 'left'
                   }}>
@@ -262,9 +262,9 @@ export default function ListeningPartyDrawer({
             height: '36px',
             padding: '0 12px',
             borderRadius: '18px',
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#fff',
+            background: 'var(--bg-main)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-primary)',
             fontSize: '0.85rem'
           }}
         />

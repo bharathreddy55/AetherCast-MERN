@@ -19,7 +19,7 @@
 .comments-header h4 {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .comment-form {
@@ -30,11 +30,11 @@
 
 .comment-input {
   flex-grow: 1;
-  background: rgba(10, 7, 30, 0.6);
+  background: var(--bg-main);
   border: 1px solid var(--border-color);
   padding: 10px 14px;
   border-radius: 8px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 0.85rem;
   outline: none;
   transition: var(--transition-smooth);
@@ -121,7 +121,7 @@
 .comment-author {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .comment-date {
