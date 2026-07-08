@@ -2,6 +2,10 @@
 
 AetherCast is a production-ready, high-fidelity MERN stack podcast platform designed for independent creators and listeners. This application features secure Supabase authentication, automatic resume-playback, synchronized live lyrics/subtitles, canvas-based audio visualization, offline downloads, creator dashboards, AI-powered summaries, and a role-based admin command center.
 
+### 🌐 Live Deployments
+- **Frontend App**: [aether-cast-mern.vercel.app](https://aether-cast-mern.vercel.app/)
+- **Backend API**: [podcast-backend-3lt7.onrender.com](https://podcast-backend-3lt7.onrender.com)
+
 ---
 
 ## 🛠️ Tech Stack & Architecture
