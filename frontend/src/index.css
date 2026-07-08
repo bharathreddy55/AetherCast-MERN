@@ -21,13 +21,42 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  /* Theme: Volcanic Console Mode (Default / Light Mode matches deep orange theme) */
-  --bg-main: #08080a;
+  /* Theme: Volcanic Console Mode (Default: Light Mode) */
+  --bg-main: #fdfcfb;
+  --bg-card: rgba(255, 255, 255, 0.65);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --bg-popover: #ffffff;
+  --border-color: rgba(255, 122, 0, 0.08);
+  --border-hover: rgba(255, 122, 0, 0.4);
+  
+  --text-primary: #16161a;
+  --text-secondary: rgba(22, 22, 26, 0.7);
+  --text-muted: rgba(22, 22, 26, 0.45);
+  
+  --color-primary: #ff7a00;
+  --color-primary-hover: #ff9533;
+  --color-secondary: #16161a;
+  --grad-accent: linear-gradient(135deg, #ff7a00 0%, #ff5500 100%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #fff5ee 0%, #fdfcfb 80%);
+  
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 8px 32px rgba(25, 12, 4, 0.05);
+  --glass-border: 1px solid rgba(255, 122, 0, 0.1);
+  
+  --hover-bg: rgba(0, 0, 0, 0.03);
+  
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease;
+}
+
+/* Dark Mode Theme overrides (Night Mode) */
+body.dark-theme {
+  --bg-main: #040405;
   --bg-card: rgba(20, 20, 24, 0.5);
   --bg-card-hover: rgba(30, 30, 36, 0.9);
   --bg-popover: #0c0c0e;
   --border-color: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 122, 0, 0.5);
+  --border-hover: rgba(255, 122, 0, 0.6);
   
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
@@ -37,38 +66,13 @@
   --color-primary-hover: #ff9533;
   --color-secondary: #ffffff;
   --grad-accent: linear-gradient(135deg, #ff7a00 0%, #ff5500 100%);
-  --grad-bg: radial-gradient(circle at 50% 0%, #251205 0%, #08080a 80%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #1c0c03 0%, #040405 85%);
   
   --glass-bg: rgba(12, 12, 14, 0.8);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
   
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.15s ease;
-}
-
-/* Dark Mode Theme overrides (Can be pitch-black) */
-body.dark-theme {
-  --bg-main: #040405;
-  --bg-card: #0a0a0c;
-  --bg-card-hover: #121214;
-  --bg-popover: #060608;
-  --border-color: rgba(255, 255, 255, 0.04);
-  --border-hover: rgba(255, 122, 0, 0.6);
-  
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --text-muted: rgba(255, 255, 255, 0.4);
-  
-  --color-primary: #ff7a00;
-  --color-primary-hover: #ff9533;
-  --color-secondary: #000000;
-  --grad-accent: linear-gradient(135deg, #ff7a00 0%, #cc5200 100%);
-  --grad-bg: radial-gradient(circle at 50% 0%, #180902 0%, #040405 85%);
-  
-  --glass-bg: rgba(6, 6, 8, 0.85);
-  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+  --hover-bg: rgba(255, 255, 255, 0.03);
 }
 
 * {
@@ -210,7 +214,7 @@ button {
 
 .btn-secondary:hover {
   border-color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover-bg);
   transform: scale(1.04);
 }
 
