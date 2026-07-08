@@ -17,15 +17,34 @@ export default function Navbar() {
     return saved !== 'light';
   });
   const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     document.body.classList.toggle('dark-theme', isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // Scroll blur effect
+  // Scroll effects (blur, thin squeeze, and smart hide/show)
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Squeeze threshold
+      setScrolled(currentScrollY > 50);
+
+      // Smart hide on scroll down, show on scroll up
+      if (currentScrollY <= 80) {
+        setVisible(true); // Always show at the top
+      } else if (currentScrollY > lastScrollY.current) {
+        setVisible(false); // Scrolling down - hide
+      } else {
+        setVisible(true); // Scrolling up - show
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -47,7 +66,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className={`navbar${scrolled ? ' navbar-scrolled' : ''}`}>
+    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''} ${visible ? 'navbar-visible' : 'navbar-hidden'}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />

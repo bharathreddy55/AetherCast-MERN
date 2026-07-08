@@ -122,28 +122,6 @@ export default function AudioPlayer() {
     return () => window.removeEventListener('resize', handleResize);
   }, [isFloating]);
 
-  // Page scroll detection for player thining
-  const [isPageScrolling, setIsPageScrolling] = useState(false);
-  const scrollTimeoutRef = useRef(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsPageScrolling(true);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsPageScrolling(false);
-      }, 700); // Reset after 700ms of no scrolling
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, []);
-
   // Sleep Timer logic
   useEffect(() => {
     if (sleepTimeRemaining === null) return;
@@ -276,7 +254,7 @@ export default function AudioPlayer() {
 
       {/* Main player bar */}
       <div 
-        className={`audio-player glass-panel animate-fade-in ${isFloating ? 'player-floating' : ''} ${isDragging ? 'player-dragging' : ''} ${isPageScrolling ? 'player-scrolling' : ''}`}
+        className={`audio-player glass-panel animate-fade-in ${isFloating ? 'player-floating' : ''} ${isDragging ? 'player-dragging' : ''}`}
         onMouseDown={handleMouseDown}
         style={isFloating ? {
           left: `${dragPos.x}px`,
