@@ -15,6 +15,17 @@ const recommendationRoutes = require('./routes/recommendationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
+// Environment Validation
+const requiredEnv = ['MONGO_URI', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET'];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+if (missingEnv.length > 0) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`CRITICAL CONFIGURATION ERROR: Missing required environment variables in production: ${missingEnv.join(', ')}`);
+  } else {
+    console.warn(`WARNING: Missing environment variables for local development: ${missingEnv.join(', ')}`);
+  }
+}
+
 const app = express();
 
 // Request Logging Middleware
@@ -74,6 +85,17 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+  const mongoose = require('mongoose');
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.status(dbStatus === 'connected' ? 200 : 500).json({
+    status: 'ok',
+    database: dbStatus,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Fallback Route
 app.use('*', (req, res) => {
