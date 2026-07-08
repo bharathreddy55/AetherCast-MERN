@@ -114,7 +114,7 @@ export default function Landing() {
                 >
                   <span className="ts-idx">{String(idx + 1).padStart(2, '0')}</span>
                   {podcast.coverImage ? (
-                    <img src={`window.BACKEND_URL${podcast.coverImage}`} alt={podcast.title} />
+                    <img src={`${window.BACKEND_URL}${podcast.coverImage}`} alt={podcast.title} />
                   ) : (
                     <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-default)', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-muted)' }}>🎙️</div>
                   )}

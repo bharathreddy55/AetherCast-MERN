@@ -12,7 +12,7 @@ export default function Settings() {
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [avatar, setAvatar] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(user?.avatar ? `window.BACKEND_URL${user.avatar}` : null);
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar ? `${window.BACKEND_URL}${user.avatar}` : null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

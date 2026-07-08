@@ -132,7 +132,7 @@ export default function CommentsSection({ episodeId }) {
               <div key={comment._id} className="comment-item">
                 {comment.userId?.avatar ? (
                   <img
-                    src={`window.BACKEND_URL${comment.userId.avatar}`}
+                    src={`${window.BACKEND_URL}${comment.userId.avatar}`}
                     alt="Avatar"
                     className="comment-avatar"
                   />

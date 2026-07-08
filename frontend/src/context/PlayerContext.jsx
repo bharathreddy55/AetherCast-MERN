@@ -191,7 +191,7 @@ export const PlayerProvider = ({ children }) => {
     
     if (!isSameEpisode) {
       setCurrentEpisode(episode);
-      audioRef.current.src = `window.BACKEND_URL${episode.audioUrl}`;
+      audioRef.current.src = `${window.BACKEND_URL}${episode.audioUrl}`;
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.load();
     }

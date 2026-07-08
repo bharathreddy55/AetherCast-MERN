@@ -111,7 +111,7 @@ export default function Navbar() {
                 {user.avatar ? (
                   <div style={{ position: 'relative', display: 'flex' }}>
                     <img 
-                      src={`window.BACKEND_URL${user.avatar}`} 
+                      src={`${window.BACKEND_URL}${user.avatar}`} 
                       alt="Avatar" 
                       className="user-avatar" 
                       style={{ 
