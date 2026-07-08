@@ -78,6 +78,10 @@ export default function CreatorDashboard() {
   const [epError, setEpError] = useState('');
   const [epSuccess, setEpSuccess] = useState(false);
 
+  // Drafts states
+  const [draftEpisodes, setDraftEpisodes] = useState([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+
   // Fetch Podcasts & Compute Stats
   const fetchMyPodcasts = async () => {
     setLoadingPodcasts(true);
@@ -117,6 +121,70 @@ export default function CreatorDashboard() {
       fetchCreatorStats();
     }
   }, [user]);
+
+  const fetchDraftEpisodes = async () => {
+    if (myPodcasts.length === 0) return;
+    setLoadingDrafts(true);
+    try {
+      const allDrafts = [];
+      for (const podcast of myPodcasts) {
+        const res = await fetch(`${API_BASE_URL}/podcasts/${podcast._id}/episodes`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.success) {
+          const drafts = data.episodes.filter(ep => ep.status === 'draft').map(ep => ({
+            ...ep,
+            podcastTitle: podcast.title
+          }));
+          allDrafts.push(...drafts);
+        }
+      }
+      setDraftEpisodes(allDrafts);
+    } catch (err) {
+      console.error('Failed to fetch draft episodes', err);
+    } finally {
+      setLoadingDrafts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'drafts') {
+      fetchDraftEpisodes();
+    }
+  }, [activeTab, myPodcasts]);
+
+  const handlePublishEpisode = (id) => {
+    setConfirmModal({
+      title: 'Publish Episode?',
+      message: 'Are you sure you want to publish this episode and notify your followers?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/episodes/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'published' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Episode published successfully!');
+            fetchDraftEpisodes();
+            fetchMyPodcasts();
+          } else {
+            showNotification(data.message || 'Failed to publish episode', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to publish episode', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
+      }
+    });
+  };
 
   // Handle Create Podcast Submission
   const handleCreatePodcast = async (e) => {
@@ -330,6 +398,14 @@ export default function CreatorDashboard() {
           >
             <Mic size={18} />
             <span>Recording Booth</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('drafts')}
+            className={`creator-menu-item ${activeTab === 'drafts' ? 'active' : ''}`}
+          >
+            <Layers size={18} />
+            <span>Drafts Workspace</span>
           </button>
         </aside>
 
@@ -672,6 +748,89 @@ export default function CreatorDashboard() {
           {/* TAB 5: RECORDING BOOTH */}
           {activeTab === 'record' && (
             <RecordingBooth />
+          )}
+
+          {/* TAB 6: DRAFTS WORKSPACE */}
+          {activeTab === 'drafts' && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              
+              {/* Draft Podcasts */}
+              <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
+                <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Radio size={20} style={{ color: 'var(--color-primary)' }} />
+                  <span>Podcast Show Drafts</span>
+                </h3>
+                
+                {myPodcasts.filter(p => p.status === 'draft').length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No podcast drafts found. All your shows are published!</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '16px' }}>
+                    {myPodcasts.filter(p => p.status === 'draft').map((podcast) => (
+                      <div key={podcast._id} className="glass-panel" style={{ display: 'flex', padding: '20px', gap: '20px', borderRadius: '12px', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-main)' }}>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                          <img 
+                            src={podcast.coverImage ? window.getMediaUrl(podcast.coverImage) : ''} 
+                            alt="Cover" 
+                            style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
+                          />
+                          <div>
+                            <h4 style={{ fontSize: '1rem', margin: 0 }}>{podcast.title}</h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+                              {podcast.category} • Created as draft
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handlePublishPodcast(podcast._id)}
+                          className="btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                        >
+                          Publish Show
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Draft Episodes */}
+              <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
+                <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileAudio size={20} style={{ color: 'var(--color-primary)' }} />
+                  <span>Episode Drafts</span>
+                </h3>
+
+                {loadingDrafts ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading draft episodes...</p>
+                ) : draftEpisodes.length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No episode drafts found. All uploaded episodes are published!</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '16px' }}>
+                    {draftEpisodes.map((episode) => (
+                      <div key={episode._id} className="glass-panel" style={{ display: 'flex', padding: '20px', gap: '20px', borderRadius: '12px', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-main)' }}>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', minWidth: 0, flexGrow: 1 }}>
+                          <FileAudio size={32} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                          <div style={{ minWidth: 0 }}>
+                            <h4 style={{ fontSize: '1rem', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{episode.title}</h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
+                              Show: <span style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{episode.podcastTitle}</span> • Duration: {Math.round(episode.duration / 60)} min
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handlePublishEpisode(episode._id)}
+                          className="btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.85rem', flexShrink: 0 }}
+                        >
+                          Publish Episode
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
           )}
 
         </main>
