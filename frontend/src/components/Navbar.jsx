@@ -24,7 +24,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="navbar glass-panel">
+    <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />
