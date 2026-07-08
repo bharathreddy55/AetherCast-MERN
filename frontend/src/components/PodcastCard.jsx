@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Disc, Layers } from 'lucide-react';
+import { Users, Disc, Layers, Play } from 'lucide-react';
 import './PodcastCard.css';
 
 export default function PodcastCard({ podcast }) {
@@ -16,6 +16,11 @@ export default function PodcastCard({ podcast }) {
             </div>
           )}
           <div className="card-badge">{podcast.category}</div>
+          <div className="card-play-overlay">
+            <div className="card-play-btn">
+              <Play size={20} fill="currentColor" style={{ marginLeft: '2px' }} />
+            </div>
+          </div>
         </div>
         <div className="card-content" style={{ padding: '12px 0 0 0' }}>
           <h4 className="card-title">{podcast.title}</h4>
