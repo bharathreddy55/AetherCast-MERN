@@ -445,3 +445,33 @@
     display: none !important;
   }
 }
+
+/* Scroll-Morph Icon-Only State overrides */
+.navbar.navbar-scrolling .nav-link-text,
+.navbar.navbar-scrolling .search-text,
+.navbar.navbar-scrolling .user-name-text {
+  display: none !important;
+}
+
+/* Adjust paddings for icon-only style when scrolling */
+.navbar.navbar-scrolling .nav-link {
+  padding: 8px 10px;
+  justify-content: center;
+}
+
+.navbar.navbar-scrolling .navbar-search-btn {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-default);
+}
+
+.navbar.navbar-scrolling .user-profile-btn {
+  padding: 2px;
+  border-radius: 50%;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+

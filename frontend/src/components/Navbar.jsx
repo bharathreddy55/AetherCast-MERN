@@ -91,7 +91,7 @@ export default function Navbar() {
             >
               {icon}
               <span className="nav-link-label">
-                {label}
+                <span className="nav-link-text">{label}</span>
                 {/* Active indicator dot */}
                 {isActive(to) && <span className="nav-active-dot" />}
               </span>
