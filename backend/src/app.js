@@ -46,13 +46,30 @@ app.use(
 );
 
 // CORS configuration to allow credential exchange (cookies)
-let clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-if (clientUrl.endsWith('/')) {
-  clientUrl = clientUrl.slice(0, -1);
-}
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  let clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  if (clientUrl.endsWith('/')) {
+    clientUrl = clientUrl.slice(0, -1);
+  }
+  return [
+    'http://localhost:5173',
+    'http://localhost:5000',
+    clientUrl
+  ].includes(origin) || 
+  origin.endsWith('.vercel.app') || 
+  origin.startsWith('http://localhost:');
+};
+
 app.use(
   cors({
-    origin: clientUrl,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
