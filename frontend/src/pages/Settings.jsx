@@ -6,7 +6,7 @@ import './Pages.css';
 
 export default function Settings() {
   const { user, token, updateLocalUser } = useAuth();
-  const { accent, setAccent, visualizerStyle, setVisualizerStyle } = useTheme();
+  const { accent, setAccent, opacity, setOpacity, blur, setBlur } = useTheme();
 
   // Profile Form States
   const [name, setName] = useState(user?.name || '');
@@ -152,45 +152,38 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Bottom Player Visualizer Selector */}
-          <div style={{ marginBottom: '8px' }}>
-            <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>
-              Audio Visualizer Style
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {[
-                { key: 'bars', name: 'Classic Bars', desc: 'Bouncing equalizer neon bars' },
-                { key: 'wave', name: 'Smooth Sine Wave', desc: 'Flowing continuous wave' },
-                { key: 'off', name: 'Off', desc: 'Saves CPU cycles & device battery' }
-              ].map((styleOption) => (
-                <button
-                  key={styleOption.key}
-                  onClick={() => setVisualizerStyle(styleOption.key)}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    padding: '12px 16px',
-                    borderRadius: 'var(--radius-default)',
-                    background: visualizerStyle === styleOption.key ? 'var(--hover-bg)' : 'transparent',
-                    border: `1px solid ${visualizerStyle === styleOption.key ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
-                    boxShadow: visualizerStyle === styleOption.key ? '0 0 8px rgba(var(--spot-rgb), 0.1)' : 'none',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: visualizerStyle === styleOption.key ? 'var(--color-primary)' : 'var(--text-primary)' }}>
-                    {styleOption.name}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                    {styleOption.desc}
-                  </span>
-                </button>
-              ))}
+          {/* Opacity slider */}
+          <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Glass Translucency</label>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-primary)' }}>{Math.round(opacity * 100)}%</span>
             </div>
+            <input
+              type="range"
+              min="0.05"
+              max="0.85"
+              step="0.05"
+              value={opacity}
+              onChange={(e) => setOpacity(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Blur slider */}
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Backdrop Blur Radius</label>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-primary)' }}>{blur}px</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="30"
+              step="1"
+              value={blur}
+              onChange={(e) => setBlur(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+            />
           </div>
         </div>
 

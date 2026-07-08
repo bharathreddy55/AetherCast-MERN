@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
-  Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users
+  Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
+  GripVertical, Maximize2, Minimize2
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -35,6 +36,91 @@ export default function AudioPlayer() {
   const lyricsContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
   const { token, user } = useAuth();
+
+  // Floating & Dragging states
+  const [isFloating, setIsFloating] = useState(false);
+  const [dragPos, setDragPos] = useState({ x: window.innerWidth - 360, y: window.innerHeight - 300 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const playerPosStart = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    // Only drag on handle or background, don't drag if clicking buttons/selectors/inputs
+    if (e.target.closest('button, input, select, a, .lyrics-drawer')) return;
+    
+    setIsDragging(true);
+    const playerEl = e.currentTarget;
+    const rect = playerEl.getBoundingClientRect();
+    
+    // Set starting position based on current element coords
+    const currentX = isFloating ? dragPos.x : rect.left;
+    const currentY = isFloating ? dragPos.y : rect.top;
+    
+    setDragPos({ x: currentX, y: currentY });
+    setIsFloating(true); // Detach immediately on drag
+
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    playerPosStart.current = { x: currentX, y: currentY };
+    
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      
+      let newX = playerPosStart.current.x + dx;
+      let newY = playerPosStart.current.y + dy;
+
+      // Bound to screen window limits
+      const width = 340;
+      const height = 300;
+      newX = Math.max(10, Math.min(window.innerWidth - width - 10, newX));
+      newY = Math.max(10, Math.min(window.innerHeight - height - 10, newY));
+
+      setDragPos({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  // Handle docking when dragging near bottom
+  useEffect(() => {
+    if (isDragging) return;
+    if (isFloating) {
+      // Dock if dropped close to bottom of page (within 80px)
+      const distanceToBottom = window.innerHeight - (dragPos.y + 110);
+      if (distanceToBottom < 80) {
+        setIsFloating(false);
+      }
+    }
+  }, [isDragging, isFloating, dragPos.y]);
+
+  // Adjust coordinates if window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      if (isFloating) {
+        setDragPos(prev => ({
+          x: Math.max(10, Math.min(window.innerWidth - 360, prev.x)),
+          y: Math.max(10, Math.min(window.innerHeight - 300, prev.y))
+        }));
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isFloating]);
 
   // Sleep Timer logic
   useEffect(() => {
@@ -167,7 +253,17 @@ export default function AudioPlayer() {
       )}
 
       {/* Main player bar */}
-      <div className="audio-player glass-panel animate-fade-in">
+      <div 
+        className={`audio-player glass-panel animate-fade-in ${isFloating ? 'player-floating' : ''} ${isDragging ? 'player-dragging' : ''}`}
+        onMouseDown={handleMouseDown}
+        style={isFloating ? {
+          left: `${dragPos.x}px`,
+          top: `${dragPos.y}px`,
+          bottom: 'auto',
+          right: 'auto',
+          transform: 'none',
+        } : {}}
+      >
         
         {/* Floating Mini Subtitle Bubble */}
         {currentSubtitle && !showLyrics && (
@@ -177,6 +273,11 @@ export default function AudioPlayer() {
         )}
 
         <div className="player-container">
+          
+          {/* Drag Handle */}
+          <div className="player-drag-handle" title="Drag to float or reposition player">
+            <GripVertical size={16} />
+          </div>
           
           {/* Track Details */}
           <div className="player-track-info">
@@ -380,6 +481,27 @@ export default function AudioPlayer() {
                 <Heart size={18} fill={liked ? '#ef4444' : 'none'} />
               </button>
             )}
+            {/* Float / Dock Toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isFloating) {
+                  setIsFloating(false);
+                } else {
+                  // Position near bottom-right default
+                  setDragPos({
+                    x: window.innerWidth - 360,
+                    y: window.innerHeight - 320
+                  });
+                  setIsFloating(true);
+                }
+              }}
+              className="volume-icon-btn"
+              style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', color: isFloating ? 'var(--color-primary)' : 'var(--text-secondary)' }}
+              title={isFloating ? "Dock Player to Bottom" : "Float Player"}
+            >
+              {isFloating ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
 
           </div>
 
