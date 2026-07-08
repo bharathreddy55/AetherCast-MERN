@@ -378,6 +378,8 @@
   margin-bottom: 12px;
   transition: var(--transition-smooth);
   border: 1px solid transparent;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .episode-row:hover {
@@ -389,8 +391,8 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  flex-grow: 1;
-  max-width: 80%;
+  flex: 1;
+  min-width: 280px;
 }
 
 .play-row-btn {
@@ -413,6 +415,8 @@
 
 .episode-meta-content {
   overflow: hidden;
+  flex: 1;
+  min-width: 0;
 }
 
 .episode-row-title {
@@ -436,9 +440,11 @@
 .episode-row-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   color: var(--text-muted);
   font-size: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* EXPLORE PAGE FILTERS */
