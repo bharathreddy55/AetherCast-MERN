@@ -1,11 +1,11 @@
 /* Shared Layout & Styling for Pages */
 
 /* PAGE CONTAINERS */
-.landing-page, .home-page, .explore-page, .details-page, .creator-dashboard, .auth-page, .playlists-page, .downloads-page {
+.landing-page, .home-page, .explore-page, .details-page, .creator-dashboard, .auth-page, .playlists-page, .downloads-page, .settings-page {
   max-width: 1400px;
   margin: 40px auto;
   padding: 0 24px;
-  padding-bottom: 120px; /* Space for sticky audio player */
+  padding-bottom: 140px; /* Space for sticky audio player */
 }
 
 /* HERO SECTION (LANDING) */
