@@ -595,19 +595,72 @@
 .player-floating .player-aux-section {
   width: 100%;
   min-width: 0;
+  display: flex;
   justify-content: center;
-  border-top: none;
-  padding-top: 0;
-  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  gap: 16px;
+  margin-top: 4px;
 }
 
-/* Hide extra aux settings in mini-player mode */
-.player-floating .player-aux-section > *:not(.volume-icon-btn) {
-  display: none;
-}
+/* Hide speed selector and volume control in floating mode */
+.player-floating .speed-selector-control,
 .player-floating .volume-control-container,
 .player-floating .volume-slider-popover {
-  display: none;
+  display: none !important;
 }
+
+/* Make sleep timer super compact: select overlaying the Moon icon with opacity 0 */
+.player-floating .sleep-timer-control {
+  position: relative !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.player-floating .sleep-timer-control .aux-icon {
+  margin: 0 !important;
+}
+.player-floating .sleep-timer-control select.speed-dropdown {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  cursor: pointer !important;
+  z-index: 5 !important;
+}
+.player-floating .sleep-timer-control span {
+  position: absolute !important;
+  bottom: -6px !important;
+  right: -6px !important;
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  font-size: 0.6rem !important;
+  padding: 1px 3px !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  z-index: 6 !important;
+  pointer-events: none !important;
+}
+
+/* Force buttons inside player-aux-section in floating mode to behave as small icons */
+.player-floating .player-aux-section button.volume-icon-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  cursor: pointer !important;
+}
+
 
 

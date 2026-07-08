@@ -376,7 +376,7 @@ export default function AudioPlayer() {
             )}
 
             {/* Sleep Timer */}
-            <div className="speed-control" style={{ marginRight: '12px', display: 'flex', alignItems: 'center' }}>
+            <div className="speed-control sleep-timer-control" style={{ marginRight: '12px', display: 'flex', alignItems: 'center' }}>
               <Moon size={16} className="aux-icon" style={{ color: sleepTimeRemaining !== null ? '#a855f7' : 'var(--text-secondary)' }} />
               <select
                 value={sleepTimeRemaining === null ? 'off' : sleepTimeRemaining}
@@ -405,7 +405,7 @@ export default function AudioPlayer() {
             </div>
 
             {/* Speed Selector */}
-            <div className="speed-control">
+            <div className="speed-control speed-selector-control">
               <Gauge size={16} className="aux-icon" />
               <select
                 value={playbackSpeed}
