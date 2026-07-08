@@ -62,7 +62,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="settings-page animate-fade-in" style={{ maxWidth: '960px', padding: '48px 24px 0' }}>
+    <div className="settings-page animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '48px 24px 140px' }}>
       {/* ── Volcanic Header ── */}
       <header style={{ textAlign: 'center', marginBottom: '48px' }}>
         <span style={{
