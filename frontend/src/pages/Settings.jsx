@@ -117,12 +117,21 @@ export default function Settings() {
           {/* Accent color picker */}
           <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
             <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>Accent Color Theme</label>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '10px' }}>
               {[
                 { key: 'purple', name: 'Neon Purple', color: '#9333ea' },
                 { key: 'cyan', name: 'Vibrant Cyan', color: '#0891b2' },
-                { key: 'emerald', name: 'Emerald Green', color: '#10b981' },
-                { key: 'orange', name: 'Electric Orange', color: '#ea580c' }
+                { key: 'emerald', name: 'Emerald Green', color: '#059669' },
+                { key: 'orange', name: 'Electric Orange', color: '#ea580c' },
+                { key: 'rose', name: 'Hot Rose', color: '#db2777' },
+                { key: 'blue', name: 'Royal Blue', color: '#2563eb' },
+                { key: 'amber', name: 'Amber Gold', color: '#d97706' },
+                { key: 'teal', name: 'Deep Teal', color: '#0d9488' },
+                { key: 'red', name: 'Crimson Red', color: '#dc2626' },
+                { key: 'lime', name: 'Vibrant Lime', color: '#65a30d' },
+                { key: 'fuchsia', name: 'Neon Fuchsia', color: '#c026d3' },
+                { key: 'indigo', name: 'Deep Indigo', color: '#4f46e5' },
+                { key: 'slate', name: 'Steel Slate', color: '#475569' }
               ].map((th) => (
                 <button
                   key={th.key}
