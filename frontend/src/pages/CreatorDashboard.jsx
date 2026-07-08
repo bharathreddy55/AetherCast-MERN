@@ -347,8 +347,7 @@ export default function CreatorDashboard() {
   };
 
   return (
-    <>
-      <div className="creator-dashboard animate-fade-in">
+    <div className="creator-dashboard animate-fade-in">
       <header style={{ marginBottom: '32px' }}>
         <h2>Creator Workspace</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -836,7 +835,6 @@ export default function CreatorDashboard() {
 
         </main>
       </div>
-      </div>
 
       {/* Custom Toast Notification */}
       {notification && (
@@ -907,6 +905,6 @@ export default function CreatorDashboard() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
