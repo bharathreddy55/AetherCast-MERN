@@ -495,21 +495,39 @@ export default function AdminDashboard() {
             <select
               value={userRoleFilter}
               onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
-              style={{ height: '40px', padding: '0 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: '#fff' }}
+              style={{ 
+                height: '40px', 
+                padding: '0 12px', 
+                borderRadius: '8px', 
+                background: '#1a1a26', 
+                border: '1px solid rgba(255,255,255,0.18)', 
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
-              <option value="">All Roles</option>
-              <option value="listener">Listener</option>
-              <option value="creator">Creator</option>
-              <option value="admin">Admin</option>
+              <option value="" style={{ background: '#12121a', color: '#fff' }}>All Roles</option>
+              <option value="listener" style={{ background: '#12121a', color: '#fff' }}>Listener</option>
+              <option value="creator" style={{ background: '#12121a', color: '#fff' }}>Creator</option>
+              <option value="admin" style={{ background: '#12121a', color: '#fff' }}>Admin</option>
             </select>
             <select
               value={userStatusFilter}
               onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
-              style={{ height: '40px', padding: '0 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', color: '#fff' }}
+              style={{ 
+                height: '40px', 
+                padding: '0 12px', 
+                borderRadius: '8px', 
+                background: '#1a1a26', 
+                border: '1px solid rgba(255,255,255,0.18)', 
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
+              <option value="" style={{ background: '#12121a', color: '#fff' }}>All Statuses</option>
+              <option value="active" style={{ background: '#12121a', color: '#fff' }}>Active</option>
+              <option value="suspended" style={{ background: '#12121a', color: '#fff' }}>Suspended</option>
             </select>
             <button onClick={fetchUsers} className="btn-primary" style={{ height: '40px', borderRadius: '8px' }}>Search</button>
           </div>
@@ -549,11 +567,20 @@ export default function AdminDashboard() {
                           value={usr.role}
                           onChange={(e) => handleChangeUserRole(usr._id, e.target.value)}
                           disabled={usr._id === user?._id}
-                          style={{ padding: '4px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: '0.8rem' }}
+                          style={{ 
+                            padding: '6px 12px', 
+                            borderRadius: '6px', 
+                            background: '#1a1a26', 
+                            border: '1px solid rgba(255,255,255,0.18)', 
+                            color: '#fff', 
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
                         >
-                          <option value="listener">Listener</option>
-                          <option value="creator">Creator</option>
-                          <option value="admin">Admin</option>
+                          <option value="listener" style={{ background: '#12121a', color: '#fff' }}>Listener</option>
+                          <option value="creator" style={{ background: '#12121a', color: '#fff' }}>Creator</option>
+                          <option value="admin" style={{ background: '#12121a', color: '#fff' }}>Admin</option>
                         </select>
                       </td>
                       <td style={{ padding: '16px 8px' }}>
