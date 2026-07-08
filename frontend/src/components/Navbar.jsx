@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot } from 'lucide-react';
+import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot, Sun, Moon } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 import './Navbar.css';
 
@@ -10,6 +10,16 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-theme', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -65,6 +75,26 @@ export default function Navbar() {
             <Search size={16} />
             <span className="search-text">Search...</span>
           </Link>
+
+          <button 
+            onClick={() => setIsDark(!isDark)} 
+            className="theme-toggle-btn"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{ 
+              background: 'var(--bg-card)', 
+              border: '1px solid var(--border-color)', 
+              padding: '8px', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+              borderRadius: 'var(--radius-default)',
+              transition: 'var(--transition-fast)'
+            }}
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
           {user && <NotificationsBell />}
 

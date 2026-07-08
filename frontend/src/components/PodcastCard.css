@@ -1,9 +1,9 @@
 .podcast-card {
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
   transition: var(--transition-smooth);
 }
 
@@ -11,7 +11,7 @@
   transform: translateY(-6px);
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
-  box-shadow: 0 12px 30px rgba(147, 51, 234, 0.15);
+  box-shadow: 0 12px 30px rgba(0, 103, 100, 0.08);
 }
 
 .card-image-container {

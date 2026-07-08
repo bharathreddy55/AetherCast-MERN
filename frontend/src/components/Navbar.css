@@ -4,9 +4,9 @@
   margin: 0 24px;
   z-index: 100;
   padding: 12px 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   margin-top: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
 }
 
 .navbar-container {
@@ -27,7 +27,7 @@
   color: var(--color-primary);
   width: 28px;
   height: 28px;
-  filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.5));
+  filter: drop-shadow(0 0 8px rgba(0, 103, 100, 0.3));
 }
 
 .logo-text {
@@ -50,19 +50,19 @@
   color: var(--text-secondary);
   font-size: 0.95rem;
   font-weight: 500;
-  border-radius: 9999px;
+  border-radius: var(--radius-default);
   transition: var(--transition-smooth);
 }
 
 .nav-link:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
 }
 
 .nav-link.active {
-  color: #ffffff;
-  background: rgba(147, 51, 234, 0.15);
-  border: 1px solid rgba(147, 51, 234, 0.2);
+  color: var(--color-primary);
+  background: rgba(0, 103, 100, 0.08);
+  border: 1px solid rgba(0, 103, 100, 0.15);
 }
 
 .navbar-actions {
@@ -74,7 +74,7 @@
 
 .navbar-search-btn {
   padding: 8px 16px;
-  border-radius: 9999px;
+  border-radius: var(--radius-default);
   font-size: 0.9rem;
 }
 
@@ -91,9 +91,9 @@
   align-items: center;
   gap: 10px;
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 9999px;
+  border-radius: var(--radius-default);
   color: var(--text-primary);
 }
 
