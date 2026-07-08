@@ -251,28 +251,36 @@ export default function AdminDashboard() {
     });
   };
 
-  const handleChangeUserRole = async (userId, newRole) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showNotification(data.message);
-        fetchUsers();
-        fetchStats();
-      } else {
-        showNotification(data.message, 'error');
+  const handleChangeUserRole = (userId, newRole) => {
+    setConfirmModal({
+      title: "Update User Role?",
+      message: `Are you sure you want to change this user's role to "${newRole.toUpperCase()}"?`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ role: newRole })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification(data.message);
+            fetchUsers();
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to update role', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      showNotification('Failed to update role', 'error');
-    }
+    });
   };
 
   const handleDeleteComment = (commentId) => {
