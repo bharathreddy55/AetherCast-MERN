@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot, Sun, Moon } from 'lucide-react';
+import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot, Sun, Moon, Menu, X } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 import './Navbar.css';
 
@@ -10,6 +10,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -20,6 +21,10 @@ export default function Navbar() {
     document.body.classList.toggle('dark-theme', isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -97,6 +102,14 @@ export default function Navbar() {
           </button>
 
           {user && <NotificationsBell />}
+
+          <button 
+            className="mobile-menu-btn" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            title="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
 
           {user ? (
             <div className="navbar-user">
@@ -211,6 +224,47 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="navbar-mobile-menu animate-fade-in">
+          <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`}>
+            <Compass size={18} />
+            <span>Explore</span>
+          </Link>
+          {user && (
+            <>
+              <Link to="/home" className={`mobile-nav-link ${isActive('/home') ? 'active' : ''}`}>
+                <Music size={18} />
+                <span>Home</span>
+              </Link>
+              <Link to="/playlists" className={`mobile-nav-link ${isActive('/playlists') ? 'active' : ''}`}>
+                <ListMusic size={18} />
+                <span>Playlists</span>
+              </Link>
+              <Link to="/downloads" className={`mobile-nav-link ${isActive('/downloads') ? 'active' : ''}`}>
+                <Download size={18} />
+                <span>Downloads</span>
+              </Link>
+              <Link to="/library" className={`mobile-nav-link ${isActive('/library') ? 'active' : ''}`}>
+                <Clock size={18} />
+                <span>Library</span>
+              </Link>
+              {user.role === 'creator' && (
+                <Link to="/creator" className={`mobile-nav-link ${isActive('/creator') ? 'active' : ''}`}>
+                  <LayoutDashboard size={18} />
+                  <span>Dashboard</span>
+                </Link>
+              )}
+              {user.role === 'admin' && (
+                <Link to="/admin" className={`mobile-nav-link ${isActive('/admin') ? 'active' : ''}`}>
+                  <ShieldAlert size={18} />
+                  <span>Admin Panel</span>
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
