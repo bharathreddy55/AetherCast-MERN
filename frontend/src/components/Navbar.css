@@ -2,84 +2,59 @@
   position: fixed;
   top: 16px;
   left: 50%;
-  transform: translateX(-50%) translateY(0) scale(1);
-  width: calc(100% - 48px);
-  z-index: 100;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 1400px;
+  z-index: 1000;
   padding: 12px 24px;
-  border-radius: var(--radius-lg);
-  border: 1px solid transparent;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
   background: transparent;
   box-shadow: none;
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
   
-  /* Apple-like cubic-bezier springy transitions */
+  /* GPU accelerated transitions using the requested Apple/Linear curve */
   transition: 
-    width var(--nav-transition-dur, 0.45s) cubic-bezier(0.25, 1.15, 0.5, 1.1),
-    border-radius var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1),
-    padding var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.35s ease,
-    backdrop-filter 0.35s ease,
-    box-shadow 0.35s ease,
-    border-color 0.35s ease,
-    transform var(--nav-transition-dur, 0.45s) cubic-bezier(0.25, 1.15, 0.5, 1.1),
-    top var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1);
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    backdrop-filter 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.navbar-logo, .navbar-links, .logo-icon, .nav-link {
-  transition: all var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 1. Initial State: At Top of the Page */
-.navbar.nav-at-top {
-  width: calc(100% - 48px);
-  border-radius: var(--radius-lg);
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  transform: translateX(-50%) translateY(0) scale(1);
-  top: 16px;
-}
-
-/* 2. Active Scrolling: Mini Capsule State */
-.navbar.nav-capsule {
+.navbar.navbar-scrolling {
   width: 72%;
+  max-width: 1000px;
+  top: 28px;
+  padding: 8px 20px;
   border-radius: 999px;
-  background: rgba(var(--bg-popover-rgb, 12, 12, 14), 0.55);
+  background: rgba(var(--bg-popover-rgb, 12, 12, 14), 0.72);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-color: rgba(var(--spot-rgb), 0.15);
-  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.18);
-  transform: translateX(-50%) translateY(15px) scale(0.98);
-  padding: 8px 20px;
-  top: 10px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.25), 
+    0 0 0 1px rgba(var(--spot-rgb), 0.1);
 }
 
-/* Synchronized content adjustments inside capsule mode */
-.navbar.nav-capsule .logo-icon {
+/* Reduced spacing between navigation items during scroll */
+.navbar.navbar-scrolling .navbar-links {
+  gap: 10px;
+}
+.navbar .navbar-links {
+  transition: gap 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Logo scaling in floating state */
+.navbar.navbar-scrolling .navbar-logo {
   transform: scale(0.95);
 }
-.navbar.nav-capsule .navbar-links {
-  gap: 8px; /* Reduce spacing between nav links */
-}
-.navbar.nav-capsule .nav-link {
-  padding: 6px 12px;
-}
-
-/* 3. Stops Scrolling: Expanded Sticky State */
-.navbar.nav-expanded {
-  width: calc(100% - 48px);
-  border-radius: var(--radius-lg);
-  background: rgba(var(--bg-popover-rgb, 12, 12, 14), 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(var(--spot-rgb), 0.15);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  transform: translateX(-50%) translateY(0) scale(1);
-  padding: 10px 20px;
-  top: 16px;
+.navbar .navbar-logo {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .navbar-container {
@@ -164,7 +139,7 @@
   background: var(--grad-accent);
   border-radius: 2px;
   transform: translateX(-50%);
-  transition: width 0.35s cubic-bezier(0.16,1,0.3,1);
+  transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 .nav-link:hover .nav-underline,

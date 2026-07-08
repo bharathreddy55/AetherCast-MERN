@@ -16,53 +16,34 @@ export default function Navbar() {
     const saved = localStorage.getItem('theme');
     return saved !== 'light';
   });
-  const [isAtTop, setIsAtTop] = useState(true);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [transitionDuration, setTransitionDuration] = useState('0.45s');
-  const scrollTimeout = useRef(null);
-  const lastScrollTime = useRef(Date.now());
-  const lastScrollPos = useRef(0);
+  const scrollTimeoutRef = useRef(null);
 
   useEffect(() => {
     document.body.classList.toggle('dark-theme', isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // Scroll effects (blur, thin squeeze, and smart hide/show)
+  // Scroll active / stationary morph detection
   useEffect(() => {
     const onScroll = () => {
-      const now = Date.now();
-      const currentScrollY = window.scrollY;
-      
-      setIsAtTop(currentScrollY === 0);
       setIsScrolling(true);
-
-      // Calculate velocity (px scrolled per millisecond)
-      const dt = Math.max(1, now - lastScrollTime.current);
-      const dy = Math.abs(currentScrollY - lastScrollPos.current);
-      const velocity = dy / dt; 
-
-      // Map velocity to transition duration (faster scroll -> shorter transition)
-      const durationSec = Math.max(0.22, Math.min(0.65, 0.48 - (velocity * 0.12)));
-      setTransitionDuration(`${durationSec}s`);
-
-      lastScrollTime.current = now;
-      lastScrollPos.current = currentScrollY;
-
-      // Reset scrolling state after user stops scrolling (300ms)
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
+      
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
-      scrollTimeout.current = setTimeout(() => {
+      
+      scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
-        setTransitionDuration('0.45s'); // Reset to default
-      }, 300);
+      }, 300); // 300ms delay to return back gently
     };
-
+    
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', onScroll);
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -80,28 +61,10 @@ export default function Navbar() {
     e.currentTarget.style.transform = '';
   }, []);
 
-  const getNavbarClass = () => {
-    let classes = 'navbar';
-    if (isAtTop) {
-      classes += ' nav-at-top';
-    } else {
-      classes += ' nav-scrolled';
-      if (isScrolling) {
-        classes += ' nav-capsule';
-      } else {
-        classes += ' nav-expanded';
-      }
-    }
-    return classes;
-  };
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <nav 
-      className={getNavbarClass()}
-      style={{
-        '--nav-transition-dur': transitionDuration,
-      }}
-    >
+    <nav className={`navbar ${isScrolling ? 'navbar-scrolling' : ''}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />

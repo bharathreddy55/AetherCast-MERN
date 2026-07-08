@@ -478,3 +478,8 @@ button {
   opacity: 1;
   animation-duration: 0.55s;
 }
+
+main {
+  padding-top: 96px;
+}
+
