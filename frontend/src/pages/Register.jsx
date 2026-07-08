@@ -65,7 +65,7 @@ export default function Register() {
             textTransform: 'uppercase',
             letterSpacing: '0.04em'
           }}>Create Account</h2>
-          <p>Join AetherCast and start streaming</p>
+          <p>Join VOX and start streaming</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}

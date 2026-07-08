@@ -66,7 +66,7 @@ afterAll(async () => {
   jest.restoreAllMocks();
 });
 
-describe('AetherCast Backend API Integration Tests', () => {
+describe('VOX Backend API Integration Tests', () => {
   
   describe('GET /api/podcasts (Public Catalog Access)', () => {
     it('should successfully return the list of published podcasts', async () => {

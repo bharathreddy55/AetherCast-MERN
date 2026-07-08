@@ -1,6 +1,6 @@
-# AetherCast User Guide: End-to-End Platform Documentation
+# VOX User Guide: End-to-End Platform Documentation
 
-Welcome to **AetherCast**, a high-fidelity MERN stack podcast platform designed for independent creators, listeners, and administrators. This guide walks you through every feature of the platform, from listening to a podcast offline to managing creators and content moderation.
+Welcome to **VOX**, a high-fidelity MERN stack podcast platform designed for independent creators, listeners, and administrators. This guide walks you through every feature of the platform, from listening to a podcast offline to managing creators and content moderation.
 
 ---
 
@@ -17,10 +17,10 @@ Welcome to **AetherCast**, a high-fidelity MERN stack podcast platform designed 
 
 ## 🔑 Getting Started & Authentication
 
-AetherCast uses Supabase Auth to guarantee secure user sessions. 
+VOX uses Supabase Auth to guarantee secure user sessions. 
 
 ### Creating an Account
-1. Visit the [AetherCast Frontend App](https://aether-cast-mern.vercel.app/).
+1. Visit the [VOX Frontend App](https://aether-cast-mern.vercel.app/).
 2. Click **Sign Up** on the top navigation bar.
 3. Fill in your **Name**, **Username**, **Email**, and **Password**.
 4. Alternatively, select **Continue with Google** to sign up instantly using your Google account.
@@ -52,7 +52,7 @@ Your user account has one of three roles, which controls what pages and tools yo
 * **Search Bar**: Type podcast titles, episode names, creators, or tags to find specific content.
 
 ### 2. Using the Global Sticky Player
-AetherCast features a **Persistent Sticky Player** located at the bottom of the screen.
+VOX features a **Persistent Sticky Player** located at the bottom of the screen.
 * **Seamless Transitions**: The audio continues playing uninterrupted as you browse through different pages of the app.
 * **Playback Speed**: Adjust the speed control button (supports `0.5x`, `1.0x`, `1.5x`, and `2.0x`).
 * **Sleep Timer**: Click the timer icon to schedule the player to turn off automatically in `15`, `30`, `45`, or `60` minutes.
@@ -63,7 +63,7 @@ When listening to an episode that has subtitles uploaded:
 * The subtitles will scroll and highlight dynamically in sync with the audio speaker.
 
 ### 4. Offline Downloads (PWA Feature)
-AetherCast is a **Progressive Web App (PWA)**, meaning you can install it on your device and listen to podcasts offline.
+VOX is a **Progressive Web App (PWA)**, meaning you can install it on your device and listen to podcasts offline.
 * **Installing the PWA**: Click the download/install icon in your browser URL bar (Chrome/Edge) or select "Add to Home Screen" (Safari on iOS).
 * **Downloading Episodes**: On any episode page, click the **Download** button. The service worker will cache the audio track in your browser.
 * **Offline Access**: Go to your **Downloads** tab to listen to saved episodes when you don't have internet access.
@@ -92,7 +92,7 @@ Before uploading episodes, you must create a show:
 3. Save the show. It will now be listed publicly under your profile.
 
 ### 3. Recording in the Recording Booth
-If you don't have pre-recorded audio, you can record directly inside AetherCast:
+If you don't have pre-recorded audio, you can record directly inside VOX:
 1. Click **Recording Booth** in your Creator Studio.
 2. Click **Start Recording** and allow microphone access.
 3. A canvas-based audio wave will display real-time visualization of your voice.

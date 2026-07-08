@@ -28,7 +28,7 @@ export default function Navbar() {
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />
-          <span className="logo-text gradient-text">AetherCast</span>
+          <span className="logo-text gradient-text">VOX</span>
         </Link>
 
         <div className="navbar-links">

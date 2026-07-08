@@ -62,8 +62,8 @@ exports.register = async (req, res) => {
     const sendEmail = require('../utils/sendEmail');
     await sendEmail({
       email: user.email,
-      subject: 'AetherCast - Your Verification OTP Code',
-      message: `Welcome to AetherCast, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
+      subject: 'VOX - Your Verification OTP Code',
+      message: `Welcome to VOX, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
     });
 
     res.status(201).json({
@@ -110,8 +110,8 @@ exports.login = async (req, res) => {
       const sendEmail = require('../utils/sendEmail');
       await sendEmail({
         email: user.email,
-        subject: 'AetherCast - Your Verification OTP Code',
-        message: `Welcome back to AetherCast, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
+        subject: 'VOX - Your Verification OTP Code',
+        message: `Welcome back to VOX, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
       });
 
       return res.status(400).json({
@@ -290,8 +290,8 @@ exports.googleLogin = async (req, res) => {
       const sendEmail = require('../utils/sendEmail');
       await sendEmail({
         email: user.email,
-        subject: 'AetherCast - Your Verification OTP Code',
-        message: `Welcome to AetherCast, ${user.name}!\n\nYou registered via Google OAuth. To complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
+        subject: 'VOX - Your Verification OTP Code',
+        message: `Welcome to VOX, ${user.name}!\n\nYou registered via Google OAuth. To complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
       });
 
       return res.status(201).json({
@@ -313,8 +313,8 @@ exports.googleLogin = async (req, res) => {
       const sendEmail = require('../utils/sendEmail');
       await sendEmail({
         email: user.email,
-        subject: 'AetherCast - Your Verification OTP Code',
-        message: `Welcome back to AetherCast, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
+        subject: 'VOX - Your Verification OTP Code',
+        message: `Welcome back to VOX, ${user.name}!\n\nTo complete your signup and log in, please enter the following One-Time Password (OTP) verification code inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
       });
 
       return res.status(400).json({
@@ -432,8 +432,8 @@ exports.resendOtp = async (req, res) => {
     const sendEmail = require('../utils/sendEmail');
     await sendEmail({
       email: user.email,
-      subject: 'AetherCast - Resent Verification OTP Code',
-      message: `Welcome back to AetherCast, ${user.name}!\n\nYou requested a new verification code. Please enter the following One-Time Password (OTP) inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
+      subject: 'VOX - Resent Verification OTP Code',
+      message: `Welcome back to VOX, ${user.name}!\n\nYou requested a new verification code. Please enter the following One-Time Password (OTP) inside the web app:\n\n🔑  ${otp}\n\nThis code is valid for 10 minutes.`,
     });
 
     res.status(200).json({

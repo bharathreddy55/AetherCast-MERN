@@ -22,7 +22,7 @@ export default function Downloads() {
   const handleDelete = async (episode) => {
     try {
       const url = window.getMediaUrl(episode.audioUrl);
-      const cache = await caches.open('aethercast-audio-v1');
+      const cache = await caches.open('vox-audio-v1');
       await cache.delete(url);
 
       const saved = JSON.parse(localStorage.getItem('downloads') || '[]');

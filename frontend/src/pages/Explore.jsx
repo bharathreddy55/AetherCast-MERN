@@ -276,7 +276,7 @@ export default function Explore() {
               Hello, {user?.name || 'User'}!
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-              Welcome back to AetherCast! Ready to dive back into your favorite podcasts?
+              Welcome back to VOX! Ready to dive back into your favorite podcasts?
             </p>
             <button
               onClick={() => {

@@ -49,7 +49,7 @@ export default function ListenHistory() {
     if (navigator.share) {
       navigator.share({
         title: episode.title,
-        text: `Listen to "${episode.title}" on AetherCast!`,
+        text: `Listen to "${episode.title}" on VOX!`,
         url,
       }).catch(() => {});
     } else {

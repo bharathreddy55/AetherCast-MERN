@@ -350,7 +350,7 @@ export default function AudioPlayer() {
               onClick={() => {
                 const url = `${window.location.origin}/podcast/${currentEpisode.podcastId?._id}`;
                 if (navigator.share) {
-                  navigator.share({ title: currentEpisode.title, text: `Check out "${currentEpisode.title}" on AetherCast!`, url }).catch(() => {});
+                  navigator.share({ title: currentEpisode.title, text: `Check out "${currentEpisode.title}" on VOX!`, url }).catch(() => {});
                 } else {
                   navigator.clipboard.writeText(url);
                 }

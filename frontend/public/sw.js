@@ -1,5 +1,5 @@
-const CACHE_NAME = 'aethercast-static-v1';
-const AUDIO_CACHE_NAME = 'aethercast-audio-v1';
+const CACHE_NAME = 'vox-static-v1';
+const AUDIO_CACHE_NAME = 'vox-audio-v1';
 
 const ASSETS_TO_CACHE = [
   '/',

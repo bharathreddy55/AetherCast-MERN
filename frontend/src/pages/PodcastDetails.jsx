@@ -73,7 +73,7 @@ export default function PodcastDetails() {
       const audioUrl = episode.audioUrl;
       const url = audioUrl.startsWith('http') ? audioUrl : `${window.BACKEND_URL}${audioUrl}`;
 
-      const cache = await caches.open('aethercast-audio-v1');
+      const cache = await caches.open('vox-audio-v1');
       await cache.add(url);
 
       const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
@@ -94,7 +94,7 @@ export default function PodcastDetails() {
     try {
       const audioUrl = episode.audioUrl;
       const url = audioUrl.startsWith('http') ? audioUrl : `${window.BACKEND_URL}${audioUrl}`;
-      const cache = await caches.open('aethercast-audio-v1');
+      const cache = await caches.open('vox-audio-v1');
       await cache.delete(url);
 
       const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
@@ -540,7 +540,7 @@ export default function PodcastDetails() {
                         onClick={() => {
                           const url = `${window.location.origin}/podcast/${podcast._id}`;
                           if (navigator.share) {
-                            navigator.share({ title: ep.title, text: `Listen to "${ep.title}" on AetherCast!`, url }).catch(() => {});
+                            navigator.share({ title: ep.title, text: `Listen to "${ep.title}" on VOX!`, url }).catch(() => {});
                           } else {
                             navigator.clipboard.writeText(url);
                             alert('Link copied to clipboard!');

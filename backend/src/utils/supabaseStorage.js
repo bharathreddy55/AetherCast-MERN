@@ -18,7 +18,7 @@ const uploadToSupabase = async (fileBuffer, originalName, mimeType, folder = 'up
   }
 
   const cleanUrl = supabaseUrl.replace(/\/$/, '');
-  const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'aethercast';
+  const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'vox';
   
   // Clean filename: timestamp + alphanumeric
   const cleanExt = path.extname(originalName).toLowerCase();

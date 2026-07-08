@@ -32,7 +32,7 @@ export default function Landing() {
       
       {/* Centralized Console Header Stack */}
       <header className="hero-section" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '60px 20px', borderBottom: '1px solid var(--border-color)', position: 'relative' }}>
-        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>[ AETHERCAST HUB ]</span>
+        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>[ VOX HUB ]</span>
         <h1 className="hero-title" style={{ fontSize: '3.75rem', fontWeight: '800', lineHeight: '1.1', textTransform: 'uppercase', fontFamily: 'var(--font-serif)', letterSpacing: '0.04em', margin: '20px 0' }}>
           Immerse Yourself in <br />
           <span style={{ color: 'var(--color-primary)' }}>Infinite Soundscapes</span>
