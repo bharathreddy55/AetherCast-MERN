@@ -262,6 +262,39 @@
   accent-color: var(--color-primary);
 }
 
+/* Custom volume slider thumb */
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 6px var(--color-primary);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 6px var(--color-primary);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.volume-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+.volume-slider:hover::-moz-range-thumb {
+  transform: scale(1.25);
+}
+
 @media (max-width: 768px) {
   .audio-player {
     bottom: 8px;

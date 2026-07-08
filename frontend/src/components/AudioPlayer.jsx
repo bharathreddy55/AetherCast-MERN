@@ -336,6 +336,9 @@ export default function AudioPlayer() {
                 value={volume}
                 onChange={handleVolumeChange}
                 className="volume-slider"
+                style={{
+                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${volume * 100}%, rgba(255, 255, 255, 0.1) ${volume * 100}%, rgba(255, 255, 255, 0.1) 100%)`
+                }}
               />
             </div>
 
