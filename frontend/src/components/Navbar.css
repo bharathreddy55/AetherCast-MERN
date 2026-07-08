@@ -64,8 +64,8 @@
 
 .nav-link.active {
   color: var(--color-primary);
-  background: rgba(255, 122, 0, 0.08);
-  border: 1px solid rgba(255, 122, 0, 0.15);
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
 }
 
 .navbar-actions {

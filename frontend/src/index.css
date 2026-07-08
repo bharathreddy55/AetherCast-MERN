@@ -27,20 +27,20 @@
   --bg-card-hover: rgba(255, 255, 255, 0.95);
   --bg-popover: #ffffff;
   --border-color: rgba(15, 23, 42, 0.08);
-  --border-hover: rgba(255, 122, 0, 0.4);
+  --border-hover: rgba(194, 65, 12, 0.4);
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   
-  --color-primary: #ff7a00;
-  --color-primary-hover: #ff9533;
+  --color-primary: #c2410c;
+  --color-primary-hover: #ea580c;
   --color-secondary: #0f172a;
-  --grad-accent: linear-gradient(135deg, #ff7a00 0%, #ff5500 100%);
-  --grad-bg: radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f1f5f9 100%);
+  --grad-accent: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #f8fafc 0%, #f1f5f9 100%);
   
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   --glass-border: 1px solid rgba(15, 23, 42, 0.08);
   
   --hover-bg: rgba(15, 23, 42, 0.04);
