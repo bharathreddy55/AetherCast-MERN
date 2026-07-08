@@ -3,12 +3,21 @@
   top: 16px;
   margin: 0 24px;
   z-index: 100;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: var(--radius-lg);
   margin-top: 16px;
   border: 1px solid var(--border-color);
   background: var(--bg-popover);
   box-shadow: var(--glass-shadow);
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.navbar-scrolled {
+  background: rgba(var(--bg-popover-rgb, 255,255,255), 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(var(--spot-rgb), 0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(var(--spot-rgb), 0.08);
 }
 
 .navbar-container {
@@ -50,24 +59,63 @@
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 7px;
+  padding: 7px 14px;
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   border-radius: var(--radius-default);
-  transition: var(--transition-smooth);
+  transition: color 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  overflow: visible;
+}
+
+.nav-link-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Active indicator dot */
+.nav-active-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 6px var(--color-primary);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.7); }
+}
+
+/* Liquid underline */
+.nav-underline {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 0%;
+  height: 2px;
+  background: var(--grad-accent);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: width 0.35s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+.nav-link:hover .nav-underline,
+.nav-underline-active {
+  width: 80%;
 }
 
 .nav-link:hover {
   color: var(--text-primary);
-  background: var(--bg-card);
 }
 
 .nav-link.active {
   color: var(--color-primary);
-  background: var(--hover-bg);
-  border: 1px solid var(--border-color);
 }
 
 .navbar-actions {

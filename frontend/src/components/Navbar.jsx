@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Music, Search, User, LogOut, Radio, LayoutDashboard, Compass, ListMusic, Download, Sliders, Clock, ShieldAlert, Bot, Sun, Moon, Menu, X } from 'lucide-react';
@@ -14,22 +14,40 @@ export default function Navbar() {
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved !== 'light'; // Defaults to true (dark) if saved is null or 'dark'
+    return saved !== 'light';
   });
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     document.body.classList.toggle('dark-theme', isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
+  // Scroll blur effect
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => { setMobileMenuOpen(false); }, [location]);
+
+  // Magnetic button effect
+  const handleMagnet = useCallback((e) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const dx = e.clientX - (rect.left + rect.width / 2);
+    const dy = e.clientY - (rect.top + rect.height / 2);
+    btn.style.transform = `translate(${dx * 0.28}px, ${dy * 0.28}px)`;
+  }, []);
+  const handleMagnetLeave = useCallback((e) => {
+    e.currentTarget.style.transform = '';
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${scrolled ? ' navbar-scrolled' : ''}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />
@@ -37,42 +55,34 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-            <Compass size={18} />
-            <span>Explore</span>
-          </Link>
-          {user && (
-            <>
-              <Link to="/home" className={`nav-link ${isActive('/home') ? 'active' : ''}`}>
-                <Music size={18} />
-                <span>Home</span>
-              </Link>
-              <Link to="/playlists" className={`nav-link ${isActive('/playlists') ? 'active' : ''}`}>
-                <ListMusic size={18} />
-                <span>Playlists</span>
-              </Link>
-              <Link to="/downloads" className={`nav-link ${isActive('/downloads') ? 'active' : ''}`}>
-                <Download size={18} />
-                <span>Downloads</span>
-              </Link>
-              <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>
-                <Clock size={18} />
-                <span>Library</span>
-              </Link>
-              {user.role === 'creator' && (
-                <Link to="/creator" className={`nav-link ${isActive('/creator') ? 'active' : ''}`}>
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
-                </Link>
-              )}
-              {user.role === 'admin' && (
-                <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>
-                  <ShieldAlert size={18} />
-                  <span>Admin Panel</span>
-                </Link>
-              )}
-            </>
-          )}
+          {[
+            { to: '/', label: 'Explore', icon: <Compass size={16} /> },
+            ...(user ? [
+              { to: '/home', label: 'Home', icon: <Music size={16} /> },
+              { to: '/playlists', label: 'Playlists', icon: <ListMusic size={16} /> },
+              { to: '/downloads', label: 'Downloads', icon: <Download size={16} /> },
+              { to: '/library', label: 'Library', icon: <Clock size={16} /> },
+              ...(user.role === 'creator' ? [{ to: '/creator', label: 'Dashboard', icon: <LayoutDashboard size={16} /> }] : []),
+              ...(user.role === 'admin' ? [{ to: '/admin', label: 'Admin Panel', icon: <ShieldAlert size={16} /> }] : []),
+            ] : []),
+          ].map(({ to, label, icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`nav-link ${isActive(to) ? 'active' : ''}`}
+              onMouseMove={handleMagnet}
+              onMouseLeave={handleMagnetLeave}
+            >
+              {icon}
+              <span className="nav-link-label">
+                {label}
+                {/* Active indicator dot */}
+                {isActive(to) && <span className="nav-active-dot" />}
+              </span>
+              {/* Liquid underline */}
+              <span className={`nav-underline ${isActive(to) ? 'nav-underline-active' : ''}`} />
+            </Link>
+          ))}
         </div>
 
         <div className="navbar-actions">

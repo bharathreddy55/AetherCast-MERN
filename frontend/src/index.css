@@ -26,6 +26,7 @@
   --bg-card: #ffffff;
   --bg-card-hover: #f8fafc;
   --bg-popover: #ffffff;
+  --bg-popover-rgb: 255, 255, 255;
   --border-color: rgba(15, 23, 42, 0.08);
   --border-hover: rgba(22, 163, 74, 0.4);
   
@@ -56,6 +57,7 @@ body.dark-theme {
   --bg-card: #0a0a0c;
   --bg-card-hover: #121214;
   --bg-popover: #0c0c0e;
+  --bg-popover-rgb: 12, 12, 14;
   --border-color: rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 122, 0, 0.6);
   

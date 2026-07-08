@@ -7,6 +7,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import Navbar from './components/Navbar';
 import AudioPlayer from './components/AudioPlayer';
+import CustomCursor from './components/CustomCursor';
 
 import Landing from './pages/Landing';
 import Explore from './pages/Explore';
@@ -71,6 +72,7 @@ function AdminRoute({ children }) {
 function MainLayout() {
   return (
     <>
+      <CustomCursor />
       <Navbar />
       <main>
         <Routes>
