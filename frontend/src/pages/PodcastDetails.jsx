@@ -678,7 +678,6 @@ export default function PodcastDetails() {
       {/* Ratings & Reviews Section */}
       <RatingWidget podcastId={podcast._id} onChange={fetchDetails} />
 
-      {/* Transcript Editor Modal Overlay */}
       {activeEditTranscriptEpisode && (
         <TranscriptEditorModal
           episode={activeEditTranscriptEpisode}
@@ -693,6 +692,8 @@ export default function PodcastDetails() {
               return ep;
             }));
           }}
+        />
+      )}
       {/* Edit Podcast Modal Overlay */}
       {showEditModal && (
         <div className="simulation-overlay animate-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
