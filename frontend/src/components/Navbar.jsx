@@ -200,15 +200,15 @@ export default function Navbar() {
                       }}>{user.role}</span>
                     </p>
                   </div>
-                  <Link to="/settings" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#ffffff', transition: 'background 0.2s', width: '100%', textAlign: 'left' }}>
+                  <Link to="/settings" className="dropdown-item">
                     <Sliders size={16} />
                     <span>Preferences</span>
                   </Link>
-                  <Link to="/explore" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#ffffff', transition: 'background 0.2s', width: '100%', textAlign: 'left' }}>
+                  <Link to="/explore" className="dropdown-item">
                     <Compass size={16} />
                     <span>Discover Podcasts</span>
                   </Link>
-                  <hr className="dropdown-divider" style={{ margin: '8px 0', border: 0, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }} />
+                  <hr className="dropdown-divider" />
                   <button onClick={logout} className="dropdown-item logout-btn">
                     <LogOut size={16} />
                     <span>Log Out</span>
