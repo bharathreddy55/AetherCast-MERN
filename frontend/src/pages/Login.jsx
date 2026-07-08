@@ -63,17 +63,18 @@ export default function Login() {
 
   return (
     <div className="auth-page animate-fade-in">
-      <div className="auth-card glass-panel">
-        <div className="auth-header">
-          <h2>Welcome Back</h2>
-          <p>Sign in to continue to your dashboard</p>
+      <div className="auth-card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+        <div className="auth-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '24px', marginBottom: '28px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-primary)', letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>[ SIGN IN ]</span>
+          <h2 style={{ fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome Back</h2>
+          <p style={{ fontFamily: 'var(--font-sans)' }}>Sign in to continue to your dashboard</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Email Address</label>
             <input
               type="email"
               required
@@ -85,7 +86,7 @@ export default function Login() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '8px' }}>
-            <label className="form-label">Password</label>
+            <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Password</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -145,17 +146,17 @@ export default function Login() {
             type="submit"
             disabled={submitting}
             className="btn-primary auth-btn"
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', justifyContent: 'center', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '0.06em', borderRadius: 'var(--radius-default)', boxShadow: '0 4px 16px rgba(255, 122, 0, 0.2)' }}
           >
             <LogIn size={18} />
-            <span>{submitting ? 'Signing in...' : 'Sign In'}</span>
+            <span>{submitting ? 'SIGNING IN...' : 'SIGN IN'}</span>
           </button>
         </form>
 
-        <div className="auth-footer">
-          <p>
+        <div className="auth-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+          <p style={{ fontFamily: 'var(--font-sans)' }}>
             Don't have an account?{' '}
-            <Link to="/register" className="auth-link">
+            <Link to="/register" className="auth-link" style={{ color: 'var(--color-primary)' }}>
               Sign up
             </Link>
           </p>
@@ -165,12 +166,12 @@ export default function Login() {
       {/* Forgot Password Modal */}
       {showForgotModal && (
         <div className="google-modal-overlay">
-          <form onSubmit={handleForgotPassword} className="google-modal-content glass-panel animate-scale-up" style={{ maxWidth: '400px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <KeyRound size={20} style={{ color: 'var(--color-primary-hover)' }} />
-              <h3 style={{ margin: 0 }}>Reset Password</h3>
+          <form onSubmit={handleForgotPassword} className="google-modal-content glass-panel animate-scale-up" style={{ maxWidth: '400px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+              <KeyRound size={20} style={{ color: 'var(--color-primary)' }} />
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '1rem' }}>Reset Password</h3>
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4', fontFamily: 'var(--font-sans)' }}>
               Enter the email address associated with your account, and we will email you a link to reset your password.
             </p>
 
@@ -189,7 +190,7 @@ export default function Login() {
             )}
 
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Email Address</label>
               <input
                 type="email"
                 required
@@ -205,17 +206,17 @@ export default function Login() {
                 type="button" 
                 className="btn-secondary" 
                 onClick={() => setShowForgotModal(false)}
-                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.9rem', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.04em', borderRadius: 'var(--radius-default)' }}
               >
-                Close
+                CLOSE
               </button>
               <button 
                 type="submit" 
                 disabled={forgotSubmitting}
                 className="btn-primary"
-                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.9rem', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.04em', borderRadius: 'var(--radius-default)', boxShadow: '0 4px 16px rgba(255, 122, 0, 0.2)' }}
               >
-                {forgotSubmitting ? 'Sending...' : 'Send Reset Link'}
+                {forgotSubmitting ? 'SENDING...' : 'SEND RESET LINK'}
               </button>
             </div>
           </form>

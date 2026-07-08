@@ -182,7 +182,7 @@ export default function AudioPlayer() {
           <div className="player-track-info">
             {currentEpisode.podcastId?.coverImage ? (
               <img 
-                src={`http://localhost:5000${currentEpisode.podcastId.coverImage}`} 
+                src={`window.BACKEND_URL${currentEpisode.podcastId.coverImage}`} 
                 alt="Cover" 
                 className="player-cover-art" 
               />

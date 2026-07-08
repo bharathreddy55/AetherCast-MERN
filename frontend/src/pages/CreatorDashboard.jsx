@@ -362,7 +362,7 @@ export default function CreatorDashboard() {
                     <div key={podcast._id} className="glass-panel" style={{ display: 'flex', padding: '24px', gap: '24px', borderRadius: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                         <img 
-                          src={podcast.coverImage ? `http://localhost:5000${podcast.coverImage}` : ''} 
+                          src={podcast.coverImage ? `window.BACKEND_URL${podcast.coverImage}` : ''} 
                           alt="Cover" 
                           style={{ width: '80px', height: '80px', borderRadius: '10px', objectFit: 'cover' }}
                         />

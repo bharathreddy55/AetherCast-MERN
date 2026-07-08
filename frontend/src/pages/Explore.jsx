@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, TrendingUp } from 'lucide-react';
 import PodcastCard from '../components/PodcastCard';
 import './Pages.css';
 
@@ -70,16 +70,39 @@ export default function Explore() {
 
   return (
     <div className="explore-page animate-fade-in">
-      <header style={{ marginBottom: '32px' }}>
-        <h2>Discover Podcasts</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+      {/* Header Section */}
+      <header style={{
+        marginBottom: '0',
+        paddingBottom: '32px',
+        borderBottom: '1px solid var(--border-color)',
+        textAlign: 'center'
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.75rem',
+          color: 'var(--color-primary)',
+          letterSpacing: '0.2em',
+          display: 'block',
+          marginBottom: '12px'
+        }}>[ EXPLORE CATALOG ]</span>
+        <h2 style={{
+          fontFamily: 'var(--font-serif)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          margin: '0 0 12px 0'
+        }}>DISCOVER PODCASTS</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
           Explore shows across different categories, search by keywords, and find your next favorite creator.
         </p>
       </header>
 
       {/* Search Input */}
-      <div className="explore-search-wrap">
-        <div className="explore-search-bar">
+      <div className="explore-search-wrap" style={{
+        paddingTop: '28px',
+        paddingBottom: '28px',
+        borderBottom: '1px solid var(--border-color)'
+      }}>
+        <div className="explore-search-bar" style={{ background: 'var(--bg-card)' }}>
           <Search size={20} className="search-bar-icon" />
           <input
             type="text"
@@ -87,42 +110,106 @@ export default function Explore() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="search-bar-input"
+            style={{ background: 'transparent' }}
           />
         </div>
       </div>
 
       {/* Category Selection Carousel */}
-      <div className="categories-scroll">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div style={{
+        paddingTop: '28px',
+        paddingBottom: '28px',
+        borderBottom: '1px solid var(--border-color)'
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.75rem',
+          color: 'var(--color-primary)',
+          letterSpacing: '0.2em',
+          display: 'block',
+          marginBottom: '16px'
+        }}>[ FILTER BY CHANNEL ]</span>
+        <div className="categories-scroll">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+              style={selectedCategory === cat ? {
+                background: 'var(--color-primary)',
+                color: '#000000',
+                boxShadow: '0 4px 10px rgba(255, 122, 0, 0.2)'
+              } : {}}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Results Grid */}
-      {loading ? (
-        <div className="loading-grid">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="skeleton-card glass-panel" style={{ borderRadius: '16px' }}></div>
-          ))}
-        </div>
-      ) : podcasts.length > 0 ? (
-        <div className="podcast-grid">
-          {podcasts.map((podcast) => (
-            <PodcastCard key={podcast._id} podcast={podcast} />
-          ))}
-        </div>
-      ) : (
-        <div className="empty-state glass-panel">
-          <h3>No podcasts match your search</h3>
-          <p>Try searching for different keywords or category filters.</p>
-        </div>
-      )}
+      {/* Trending Stacked Cards + Results Grid */}
+      <div style={{ paddingTop: '28px' }}>
+        {loading ? (
+          <div className="loading-grid">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="skeleton-card glass-panel" style={{ borderRadius: 'var(--radius-lg)' }}></div>
+            ))}
+          </div>
+        ) : podcasts.length > 0 ? (
+          <>
+            {/* Stacked Trending Preview */}
+            {podcasts.length >= 4 && (
+              <div style={{ marginBottom: '60px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <TrendingUp size={18} style={{ color: 'var(--color-primary)' }} />
+                    <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700' }}>Trending Broadcasts</h3>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>[ TOP 4 ]</span>
+                </div>
+
+                <div className="trending-stack">
+                  {podcasts.slice(0, 4).map((podcast, idx) => (
+                    <Link
+                      key={podcast._id}
+                      to={`/podcast/${podcast._id}`}
+                      className="trending-stack-item"
+                      style={{ transitionDelay: `${(idx + 1) * 50}ms`, '--i': idx + 1 }}
+                    >
+                      <span className="ts-idx">{String(idx + 1).padStart(2, '0')}</span>
+                      {podcast.coverImage ? (
+                        <img src={`window.BACKEND_URL${podcast.coverImage}`} alt={podcast.title} />
+                      ) : (
+                        <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-default)', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-muted)' }}>🎙️</div>
+                      )}
+                      <div className="ts-content">
+                        <h4>{podcast.title}</h4>
+                        <p>by {podcast.creatorId?.name || 'Unknown'} · {podcast.episodeCount} episodes</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* All Results Grid */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderTop: '1px solid var(--border-color)', paddingTop: '28px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700' }}>All Shows</h3>
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>[ {podcasts.length} RESULTS ]</span>
+            </div>
+            <div className="podcast-grid">
+              {podcasts.map((podcast) => (
+                <PodcastCard key={podcast._id} podcast={podcast} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="empty-state glass-panel">
+            <h3>No podcasts match your search</h3>
+            <p>Try searching for different keywords or category filters.</p>
+          </div>
+        )}
+      </div>
 
       {/* Welcome Popup */}
       {showWelcomePopup && (
@@ -168,16 +255,24 @@ export default function Explore() {
               width: '68px',
               height: '68px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #a855f7, #06b6d4)',
+              background: 'var(--grad-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '2.2rem',
-              boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)'
+              boxShadow: '0 4px 20px rgba(255, 122, 0, 0.3)'
             }}>
               👋
             </div>
-            <h3 style={{ fontSize: '1.6rem', fontWeight: '700', margin: '8px 0 0 0', color: '#fff' }}>
+            <h3 style={{
+              fontSize: '1.6rem',
+              fontWeight: '700',
+              margin: '8px 0 0 0',
+              color: '#fff',
+              fontFamily: 'var(--font-serif)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em'
+            }}>
               Hello, {user?.name || 'User'}!
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
@@ -199,10 +294,12 @@ export default function Explore() {
                 cursor: 'pointer',
                 border: 0,
                 color: '#fff',
-                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.3)'
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                boxShadow: '0 4px 15px rgba(255, 122, 0, 0.3)'
               }}
             >
-              Let's Listen
+              LET'S LISTEN
             </button>
           </div>
         </div>

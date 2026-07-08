@@ -3,7 +3,8 @@ import { supabase } from '../supabase';
 
 const AuthContext = createContext(null);
 
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const BACKEND_URL = import.meta.env.VITE_API_URL || 'window.BACKEND_URL';
+export const API_BASE_URL = `${BACKEND_URL}/api`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

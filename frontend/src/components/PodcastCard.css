@@ -11,7 +11,7 @@
   transform: translateY(-6px);
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
-  box-shadow: 0 12px 30px rgba(0, 103, 100, 0.08);
+  box-shadow: 0 12px 30px rgba(255, 122, 0, 0.08);
 }
 
 .card-image-container {
@@ -135,13 +135,15 @@
   height: 48px;
   border-radius: 50%;
   background: var(--color-primary);
-  color: #ffffff;
+  color: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.5);
+  box-shadow: 0 4px 14px rgba(255, 122, 0, 0.4);
   transform: translateY(10px);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .podcast-card:hover .card-play-btn {

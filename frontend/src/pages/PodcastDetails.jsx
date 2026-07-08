@@ -70,7 +70,7 @@ export default function PodcastDetails() {
   const downloadEpisode = async (episode) => {
     try {
       setDownloadingMap(prev => ({ ...prev, [episode._id]: 'downloading' }));
-      const url = `http://localhost:5000${episode.audioUrl}`;
+      const url = `window.BACKEND_URL${episode.audioUrl}`;
       const response = await fetch(url);
       if (response.status !== 200) throw new Error('Download failed');
 
@@ -93,7 +93,7 @@ export default function PodcastDetails() {
 
   const deleteDownload = async (episode) => {
     try {
-      const url = `http://localhost:5000${episode.audioUrl}`;
+      const url = `window.BACKEND_URL${episode.audioUrl}`;
       const cache = await caches.open('aethercast-audio-v1');
       await cache.delete(url);
 
@@ -243,7 +243,7 @@ export default function PodcastDetails() {
       {/* Podcast Banner/Header */}
       <header className="details-header glass-panel">
         {podcast.coverImage ? (
-          <img src={`http://localhost:5000${podcast.coverImage}`} alt={podcast.title} className="details-cover" />
+          <img src={`window.BACKEND_URL${podcast.coverImage}`} alt={podcast.title} className="details-cover" />
         ) : (
           <div className="details-cover-placeholder">
             <Disc size={80} />

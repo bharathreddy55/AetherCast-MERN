@@ -22,7 +22,7 @@ export default function ListeningPartyDrawer({
 
   useEffect(() => {
     // Connect to Socket.io backend
-    const socketUrl = 'http://localhost:5000';
+    const socketUrl = 'window.BACKEND_URL';
     const socket = io(socketUrl, {
       withCredentials: true
     });
@@ -223,7 +223,7 @@ export default function ListeningPartyDrawer({
               }}>
                 {!m.self && (
                   m.avatar ? (
-                    <img src={`http://localhost:5000${m.avatar}`} alt="Av" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={`window.BACKEND_URL${m.avatar}`} alt="Av" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold' }}>
                       {m.username.charAt(0).toUpperCase()}

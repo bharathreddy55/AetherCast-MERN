@@ -21,7 +21,7 @@ export default function Downloads() {
 
   const handleDelete = async (episode) => {
     try {
-      const url = `http://localhost:5000${episode.audioUrl}`;
+      const url = `window.BACKEND_URL${episode.audioUrl}`;
       const cache = await caches.open('aethercast-audio-v1');
       await cache.delete(url);
 
@@ -75,7 +75,7 @@ export default function Downloads() {
                   
                   {ep.podcastId?.coverImage && (
                     <img 
-                      src={`http://localhost:5000${ep.podcastId.coverImage}`} 
+                      src={`window.BACKEND_URL${ep.podcastId.coverImage}`} 
                       alt="Cover" 
                       style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} 
                     />

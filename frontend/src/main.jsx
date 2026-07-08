@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+window.BACKEND_URL = import.meta.env.VITE_API_URL || 'window.BACKEND_URL';
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

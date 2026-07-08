@@ -33,9 +33,9 @@ export default function RecommendationsFeed() {
 
   if (loading) {
     return (
-      <div className="loading-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '24px' }}>
         {[1, 2, 3].map((n) => (
-          <div key={n} className="skeleton-card glass-panel" style={{ height: '300px', borderRadius: '16px' }}></div>
+          <div key={n} className="skeleton-card glass-panel" style={{ height: '300px', borderRadius: 'var(--radius-lg)' }}></div>
         ))}
       </div>
     );
@@ -44,15 +44,16 @@ export default function RecommendationsFeed() {
   if (recommendations.length === 0) return null;
 
   return (
-    <section className="recommendations-feed-section" style={{ marginBottom: '48px' }}>
-      <div className="section-header" style={{ marginTop: 0 }}>
-        <div className="section-title-wrap">
-          <Sparkles size={20} className="title-icon" style={{ color: 'var(--color-secondary)' }} />
-          <h3>Smart Recommendations</h3>
+    <section>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Sparkles size={18} style={{ color: 'var(--color-primary)' }} />
+          <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700' }}>Smart Recommendations</h3>
         </div>
+        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>[ FOR YOU ]</span>
       </div>
 
-      <div className="podcast-grid">
+      <div className="podcast-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '24px' }}>
         {recommendations.map((podcast) => (
           <PodcastCard key={podcast._id} podcast={podcast} />
         ))}
@@ -60,3 +61,4 @@ export default function RecommendationsFeed() {
     </section>
   );
 }
+

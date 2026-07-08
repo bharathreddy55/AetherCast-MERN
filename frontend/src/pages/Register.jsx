@@ -49,19 +49,32 @@ export default function Register() {
 
   return (
     <div className="auth-page animate-fade-in">
-      <div className="auth-card glass-panel" style={{ maxWidth: '500px' }}>
+      <div className="auth-card glass-panel" style={{ maxWidth: '500px', borderTop: '2px solid var(--color-primary)' }}>
         <div className="auth-header">
-          <h2>Create Account</h2>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.7rem',
+            color: 'var(--color-primary)',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            display: 'block',
+            marginBottom: '12px'
+          }}>[ REGISTER ]</span>
+          <h2 style={{
+            fontFamily: 'var(--font-serif)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em'
+          }}>Create Account</h2>
           <p>Join AetherCast and start streaming</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}
-        {success && <div className="auth-error" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399' }}>{success}</div>}
+        {success && <div className="auth-error" style={{ background: 'rgba(255, 122, 0, 0.08)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>{success}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-double-col">
             <div className="form-group">
-              <label className="form-label">Full Name</label>
+              <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Full Name</label>
               <input
                 type="text"
                 required
@@ -73,7 +86,7 @@ export default function Register() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Username</label>
+              <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Username</label>
               <input
                 type="text"
                 required
@@ -86,7 +99,7 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Email Address</label>
             <input
               type="email"
               required
@@ -98,7 +111,7 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Password</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -132,12 +145,12 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">I want to...</label>
+            <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>I want to...</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="form-input"
-              style={{ background: 'rgba(10, 7, 30, 0.9)' }}
+              style={{ background: 'var(--bg-card)' }}
             >
               <option value="listener">Listen to Podcasts</option>
               <option value="creator">Publish Podcasts (Creator)</option>
@@ -146,7 +159,7 @@ export default function Register() {
 
           {role === 'creator' && (
             <div className="form-group">
-              <label className="form-label">Creator Biography</label>
+              <label className="form-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Creator Biography</label>
               <textarea
                 placeholder="Tell listeners about yourself..."
                 value={bio}
@@ -161,17 +174,24 @@ export default function Register() {
             type="submit"
             disabled={submitting}
             className="btn-primary auth-btn"
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 600
+            }}
           >
             <UserPlus size={18} />
-            <span>{submitting ? 'Creating account...' : 'Create Account'}</span>
+            <span>{submitting ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}</span>
           </button>
         </form>
 
-        <div className="auth-footer">
+        <div className="auth-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
           <p>
             Already have an account?{' '}
-            <Link to="/login" className="auth-link">
+            <Link to="/login" className="auth-link" style={{ color: 'var(--color-primary)' }}>
               Sign in
             </Link>
           </p>

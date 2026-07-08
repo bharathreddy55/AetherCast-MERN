@@ -551,7 +551,7 @@ export default function AdminDashboard() {
                     <tr key={usr._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.9rem' }}>
                       <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {usr.avatar ? (
-                          <img src={`http://localhost:5000${usr.avatar}`} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                          <img src={`window.BACKEND_URL${usr.avatar}`} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                             {usr.name?.charAt(0).toUpperCase()}
@@ -750,7 +750,7 @@ export default function AdminDashboard() {
                   {podcastsList.map((p) => (
                     <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.9rem' }}>
                       <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img src={`http://localhost:5000${p.coverImage}`} alt="Cover" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }} />
+                        <img src={`window.BACKEND_URL${p.coverImage}`} alt="Cover" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }} />
                         <div>
                           <p style={{ fontWeight: '600', margin: 0, color: '#fff' }}>{p.title}</p>
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>{p.status}</p>
