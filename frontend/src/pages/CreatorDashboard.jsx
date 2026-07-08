@@ -226,6 +226,31 @@ export default function CreatorDashboard() {
     }
   };
 
+  // Publish Podcast
+  const handlePublishPodcast = async (id) => {
+    if (!window.confirm('Are you sure you want to make this podcast show live and visible to all listeners?')) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'published' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Podcast published successfully! It is now visible to all listeners.');
+        fetchMyPodcasts();
+      } else {
+        alert(data.message || 'Failed to publish podcast');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to publish podcast');
+    }
+  };
+
   return (
     <div className="creator-dashboard animate-fade-in">
       <header style={{ marginBottom: '32px' }}>
@@ -335,7 +360,16 @@ export default function CreatorDashboard() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        {podcast.status === 'draft' && (
+                          <button 
+                            onClick={() => handlePublishPodcast(podcast._id)}
+                            className="btn-primary"
+                            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                          >
+                            <span>Publish Show</span>
+                          </button>
+                        )}
                         <button 
                           onClick={() => {
                             setEpPodcastId(podcast._id);
