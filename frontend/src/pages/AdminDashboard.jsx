@@ -6,6 +6,17 @@ import './Pages.css';
 export default function AdminDashboard() {
   const { token, user } = useAuth();
   
+  // Custom Alerts & Confirms States
+  const [notification, setNotification] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
+  };
+
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -130,78 +141,114 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeletePodcast = async (podcastId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this podcast and all its episodes? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/podcasts/${podcastId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        setPodcastsList(prev => prev.filter(p => p._id !== podcastId));
+  const handleDeletePodcast = (podcastId) => {
+    setConfirmModal({
+      title: "Delete Podcast?",
+      message: "Are you sure you want to permanently delete this podcast and all its episodes? This cannot be undone.",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/podcasts/${podcastId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification(data.message);
+            setPodcastsList(prev => prev.filter(p => p._id !== podcastId));
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete podcast', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
-  const handleDeleteEpisode = async (episodeId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this episode? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/episodes/${episodeId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        setEpisodesList(prev => prev.filter(e => e._id !== episodeId));
+  const handleDeleteEpisode = (episodeId) => {
+    setConfirmModal({
+      title: "Delete Episode?",
+      message: "Are you sure you want to permanently delete this episode? This cannot be undone.",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/episodes/${episodeId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification(data.message);
+            setEpisodesList(prev => prev.filter(e => e._id !== episodeId));
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete episode', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user's profile from MongoDB? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        fetchUsers();
-        fetchStats();
-      } else {
-        alert(data.message);
+  const handleDeleteUser = (userId) => {
+    setConfirmModal({
+      title: "Delete User?",
+      message: "Are you sure you want to permanently delete this user's profile from MongoDB? This cannot be undone.",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification(data.message);
+            fetchUsers();
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete user', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
-  const handleToggleUserStatus = async (userId) => {
-    if (!window.confirm("Change status of this user's account?")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        fetchUsers();
-        fetchStats();
-      } else {
-        alert(data.message);
+  const handleToggleUserStatus = (userId) => {
+    setConfirmModal({
+      title: "Change Account Status?",
+      message: "Change status of this user's account (Suspend/Activate)?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification(data.message);
+            fetchUsers();
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to update status', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   const handleChangeUserRole = async (userId, newRole) => {
@@ -216,32 +263,44 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        showNotification(data.message);
         fetchUsers();
         fetchStats();
       } else {
-        alert(data.message);
+        showNotification(data.message, 'error');
       }
     } catch (err) {
       console.error(err);
+      showNotification('Failed to update role', 'error');
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Delete this comment permanently?")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFlaggedComments(prev => prev.filter(c => c._id !== commentId));
-        fetchStats();
+  const handleDeleteComment = (commentId) => {
+    setConfirmModal({
+      title: "Delete Comment?",
+      message: "Delete this comment permanently?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Comment deleted successfully');
+            setFlaggedComments(prev => prev.filter(c => c._id !== commentId));
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete comment', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   const handleDismissComment = async (commentId) => {
@@ -252,6 +311,7 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
+        showNotification('Flag dismissed');
         setFlaggedComments(prev => prev.filter(c => c._id !== commentId));
         fetchStats();
       }
@@ -260,21 +320,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm("Delete this review permanently?")) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFlaggedReviews(prev => prev.filter(r => r._id !== reviewId));
-        fetchStats();
+  const handleDeleteReview = (reviewId) => {
+    setConfirmModal({
+      title: "Delete Review?",
+      message: "Delete this review permanently?",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Review deleted successfully');
+            setFlaggedReviews(prev => prev.filter(r => r._id !== reviewId));
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete review', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   const handleDismissReview = async (reviewId) => {
@@ -285,6 +356,7 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
+        showNotification('Flag dismissed');
         setFlaggedReviews(prev => prev.filter(r => r._id !== reviewId));
         fetchStats();
       }
@@ -727,6 +799,76 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Custom Toast Notification */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          background: notification.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+          backdropFilter: 'blur(8px)',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '12px',
+          border: `1px solid ${notification.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>{notification.message}</span>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999,
+        }}>
+          <div className="glass-panel animate-scale-in" style={{
+            padding: '28px',
+            borderRadius: '16px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ color: '#fff', marginBottom: '12px', fontSize: '1.2rem' }}>{confirmModal.title}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
+              {confirmModal.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setConfirmModal(null)}
+                className="btn-secondary" 
+                style={{ padding: '8px 20px', borderRadius: '50px', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmModal.onConfirm}
+                className="btn-primary" 
+                style={{ padding: '8px 20px', borderRadius: '50px', background: '#ef4444', borderColor: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
