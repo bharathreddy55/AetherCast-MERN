@@ -77,7 +77,6 @@ export default function Navbar() {
             ...(user ? [
               { to: '/home', label: 'Home', icon: <Music size={16} /> },
               { to: '/playlists', label: 'Playlists', icon: <ListMusic size={16} /> },
-              { to: '/downloads', label: 'Downloads', icon: <Download size={16} /> },
               { to: '/library', label: 'Library', icon: <Clock size={16} /> },
               ...(user.role === 'creator' ? [{ to: '/creator', label: 'Dashboard', icon: <LayoutDashboard size={16} /> }] : []),
               ...(user.role === 'admin' ? [{ to: '/admin', label: 'Admin Panel', icon: <ShieldAlert size={16} /> }] : []),
@@ -127,6 +126,32 @@ export default function Navbar() {
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+
+          {user && (
+            <Link 
+              to="/downloads" 
+              className="navbar-action-icon-btn" 
+              title="Downloads"
+              style={{
+                background: 'var(--bg-card)', 
+                border: '1px solid var(--border-color)', 
+                padding: '8px', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: isActive('/downloads') ? 'var(--color-primary)' : 'var(--text-secondary)',
+                borderRadius: 'var(--radius-default)',
+                transition: 'var(--transition-fast)',
+                position: 'relative'
+              }}
+            >
+              <Download size={18} />
+              {isActive('/downloads') && (
+                <span className="nav-active-dot" style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)' }} />
+              )}
+            </Link>
+          )}
 
           {user && <NotificationsBell />}
 
