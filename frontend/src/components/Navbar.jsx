@@ -16,9 +16,12 @@ export default function Navbar() {
     const saved = localStorage.getItem('theme');
     return saved !== 'light';
   });
-  const [scrolled, setScrolled] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const lastScrollY = useRef(0);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [transitionDuration, setTransitionDuration] = useState('0.45s');
+  const scrollTimeout = useRef(null);
+  const lastScrollTime = useRef(Date.now());
+  const lastScrollPos = useRef(0);
 
   useEffect(() => {
     document.body.classList.toggle('dark-theme', isDark);
@@ -28,25 +31,39 @@ export default function Navbar() {
   // Scroll effects (blur, thin squeeze, and smart hide/show)
   useEffect(() => {
     const onScroll = () => {
+      const now = Date.now();
       const currentScrollY = window.scrollY;
       
-      // Squeeze threshold
-      setScrolled(currentScrollY > 50);
+      setIsAtTop(currentScrollY === 0);
+      setIsScrolling(true);
 
-      // Smart hide on scroll down, show on scroll up
-      if (currentScrollY <= 80) {
-        setVisible(true); // Always show at the top
-      } else if (currentScrollY > lastScrollY.current) {
-        setVisible(false); // Scrolling down - hide
-      } else {
-        setVisible(true); // Scrolling up - show
+      // Calculate velocity (px scrolled per millisecond)
+      const dt = Math.max(1, now - lastScrollTime.current);
+      const dy = Math.abs(currentScrollY - lastScrollPos.current);
+      const velocity = dy / dt; 
+
+      // Map velocity to transition duration (faster scroll -> shorter transition)
+      const durationSec = Math.max(0.22, Math.min(0.65, 0.48 - (velocity * 0.12)));
+      setTransitionDuration(`${durationSec}s`);
+
+      lastScrollTime.current = now;
+      lastScrollPos.current = currentScrollY;
+
+      // Reset scrolling state after user stops scrolling (300ms)
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
       }
-
-      lastScrollY.current = currentScrollY;
+      scrollTimeout.current = setTimeout(() => {
+        setIsScrolling(false);
+        setTransitionDuration('0.45s'); // Reset to default
+      }, 300);
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
   }, []);
 
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
@@ -63,10 +80,28 @@ export default function Navbar() {
     e.currentTarget.style.transform = '';
   }, []);
 
-  const isActive = (path) => location.pathname === path;
+  const getNavbarClass = () => {
+    let classes = 'navbar';
+    if (isAtTop) {
+      classes += ' nav-at-top';
+    } else {
+      classes += ' nav-scrolled';
+      if (isScrolling) {
+        classes += ' nav-capsule';
+      } else {
+        classes += ' nav-expanded';
+      }
+    }
+    return classes;
+  };
 
   return (
-    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''} ${visible ? 'navbar-visible' : 'navbar-hidden'}`}>
+    <nav 
+      className={getNavbarClass()}
+      style={{
+        '--nav-transition-dur': transitionDuration,
+      }}
+    >
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <Radio className="logo-icon" />

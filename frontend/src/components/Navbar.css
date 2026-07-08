@@ -1,48 +1,85 @@
 .navbar {
   position: fixed;
   top: 16px;
-  left: 0;
-  right: 0;
-  margin: 0 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0) scale(1);
+  width: calc(100% - 48px);
   z-index: 100;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  background: var(--bg-popover);
-  box-shadow: var(--glass-shadow);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              top 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              background 0.3s ease, 
-              backdrop-filter 0.3s ease, 
-              box-shadow 0.3s ease, 
-              border-color 0.3s ease;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  
+  /* Apple-like cubic-bezier springy transitions */
+  transition: 
+    width var(--nav-transition-dur, 0.45s) cubic-bezier(0.25, 1.15, 0.5, 1.1),
+    border-radius var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1),
+    padding var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.35s ease,
+    backdrop-filter 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease,
+    transform var(--nav-transition-dur, 0.45s) cubic-bezier(0.25, 1.15, 0.5, 1.1),
+    top var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Visibility states */
-.navbar-visible {
-  transform: translateY(0);
-}
-.navbar-hidden {
-  transform: translateY(-100px); /* Slides up completely out of viewport */
+.navbar-logo, .navbar-links, .logo-icon, .nav-link {
+  transition: all var(--nav-transition-dur, 0.45s) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.navbar-scrolled {
-  padding: 6px 16px;
-  top: 10px;
-  background: rgba(var(--bg-popover-rgb, 255,255,255), 0.75);
+/* 1. Initial State: At Top of the Page */
+.navbar.nav-at-top {
+  width: calc(100% - 48px);
+  border-radius: var(--radius-lg);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transform: translateX(-50%) translateY(0) scale(1);
+  top: 16px;
+}
+
+/* 2. Active Scrolling: Mini Capsule State */
+.navbar.nav-capsule {
+  width: 72%;
+  border-radius: 999px;
+  background: rgba(var(--bg-popover-rgb, 12, 12, 14), 0.55);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-color: rgba(var(--spot-rgb), 0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(var(--spot-rgb), 0.08);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.18);
+  transform: translateX(-50%) translateY(15px) scale(0.98);
+  padding: 8px 20px;
+  top: 10px;
 }
 
-.navbar-scrolled .logo-icon {
-  width: 22px;
-  height: 22px;
+/* Synchronized content adjustments inside capsule mode */
+.navbar.nav-capsule .logo-icon {
+  transform: scale(0.95);
 }
-.navbar-scrolled .logo-text {
-  font-size: 1.15rem;
+.navbar.nav-capsule .navbar-links {
+  gap: 8px; /* Reduce spacing between nav links */
+}
+.navbar.nav-capsule .nav-link {
+  padding: 6px 12px;
+}
+
+/* 3. Stops Scrolling: Expanded Sticky State */
+.navbar.nav-expanded {
+  width: calc(100% - 48px);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--bg-popover-rgb, 12, 12, 14), 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(var(--spot-rgb), 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateX(-50%) translateY(0) scale(1);
+  padding: 10px 20px;
+  top: 16px;
 }
 
 .navbar-container {
