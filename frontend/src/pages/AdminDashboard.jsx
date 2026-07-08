@@ -374,7 +374,8 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="page-container animate-fade-in" style={{ padding: '80px 20px 140px', maxWidth: '1200px', margin: '0 auto' }}>
+    <>
+      <div className="page-container animate-fade-in" style={{ padding: '80px 20px 140px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
           <h2>Moderation Command Center</h2>
@@ -835,6 +836,7 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
+      </div>
 
       {/* Custom Toast Notification */}
       {notification && (
@@ -905,6 +907,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

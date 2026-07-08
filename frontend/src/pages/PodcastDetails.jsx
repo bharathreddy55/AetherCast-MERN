@@ -324,7 +324,8 @@ export default function PodcastDetails() {
   };
 
   return (
-    <div className="details-page animate-fade-in">
+    <>
+      <div className="details-page animate-fade-in">
       {/* Podcast Banner/Header */}
       <header className="details-header glass-panel">
         <img src={getCoverImage()} alt={podcast.title} className="details-cover" />
@@ -677,6 +678,7 @@ export default function PodcastDetails() {
 
       {/* Ratings & Reviews Section */}
       <RatingWidget podcastId={podcast._id} onChange={fetchDetails} />
+      </div>
 
       {activeEditTranscriptEpisode && (
         <TranscriptEditorModal
@@ -818,6 +820,6 @@ export default function PodcastDetails() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
