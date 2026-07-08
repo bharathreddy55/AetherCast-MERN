@@ -22,6 +22,18 @@ export default function PodcastDetails() {
   const [activeCommentsEpisode, setActiveCommentsEpisode] = useState(null);
   const [activeEditTranscriptEpisode, setActiveEditTranscriptEpisode] = useState(null);
 
+  // Edit podcast modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editLanguage, setEditLanguage] = useState('');
+  const [editStatus, setEditStatus] = useState('published');
+  const [editCoverFile, setEditCoverFile] = useState(null);
+  const [editBannerFile, setEditBannerFile] = useState(null);
+  const [updating, setUpdating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
   // Offline caching states
   const [downloadedIds, setDownloadedIds] = useState([]);
   const [downloadingMap, setDownloadingMap] = useState({});
@@ -158,6 +170,58 @@ export default function PodcastDetails() {
     fetchDetails();
   }, [id, token]);
 
+  useEffect(() => {
+    if (podcast) {
+      setEditTitle(podcast.title || '');
+      setEditDesc(podcast.description || '');
+      setEditCategory(podcast.category || 'other');
+      setEditLanguage(podcast.language || 'English');
+      setEditStatus(podcast.status || 'published');
+    }
+  }, [podcast]);
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    setErrorMsg('');
+
+    try {
+      const formData = new FormData();
+      formData.append('title', editTitle);
+      formData.append('description', editDesc);
+      formData.append('category', editCategory);
+      formData.append('language', editLanguage);
+      formData.append('status', editStatus);
+      if (editCoverFile) {
+        formData.append('coverImage', editCoverFile);
+      }
+      if (editBannerFile) {
+        formData.append('bannerImage', editBannerFile);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/podcasts/${podcast._id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setPodcast(data.podcast);
+        setShowEditModal(false);
+      } else {
+        setErrorMsg(data.message || 'Failed to update podcast');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Network error occurred while updating.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleFollowToggle = async () => {
     if (!token) return; // User needs to login
     setLoadingFollow(true);
@@ -284,15 +348,24 @@ export default function PodcastDetails() {
           </div>
 
           <div className="details-actions" style={{ marginTop: '20px' }}>
-            {token && (
+            {user && user.id === podcast.creatorId?._id ? (
               <button 
-                onClick={handleFollowToggle} 
-                disabled={loadingFollow}
-                className="btn-secondary"
+                onClick={() => setShowEditModal(true)} 
+                className="btn-primary"
               >
-                {following ? <BookmarkCheck size={18} className="gradient-text" /> : <Bookmark size={18} />}
-                <span>{following ? 'Following' : 'Follow Show'}</span>
+                <span>Edit Podcast Info</span>
               </button>
+            ) : (
+              token && (
+                <button 
+                  onClick={handleFollowToggle} 
+                  disabled={loadingFollow}
+                  className="btn-secondary"
+                >
+                  {following ? <BookmarkCheck size={18} className="gradient-text" /> : <Bookmark size={18} />}
+                  <span>{following ? 'Following' : 'Follow Show'}</span>
+                </button>
+              )
             )}
             {!token && (
               <Link to="/login" className="btn-secondary">
@@ -620,7 +693,129 @@ export default function PodcastDetails() {
               return ep;
             }));
           }}
-        />
+      {/* Edit Podcast Modal Overlay */}
+      {showEditModal && (
+        <div className="simulation-overlay animate-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+          <div className="simulation-modal glass-panel animate-scale-up" style={{ width: '90%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Edit Broadcast Show</h3>
+            
+            {errorMsg && (
+              <div style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '0.85rem' }}>
+                {errorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="input-group">
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Podcast Title</label>
+                <input 
+                  type="text" 
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                />
+              </div>
+
+              <div className="input-group">
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Description</label>
+                <textarea 
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  rows="4"
+                  required
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="input-group">
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Category</label>
+                  <select 
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="technology">Technology</option>
+                    <option value="business">Business</option>
+                    <option value="education">Education</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Language</label>
+                  <input 
+                    type="text" 
+                    value={editLanguage}
+                    onChange={(e) => setEditLanguage(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Publishing Status</label>
+                <select 
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="input-group">
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Cover Image</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setEditCoverFile(e.target.files[0])}
+                    style={{ width: '100%', fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Banner Image</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setEditBannerFile(e.target.files[0])}
+                    style={{ width: '100%', fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button 
+                  type="button" 
+                  className="btn-secondary"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={updating}
+                  style={{ padding: '8px 16px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  disabled={updating}
+                  style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
