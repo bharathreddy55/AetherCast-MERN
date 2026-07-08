@@ -50,7 +50,7 @@ function CreatorRoute({ children }) {
     );
   }
   
-  return user && user.role === 'creator' ? children : <Navigate to="/" />;
+  return user && (user.role === 'creator' || user.role === 'admin') ? children : <Navigate to="/" />;
 }
 
 // Helper for protecting admin routes

@@ -14,11 +14,16 @@ exports.createPodcast = async (req, res) => {
     let bannerImage = '';
 
     if (req.files) {
+      const { uploadToSupabase, saveFileLocally } = require('../utils/supabaseStorage');
       if (req.files.coverImage) {
-        coverImage = `/uploads/${req.files.coverImage[0].filename}`;
+        const file = req.files.coverImage[0];
+        const supabaseUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype, 'covers');
+        coverImage = supabaseUrl || saveFileLocally(file, 'uploads');
       }
       if (req.files.bannerImage) {
-        bannerImage = `/uploads/${req.files.bannerImage[0].filename}`;
+        const file = req.files.bannerImage[0];
+        const supabaseUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype, 'banners');
+        bannerImage = supabaseUrl || saveFileLocally(file, 'uploads');
       }
     }
 
@@ -54,11 +59,17 @@ exports.getPodcasts = async (req, res) => {
     // If a creator is checking their own podcasts, they can see drafts too
     if (creatorId) {
       query.creatorId = creatorId;
-      delete query.status; // Creator sees all their own
+      // Only bypass published status if the user is requesting their own podcasts
+      if (req.user && req.user._id.toString() === creatorId.toString()) {
+        delete query.status; 
+      }
     }
 
+    const escapeRegex = (str) => str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
     if (category) {
-      query.category = { $regex: new RegExp(`^${category}$`, 'i') };
+      const escapedCategory = escapeRegex(category);
+      query.category = { $regex: new RegExp(`^${escapedCategory}$`, 'i') };
     }
 
     if (tag) {
@@ -67,19 +78,20 @@ exports.getPodcasts = async (req, res) => {
 
     let matchedEpisodes = [];
     if (search) {
+      const escapedSearch = escapeRegex(search);
       matchedEpisodes = await Episode.find({
         $or: [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { transcript: { $regex: search, $options: 'i' } },
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { transcript: { $regex: escapedSearch, $options: 'i' } },
         ]
       });
 
       const matchedPodcastIds = matchedEpisodes.map((ep) => ep.podcastId.toString());
 
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        { title: { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } },
         { _id: { $in: matchedPodcastIds } }
       ];
     }
@@ -145,7 +157,8 @@ exports.getPodcastById = async (req, res) => {
 
     // Check draft permission
     if (podcast.status === 'draft') {
-      if (!req.user || (req.user.role !== 'admin' && req.user._id.toString() !== podcast.creatorId._id.toString())) {
+      const creatorIdStr = podcast.creatorId ? (podcast.creatorId._id || podcast.creatorId).toString() : '';
+      if (!req.user || (req.user.role !== 'admin' && req.user._id.toString() !== creatorIdStr)) {
         return res.status(403).json({ success: false, message: 'Access denied: this is a draft' });
       }
     }
@@ -184,11 +197,16 @@ exports.updatePodcast = async (req, res) => {
     }
 
     if (req.files) {
+      const { uploadToSupabase, saveFileLocally } = require('../utils/supabaseStorage');
       if (req.files.coverImage) {
-        podcast.coverImage = `/uploads/${req.files.coverImage[0].filename}`;
+        const file = req.files.coverImage[0];
+        const supabaseUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype, 'covers');
+        podcast.coverImage = supabaseUrl || saveFileLocally(file, 'uploads');
       }
       if (req.files.bannerImage) {
-        podcast.bannerImage = `/uploads/${req.files.bannerImage[0].filename}`;
+        const file = req.files.bannerImage[0];
+        const supabaseUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype, 'banners');
+        podcast.bannerImage = supabaseUrl || saveFileLocally(file, 'uploads');
       }
     }
 
@@ -215,9 +233,41 @@ exports.deletePodcast = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to delete this podcast' });
     }
 
+    const Episode = require('../models/Episode');
+    const Review = require('../models/Review');
+    const fs = require('fs');
+    const path = require('path');
+
+    // Clean up episode audio files
+    const episodes = await Episode.find({ podcastId: podcast._id });
+    for (const ep of episodes) {
+      if (ep.audioUrl && ep.audioUrl.startsWith('/uploads/')) {
+        const localPath = path.join(__dirname, '../../', ep.audioUrl);
+        if (fs.existsSync(localPath)) {
+          try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete audio file:', e.message); }
+        }
+      }
+    }
+
+    // Clean up podcast cover and banner files
+    if (podcast.coverImage && podcast.coverImage.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', podcast.coverImage);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete cover image:', e.message); }
+      }
+    }
+    if (podcast.bannerImage && podcast.bannerImage.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', podcast.bannerImage);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete banner image:', e.message); }
+      }
+    }
+
+    await Episode.deleteMany({ podcastId: podcast._id });
+    await Review.deleteMany({ podcastId: podcast._id });
     await podcast.deleteOne();
 
-    res.status(200).json({ success: true, message: 'Podcast deleted successfully' });
+    res.status(200).json({ success: true, message: 'Podcast show and all related episodes, reviews, and media deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -47,6 +47,12 @@ const verifySupabaseToken = async (token) => {
   }
 
   const { alg, kid } = decodedToken.header;
+  
+  // Whitelist algorithms to prevent algorithm confusion/signature bypass attacks
+  if (alg !== 'ES256' && alg !== 'HS256') {
+    throw new Error(`Unsupported JWT algorithm: ${alg}`);
+  }
+
   let secretOrPublicKey;
 
   if (alg === 'ES256') {
@@ -58,6 +64,12 @@ const verifySupabaseToken = async (token) => {
     secretOrPublicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
   } else {
     const rawSecret = process.env.SUPABASE_JWT_SECRET || 'your-supabase-jwt-secret-here';
+    
+    // Prevent fallback secret in production
+    if (process.env.NODE_ENV === 'production' && rawSecret === 'your-supabase-jwt-secret-here') {
+      throw new Error('SUPABASE_JWT_SECRET environment variable is missing in production!');
+    }
+
     secretOrPublicKey = rawSecret.length > 40 ? Buffer.from(rawSecret, 'base64') : rawSecret;
   }
 

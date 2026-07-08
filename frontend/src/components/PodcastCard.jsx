@@ -27,7 +27,7 @@ export default function PodcastCard({ podcast }) {
       <Link to={`/podcast/${podcast._id}`} style={{ display: 'block', flexGrow: 1, padding: '16px' }}>
         <div className="card-image-container">
           {podcast.coverImage ? (
-            <img src={`${BACKEND_URL}${podcast.coverImage}`} alt={podcast.title} className="card-cover-image" />
+            <img src={window.getMediaUrl(podcast.coverImage)} alt={podcast.title} className="card-cover-image" />
           ) : (
             <div className="card-cover-placeholder">
               <Disc size={40} className="card-placeholder-icon" />

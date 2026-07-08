@@ -94,7 +94,7 @@ export default function Home() {
               return (
                 <div key={progress._id} style={{ display: 'flex', padding: '16px', gap: '16px', alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', transition: 'var(--transition-smooth)', position: 'relative', overflow: 'hidden' }}>
                   <img 
-                    src={ep.podcastId?.coverImage ? `${window.BACKEND_URL}${ep.podcastId.coverImage}` : ''} 
+                    src={ep.podcastId?.coverImage ? window.getMediaUrl(ep.podcastId.coverImage) : ''} 
                     alt="Cover" 
                     style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-default)', objectFit: 'cover', border: '1px solid var(--border-color)' }}
                   />

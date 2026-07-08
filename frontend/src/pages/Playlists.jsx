@@ -170,7 +170,7 @@ export default function Playlists() {
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                   {hasCover ? (
                     <img 
-                      src={`${window.BACKEND_URL}${ep.podcastId.coverImage}`} 
+                      src={window.getMediaUrl(ep.podcastId.coverImage)} 
                       alt="Cover" 
                       style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover' }}
                     />

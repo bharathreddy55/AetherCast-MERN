@@ -153,8 +153,8 @@ export const PlayerProvider = ({ children }) => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          playedTime: currentTime,
-          completed,
+          position: currentTime,
+          duration,
         }),
       });
     } catch (err) {
@@ -191,7 +191,7 @@ export const PlayerProvider = ({ children }) => {
     
     if (!isSameEpisode) {
       setCurrentEpisode(episode);
-      audioRef.current.src = `${window.BACKEND_URL}${episode.audioUrl}`;
+      audioRef.current.src = window.getMediaUrl(episode.audioUrl);
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.load();
     }

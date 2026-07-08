@@ -273,11 +273,36 @@ exports.deletePodcastAdmin = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Podcast not found' });
     }
 
-    // Delete all related episodes
+    const fs = require('fs');
+    const path = require('path');
+
+    // Delete all related episodes and their physical files
+    const episodes = await Episode.find({ podcastId: podcast._id });
+    for (const ep of episodes) {
+      if (ep.audioUrl && ep.audioUrl.startsWith('/uploads/')) {
+        const localPath = path.join(__dirname, '../../', ep.audioUrl);
+        if (fs.existsSync(localPath)) {
+          try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete audio:', e.message); }
+        }
+      }
+    }
+
+    // Delete podcast cover & banner images
+    if (podcast.coverImage && podcast.coverImage.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', podcast.coverImage);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete cover:', e.message); }
+      }
+    }
+    if (podcast.bannerImage && podcast.bannerImage.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', podcast.bannerImage);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete banner:', e.message); }
+      }
+    }
+
     await Episode.deleteMany({ podcastId: podcast._id });
-    // Delete all related reviews
     await Review.deleteMany({ podcastId: podcast._id });
-    // Delete podcast
     await podcast.deleteOne();
 
     res.status(200).json({ success: true, message: 'Podcast show and all its episodes deleted successfully by Admin' });
@@ -308,6 +333,16 @@ exports.deleteEpisodeAdmin = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Episode not found' });
     }
 
+    const fs = require('fs');
+    const path = require('path');
+
+    if (episode.audioUrl && episode.audioUrl.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', episode.audioUrl);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete audio:', e.message); }
+      }
+    }
+
     const podcastId = episode.podcastId;
     await episode.deleteOne();
 
@@ -335,9 +370,26 @@ exports.deleteUserAdmin = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot delete another admin account' });
     }
 
+    // Find all reviews made by this user to know which podcasts are affected
+    const userReviews = await Review.find({ userId: user._id });
+    const affectedPodcastIds = [...new Set(userReviews.map((r) => r.podcastId.toString()))];
+
     // Clean up reviews and comments
     await Review.deleteMany({ userId: user._id });
     await Comment.deleteMany({ userId: user._id });
+
+    // Recalculate rating stats for affected podcasts
+    for (const podcastId of affectedPodcastIds) {
+      const reviews = await Review.find({ podcastId });
+      const count = reviews.length;
+      const sum = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+      const average = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+
+      await Podcast.findByIdAndUpdate(podcastId, {
+        ratingAverage: average,
+        ratingCount: count,
+      });
+    }
     
     await user.deleteOne();
 

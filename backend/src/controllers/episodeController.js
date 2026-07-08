@@ -25,7 +25,9 @@ exports.createEpisode = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload an audio file (MP3/WAV)' });
     }
 
-    const audioUrl = `/uploads/${req.file.filename}`;
+    const { uploadToSupabase, saveFileLocally } = require('../utils/supabaseStorage');
+    const supabaseUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, req.file.mimetype, 'audios');
+    const audioUrl = supabaseUrl || saveFileLocally(req.file, 'uploads');
 
     const episode = await Episode.create({
       podcastId: podcast._id,
@@ -121,7 +123,9 @@ exports.updateEpisode = async (req, res) => {
     if (status) episode.status = status;
 
     if (req.file) {
-      episode.audioUrl = `/uploads/${req.file.filename}`;
+      const { uploadToSupabase, saveFileLocally } = require('../utils/supabaseStorage');
+      const supabaseUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, req.file.mimetype, 'audios');
+      episode.audioUrl = supabaseUrl || saveFileLocally(req.file, 'uploads');
     }
 
     await episode.save();
@@ -152,6 +156,13 @@ exports.deleteEpisode = async (req, res) => {
     // Verify ownership
     if (podcast.creatorId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to delete this episode' });
+    }
+
+    if (episode.audioUrl && episode.audioUrl.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', episode.audioUrl);
+      if (fs.existsSync(localPath)) {
+        try { fs.unlinkSync(localPath); } catch (e) { console.error('Failed to delete audio file:', e.message); }
+      }
     }
 
     await episode.deleteOne();

@@ -460,10 +460,12 @@ exports.updateProfile = async (req, res) => {
 
     if (name) user.name = name;
     if (bio !== undefined) user.bio = bio;
-    if (role) user.role = role;
+    if (role && req.user.role === 'admin') user.role = role;
 
     if (req.file) {
-      user.avatar = `/uploads/${req.file.filename}`;
+      const { uploadToSupabase, saveFileLocally } = require('../utils/supabaseStorage');
+      const supabaseUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, req.file.mimetype, 'avatars');
+      user.avatar = supabaseUrl || saveFileLocally(req.file, 'uploads');
     }
 
     await user.save();

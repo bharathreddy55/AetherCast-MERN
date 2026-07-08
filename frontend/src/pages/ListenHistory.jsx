@@ -80,7 +80,7 @@ export default function ListenHistory() {
       {/* Cover */}
       {episode.podcastId?.coverImage ? (
         <img
-          src={`${window.BACKEND_URL}${episode.podcastId.coverImage}`}
+          src={window.getMediaUrl(episode.podcastId.coverImage)}
           alt="Cover"
           style={{ width: '52px', height: '52px', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.05)' }}
         />

@@ -39,16 +39,35 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // If it's an audio stream request
-  if (url.pathname.includes('/uploads/')) {
+  // If it's an audio stream request (local uploads or Supabase public storage objects)
+  if (url.pathname.includes('/uploads/') || url.pathname.includes('/storage/v1/object/public/')) {
     e.respondWith(
       caches.open(AUDIO_CACHE_NAME).then((cache) => {
-        return cache.match(e.request).then((cachedResponse) => {
+        return cache.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
           if (cachedResponse) {
-            // Return cached audio file directly
+            const rangeHeader = e.request.headers.get('range');
+            if (rangeHeader) {
+              return cachedResponse.arrayBuffer().then((arrayBuffer) => {
+                const bytes = /^bytes=(\d+)-(\d+)?$/.exec(rangeHeader);
+                if (bytes) {
+                  const start = parseInt(bytes[1], 10);
+                  const end = bytes[2] ? parseInt(bytes[2], 10) : arrayBuffer.byteLength - 1;
+                  const slice = arrayBuffer.slice(start, end + 1);
+                  return new Response(slice, {
+                    status: 206,
+                    statusText: 'Partial Content',
+                    headers: {
+                      'Content-Range': `bytes ${start}-${end}/${arrayBuffer.byteLength}`,
+                      'Accept-Ranges': 'bytes',
+                      'Content-Length': slice.byteLength,
+                      'Content-Type': cachedResponse.headers.get('content-type') || 'audio/mpeg'
+                    }
+                  });
+                }
+              });
+            }
             return cachedResponse;
           }
-          // Fall back to network
           return fetch(e.request);
         });
       })

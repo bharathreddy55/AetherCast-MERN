@@ -69,14 +69,25 @@ const podcastSchema = new mongoose.Schema(
 );
 
 // Create slug from title before saving
-podcastSchema.pre('save', function (next) {
+podcastSchema.pre('save', async function (next) {
   if (!this.isModified('title')) {
     return next();
   }
-  this.slug = this.title
+  const baseSlug = this.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
+
+  let slug = baseSlug;
+  let counter = 1;
+  const Podcast = mongoose.model('Podcast');
+
+  while (await Podcast.exists({ slug, _id: { $ne: this._id } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  this.slug = slug;
   next();
 });
 
