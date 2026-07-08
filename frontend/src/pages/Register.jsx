@@ -49,22 +49,10 @@ export default function Register() {
 
   return (
     <div className="auth-page animate-fade-in">
-      <div className="auth-card glass-panel" style={{ maxWidth: '500px', borderTop: '2px solid var(--color-primary)' }}>
+      <div className="auth-card glass-panel">
         <div className="auth-header">
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.7rem',
-            color: 'var(--color-primary)',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            display: 'block',
-            marginBottom: '12px'
-          }}>[ REGISTER ]</span>
-          <h2 style={{
-            fontFamily: 'var(--font-serif)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em'
-          }}>Create Account</h2>
+          <span className="badge-mono">REGISTER</span>
+          <h2 className="brand-heading">Create Account</h2>
           <p>Join VOX and start streaming</p>
         </div>
 

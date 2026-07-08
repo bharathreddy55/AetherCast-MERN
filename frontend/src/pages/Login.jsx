@@ -63,11 +63,11 @@ export default function Login() {
 
   return (
     <div className="auth-page animate-fade-in">
-      <div className="auth-card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-        <div className="auth-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '24px', marginBottom: '28px' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-primary)', letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>[ SIGN IN ]</span>
-          <h2 style={{ fontFamily: 'var(--font-serif)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome Back</h2>
-          <p style={{ fontFamily: 'var(--font-sans)' }}>Sign in to continue to your dashboard</p>
+      <div className="auth-card glass-panel">
+        <div className="auth-header">
+          <span className="badge-mono">SIGN IN</span>
+          <h2 className="brand-heading">Welcome Back</h2>
+          <p>Sign in to continue to your dashboard</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}

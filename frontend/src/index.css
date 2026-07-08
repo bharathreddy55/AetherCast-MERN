@@ -22,26 +22,26 @@
   --spacing-xl: 32px;
 
   /* Theme: Volcanic Console Mode (Default / Light Mode matches deep orange theme) */
-  --bg-main: #0a0a0c;
-  --bg-card: rgba(20, 20, 24, 0.7);
-  --bg-card-hover: rgba(30, 30, 36, 0.95);
-  --bg-popover: #121214;
-  --border-color: rgba(255, 255, 255, 0.05);
-  --border-hover: rgba(255, 122, 0, 0.3);
+  --bg-main: #08080a;
+  --bg-card: rgba(20, 20, 24, 0.5);
+  --bg-card-hover: rgba(30, 30, 36, 0.9);
+  --bg-popover: #0c0c0e;
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 122, 0, 0.5);
   
   --text-primary: #ffffff;
-  --text-secondary: #ff7a00;
-  --text-muted: #88888a;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.45);
   
   --color-primary: #ff7a00;
   --color-primary-hover: #ff9533;
   --color-secondary: #ffffff;
   --grad-accent: linear-gradient(135deg, #ff7a00 0%, #ff5500 100%);
-  --grad-bg: radial-gradient(circle at 50% -20%, #1c1410 0%, #0a0a0c 75%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #251205 0%, #08080a 80%);
   
-  --glass-bg: rgba(18, 18, 20, 0.85);
-  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  --glass-border: 1px solid rgba(255, 122, 0, 0.1);
+  --glass-bg: rgba(12, 12, 14, 0.8);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: all 0.15s ease;
@@ -49,26 +49,26 @@
 
 /* Dark Mode Theme overrides (Can be pitch-black) */
 body.dark-theme {
-  --bg-main: #050505;
-  --bg-card: #121212;
-  --bg-card-hover: #1c1c1c;
-  --bg-popover: #090909;
-  --border-color: rgba(255, 122, 0, 0.08);
-  --border-hover: rgba(255, 122, 0, 0.4);
+  --bg-main: #040405;
+  --bg-card: #0a0a0c;
+  --bg-card-hover: #121214;
+  --bg-popover: #060608;
+  --border-color: rgba(255, 255, 255, 0.04);
+  --border-hover: rgba(255, 122, 0, 0.6);
   
   --text-primary: #ffffff;
-  --text-secondary: #ff7a00;
-  --text-muted: #66666a;
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.4);
   
   --color-primary: #ff7a00;
   --color-primary-hover: #ff9533;
   --color-secondary: #000000;
   --grad-accent: linear-gradient(135deg, #ff7a00 0%, #cc5200 100%);
-  --grad-bg: radial-gradient(circle at 50% -20%, #150a05 0%, #050505 80%);
+  --grad-bg: radial-gradient(circle at 50% 0%, #180902 0%, #040405 85%);
   
-  --glass-bg: rgba(12, 12, 12, 0.9);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  --glass-border: 1px solid rgba(255, 122, 0, 0.15);
+  --glass-bg: rgba(6, 6, 8, 0.85);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 * {
@@ -112,11 +112,25 @@ body.dark-theme ::-webkit-scrollbar-track {
 
 /* Typography styles */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.brand-heading {
   font-family: var(--font-serif);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-primary);
+}
+
+.badge-mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 /* Interactive elements */
@@ -241,4 +255,166 @@ button {
 
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Landing Page Layout */
+.landing-page {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+.hero-section {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 60px 20px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 3.75rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 20px 0;
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 30px auto;
+  line-height: 1.6;
+}
+
+.hero-cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.banner-visual {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-top: 48px;
+  position: relative;
+  border: 1px solid var(--border-color);
+}
+
+.banner-bg {
+  width: 100%;
+  height: 100%;
+  background-image: url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.5);
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg-main), transparent);
+}
+
+.category-section {
+  padding: 60px 0;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  font-size: 1.85rem;
+  font-family: var(--font-serif);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+.featured-section {
+  padding: 60px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title h2 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.view-all-link {
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.skeleton-card {
+  height: 300px;
+}
+
+.trending-stack {
+  margin-bottom: 40px;
+}
+
+.podcast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 28px;
+}
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+}
+
+.fallback-podcast-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-default);
+  background: var(--bg-card-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
