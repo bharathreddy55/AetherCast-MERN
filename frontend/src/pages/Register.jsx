@@ -26,9 +26,45 @@ export default function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [signupCooldown, setSignupCooldown] = useState(0);
+
+  useEffect(() => {
+    const limitTime = localStorage.getItem('signUpLimitTime');
+    if (limitTime) {
+      const elapsed = Math.floor((Date.now() - parseInt(limitTime)) / 1000);
+      const remaining = 3600 - elapsed;
+      if (remaining > 0) {
+        setSignupCooldown(remaining);
+      } else {
+        localStorage.removeItem('signUpLimitTime');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (signupCooldown > 0) {
+      const timer = setTimeout(() => {
+        setSignupCooldown(prev => {
+          if (prev <= 1) {
+            localStorage.removeItem('signUpLimitTime');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [signupCooldown]);
+
+  const formatCooldown = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (signupCooldown > 0) return;
     setError('');
     setSuccess('');
     setSubmitting(true);
@@ -44,6 +80,10 @@ export default function Register() {
       }
     } else {
       setError(result.message || 'Registration failed');
+      if (result.message.toLowerCase().includes('limit exceeded') || result.message.toLowerCase().includes('rate limit')) {
+        localStorage.setItem('signUpLimitTime', Date.now().toString());
+        setSignupCooldown(3600);
+      }
     }
   };
 
@@ -56,7 +96,13 @@ export default function Register() {
           <p>Join VOX and start streaming</p>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {signupCooldown > 0 ? (
+          <div className="auth-error" style={{ background: 'rgba(255, 122, 0, 0.1)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>
+            Email sending limit exceeded. Signup option refreshes in {formatCooldown(signupCooldown)}.
+          </div>
+        ) : (
+          error && <div className="auth-error">{error}</div>
+        )}
         {success && <div className="auth-error" style={{ background: 'rgba(255, 122, 0, 0.08)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>{success}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -160,7 +206,7 @@ export default function Register() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || signupCooldown > 0}
             className="btn-primary auth-btn"
             style={{
               width: '100%',
@@ -172,7 +218,7 @@ export default function Register() {
             }}
           >
             <UserPlus size={18} />
-            <span>{submitting ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}</span>
+            <span>{submitting ? 'CREATING ACCOUNT...' : (signupCooldown > 0 ? `LOCKED (${formatCooldown(signupCooldown)})` : 'CREATE ACCOUNT')}</span>
           </button>
         </form>
 

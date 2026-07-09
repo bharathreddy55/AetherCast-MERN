@@ -27,6 +27,41 @@ export default function Login() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState('');
   const [forgotError, setForgotError] = useState('');
+  const [forgotCooldown, setForgotCooldown] = useState(0);
+
+  useEffect(() => {
+    const limitTime = localStorage.getItem('forgotPasswordLimitTime');
+    if (limitTime) {
+      const elapsed = Math.floor((Date.now() - parseInt(limitTime)) / 1000);
+      const remaining = 3600 - elapsed;
+      if (remaining > 0) {
+        setForgotCooldown(remaining);
+      } else {
+        localStorage.removeItem('forgotPasswordLimitTime');
+      }
+    }
+  }, [showForgotModal]);
+
+  useEffect(() => {
+    if (forgotCooldown > 0) {
+      const timer = setTimeout(() => {
+        setForgotCooldown(prev => {
+          if (prev <= 1) {
+            localStorage.removeItem('forgotPasswordLimitTime');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [forgotCooldown]);
+
+  const formatCooldown = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +80,7 @@ export default function Login() {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    if (forgotCooldown > 0) return;
     setForgotError('');
     setForgotSuccess('');
     setForgotSubmitting(true);
@@ -56,6 +92,10 @@ export default function Login() {
 
     if (error) {
       setForgotError(error.message);
+      if (error.message.toLowerCase().includes('limit exceeded') || error.message.toLowerCase().includes('rate limit')) {
+        localStorage.setItem('forgotPasswordLimitTime', Date.now().toString());
+        setForgotCooldown(3600);
+      }
     } else {
       setForgotSuccess('Password reset link sent to your email inbox!');
     }
@@ -175,11 +215,18 @@ export default function Login() {
               Enter the email address associated with your account, and we will email you a link to reset your password.
             </p>
 
-            {forgotError && (
-              <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            {forgotCooldown > 0 ? (
+              <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', background: 'rgba(255, 122, 0, 0.1)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>
                 <AlertCircle size={16} />
-                <span>{forgotError}</span>
+                <span>Email sending limit exceeded. Resend option refreshes in {formatCooldown(forgotCooldown)}.</span>
               </div>
+            ) : (
+              forgotError && (
+                <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <AlertCircle size={16} />
+                  <span>{forgotError}</span>
+                </div>
+              )
             )}
 
             {forgotSuccess && (
@@ -198,6 +245,7 @@ export default function Login() {
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
                 className="form-input"
+                disabled={forgotCooldown > 0}
               />
             </div>
 
@@ -212,11 +260,11 @@ export default function Login() {
               </button>
               <button 
                 type="submit" 
-                disabled={forgotSubmitting}
+                disabled={forgotSubmitting || forgotCooldown > 0}
                 className="btn-primary"
                 style={{ padding: '8px 16px', fontSize: '0.9rem', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.04em', borderRadius: 'var(--radius-default)', boxShadow: '0 4px 16px rgba(255, 122, 0, 0.2)' }}
               >
-                {forgotSubmitting ? 'SENDING...' : 'SEND RESET LINK'}
+                {forgotSubmitting ? 'SENDING...' : (forgotCooldown > 0 ? `LOCKED (${formatCooldown(forgotCooldown)})` : 'SEND RESET LINK')}
               </button>
             </div>
           </form>
