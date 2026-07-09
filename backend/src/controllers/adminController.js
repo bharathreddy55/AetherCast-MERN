@@ -3,6 +3,7 @@ const Podcast = require('../models/Podcast');
 const Episode = require('../models/Episode');
 const Comment = require('../models/Comment');
 const Review = require('../models/Review');
+const Playlist = require('../models/Playlist');
 
 // @desc    Get all users with search and filter
 // @route   GET /api/admin/users
