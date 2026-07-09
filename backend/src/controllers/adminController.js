@@ -399,6 +399,57 @@ exports.deleteUserAdmin = async (req, res) => {
   }
 };
 
+// @desc    Get detailed user metrics (playlists, podcasts, comments, reviews)
+// @route   GET /api/admin/users/:id
+// @access  Private (Admin)
+exports.getUserDetailsAdmin = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let podcasts = [];
+    let playlistsCount = 0;
+    let comments = [];
+    let reviews = [];
+
+    // Fetch playlists count for everyone
+    playlistsCount = await Playlist.countDocuments({ userId: user._id });
+
+    // Fetch comments and reviews made by this user
+    comments = await Comment.find({ userId: user._id })
+      .populate('episodeId', 'title')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    reviews = await Review.find({ userId: user._id })
+      .populate('podcastId', 'title')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // If creator, fetch their podcasts
+    if (user.role === 'creator' || user.role === 'admin') {
+      podcasts = await Podcast.find({ creatorId: user._id })
+        .select('title coverImage status category episodeCount followersCount')
+        .sort({ createdAt: -1 });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+      details: {
+        playlistsCount,
+        comments,
+        reviews,
+        podcasts
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Get all comments for Admin management (not just flagged ones)
 // @route   GET /api/admin/comments
 // @access  Private (Admin)

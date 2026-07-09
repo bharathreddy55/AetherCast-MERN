@@ -48,6 +48,10 @@ export default function AdminDashboard() {
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentsSearch, setCommentsSearch] = useState('');
 
+  // User Details Modal
+  const [selectedUserDetail, setSelectedUserDetail] = useState(null);
+  const [loadingUserDetail, setLoadingUserDetail] = useState(false);
+
   useEffect(() => {
     if (activeSubTab === 'stats') {
       fetchStats();
@@ -161,6 +165,26 @@ export default function AdminDashboard() {
       console.error(err);
     } finally {
       setLoadingComments(false);
+    }
+  };
+
+  const fetchUserDetails = async (userId) => {
+    setLoadingUserDetail(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedUserDetail(data);
+      } else {
+        showNotification(data.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Failed to fetch user details', 'error');
+    } finally {
+      setLoadingUserDetail(false);
     }
   };
 
@@ -608,7 +632,11 @@ export default function AdminDashboard() {
                 <tbody>
                   {usersList.map((usr) => (
                     <tr key={usr._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
-                      <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <td 
+                        onClick={() => fetchUserDetails(usr._id)}
+                        style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                        title="Click to view full user profile metrics"
+                      >
                         {usr.avatar ? (
                           <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
@@ -975,6 +1003,226 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* User Details Modal */}
+      {selectedUserDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <div className="glass-panel animate-scale-in" style={{
+            padding: '32px',
+            borderRadius: '20px',
+            maxWidth: '650px',
+            width: '90%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setSelectedUserDetail(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.05)',
+                border: 0,
+                color: 'var(--text-primary)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </button>
+
+            {/* Header Profile Info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
+              {selectedUserDetail.user.avatar ? (
+                <img 
+                  src={window.getMediaUrl(selectedUserDetail.user.avatar)} 
+                  alt="Avatar" 
+                  style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} 
+                />
+              ) : (
+                <div style={{ 
+                  width: '64px', 
+                  height: '64px', 
+                  borderRadius: '50%', 
+                  background: 'var(--grad-accent)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.5rem', 
+                  fontWeight: 'bold',
+                  color: '#fff' 
+                }}>
+                  {selectedUserDetail.user.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--text-primary)' }}>{selectedUserDetail.user.name}</h3>
+                <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  @{selectedUserDetail.user.username} • {selectedUserDetail.user.email}
+                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: selectedUserDetail.user.role === 'admin' ? 'rgba(168, 85, 247, 0.15)' : (selectedUserDetail.user.role === 'creator' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255,255,255,0.05)'),
+                    color: selectedUserDetail.user.role === 'admin' ? '#c084fc' : (selectedUserDetail.user.role === 'creator' ? '#22d3ee' : 'var(--text-secondary)')
+                  }}>
+                    {selectedUserDetail.user.role}
+                  </span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: selectedUserDetail.user.accountStatus === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    color: selectedUserDetail.user.accountStatus === 'active' ? '#34d399' : '#f87171'
+                  }}>
+                    {selectedUserDetail.user.accountStatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* General Meta Information */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px' }}>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Member Since</p>
+                <p style={{ margin: '4px 0 0 0', fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  {new Date(selectedUserDetail.user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Created Playlists</p>
+                <p style={{ margin: '4px 0 0 0', fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  {selectedUserDetail.details.playlistsCount} playlists
+                </p>
+              </div>
+            </div>
+
+            {/* Role specific info: Creator Podcasts */}
+            {(selectedUserDetail.user.role === 'creator' || selectedUserDetail.user.role === 'admin') && (
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '8px', marginBottom: '12px', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Owned Podcasts ({selectedUserDetail.details.podcasts.length})
+                </h4>
+                {selectedUserDetail.details.podcasts.length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontStyle: 'italic' }}>No podcast shows created yet.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {selectedUserDetail.details.podcasts.map((p) => (
+                      <div key={p._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.01)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                        <img src={window.getMediaUrl(p.coverImage)} alt="Show cover" style={{ width: '36px', height: '36px', borderRadius: '4px', objectFit: 'cover' }} />
+                        <div style={{ flexGrow: 1 }}>
+                          <p style={{ margin: 0, fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>{p.title}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.category} • {p.status}</p>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.episodeCount} eps</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Listener specific info: Comments */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '8px', marginBottom: '12px', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Recent Comments ({selectedUserDetail.details.comments.length})
+              </h4>
+              {selectedUserDetail.details.comments.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontStyle: 'italic' }}>No comments posted yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {selectedUserDetail.details.comments.map((c) => (
+                    <div key={c._id} style={{ background: 'rgba(255,255,255,0.01)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <p style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>"{c.content}"</p>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        On: <span style={{ fontWeight: '600' }}>{c.episodeId?.title || 'Unknown Episode'}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Reviews */}
+            <div>
+              <h4 style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '8px', marginBottom: '12px', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Recent Reviews ({selectedUserDetail.details.reviews.length})
+              </h4>
+              {selectedUserDetail.details.reviews.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontStyle: 'italic' }}>No reviews written yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {selectedUserDetail.details.reviews.map((r) => (
+                    <div key={r._id} style={{ background: 'rgba(255,255,255,0.01)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          <Star size={12} fill="currentColor" /> {r.rating}/5
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: 'var(--text-primary)' }}>"{r.content}"</p>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        Show: <span style={{ fontWeight: '600' }}>{r.podcastId?.title || 'Unknown Show'}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Loading User Details Spinner Overlay */}
+      {loadingUserDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999
+        }}>
+          <div className="glass-panel" style={{ padding: '20px 30px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="animate-spin" style={{ width: '20px', height: '20px', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '500' }}>Fetching profile metrics...</span>
+          </div>
         </div>
       )}
 
