@@ -92,7 +92,8 @@ export default function Login() {
 
     if (error) {
       setForgotError(error.message);
-      if (error.message.toLowerCase().includes('limit exceeded') || error.message.toLowerCase().includes('rate limit')) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('limit') || msg.includes('rate') || msg.includes('exceeded') || msg.includes('too many') || msg.includes('429')) {
         localStorage.setItem('forgotPasswordLimitTime', Date.now().toString());
         setForgotCooldown(3600);
       }
@@ -216,9 +217,9 @@ export default function Login() {
             </p>
 
             {forgotCooldown > 0 ? (
-              <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', background: 'rgba(255, 122, 0, 0.1)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>
+              <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <AlertCircle size={16} />
-                <span>Email sending limit exceeded. Resend option refreshes in {formatCooldown(forgotCooldown)}.</span>
+                <span>email rate limit exceeded. Refreshes in {formatCooldown(forgotCooldown)}.</span>
               </div>
             ) : (
               forgotError && (

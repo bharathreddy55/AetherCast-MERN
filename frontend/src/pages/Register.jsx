@@ -80,7 +80,8 @@ export default function Register() {
       }
     } else {
       setError(result.message || 'Registration failed');
-      if (result.message.toLowerCase().includes('limit exceeded') || result.message.toLowerCase().includes('rate limit')) {
+      const msg = (result.message || '').toLowerCase();
+      if (msg.includes('limit') || msg.includes('rate') || msg.includes('exceeded') || msg.includes('too many') || msg.includes('429')) {
         localStorage.setItem('signUpLimitTime', Date.now().toString());
         setSignupCooldown(3600);
       }
@@ -97,8 +98,8 @@ export default function Register() {
         </div>
 
         {signupCooldown > 0 ? (
-          <div className="auth-error" style={{ background: 'rgba(255, 122, 0, 0.1)', borderColor: 'rgba(255, 122, 0, 0.2)', color: 'var(--color-primary)' }}>
-            Email sending limit exceeded. Signup option refreshes in {formatCooldown(signupCooldown)}.
+          <div className="auth-error">
+            email rate limit exceeded. Refreshes in {formatCooldown(signupCooldown)}.
           </div>
         ) : (
           error && <div className="auth-error">{error}</div>
