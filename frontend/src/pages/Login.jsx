@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { supabase } from '../supabase';
 import { LogIn, Eye, EyeOff, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
 import './Pages.css';
@@ -94,11 +94,32 @@ export default function Login() {
       setForgotError(error.message);
       const msg = error.message.toLowerCase();
       if (msg.includes('limit') || msg.includes('rate') || msg.includes('exceeded') || msg.includes('too many') || msg.includes('429')) {
-        localStorage.setItem('forgotPasswordLimitTime', Date.now().toString());
-        setForgotCooldown(3600);
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/email-cooldown`);
+          const data = await res.json();
+          let cooldownSeconds = 3600;
+          let trackingTime = Date.now();
+          if (data.success && data.oldestEmailTime) {
+            trackingTime = new Date(data.oldestEmailTime).getTime();
+            const elapsed = Math.floor((Date.now() - trackingTime) / 1000);
+            cooldownSeconds = Math.max(3600 - elapsed, 60);
+          }
+          localStorage.setItem('forgotPasswordLimitTime', trackingTime.toString());
+          setForgotCooldown(cooldownSeconds);
+        } catch (err) {
+          console.error(err);
+          localStorage.setItem('forgotPasswordLimitTime', Date.now().toString());
+          setForgotCooldown(3600);
+        }
       }
     } else {
       setForgotSuccess('Password reset link sent to your email inbox!');
+      // Log successful reset email to backend
+      fetch(`${API_BASE_URL}/auth/log-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'reset' })
+      }).catch(err => console.error('Failed to log reset email:', err));
     }
   };
 

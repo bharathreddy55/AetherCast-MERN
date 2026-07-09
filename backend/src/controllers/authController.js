@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const EmailLog = require('../models/EmailLog');
 
 // Helper to generate access and refresh tokens
 const generateTokens = (userId) => {
@@ -483,6 +484,40 @@ exports.updateProfile = async (req, res) => {
         avatar: user.avatar,
         isVerified: user.isVerified,
       },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Log a successful email dispatch to Supabase
+// @route   POST /api/auth/log-email
+// @access  Public
+exports.logEmailSent = async (req, res) => {
+  try {
+    const { type } = req.body;
+    if (!['signup', 'reset'].includes(type)) {
+      return res.status(400).json({ success: false, message: 'Invalid email dispatch type' });
+    }
+
+    await EmailLog.create({ type });
+    res.status(200).json({ success: true, message: 'Email dispatch logged successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get the oldest successful email dispatch timestamp in the last hour
+// @route   GET /api/auth/email-cooldown
+// @access  Public
+exports.getEmailCooldown = async (req, res) => {
+  try {
+    // Find logs in the last hour (TTL index handles the cleanup automatically, so we just get all existing logs)
+    const logs = await EmailLog.find().sort({ createdAt: 1 });
+    res.status(200).json({
+      success: true,
+      oldestEmailTime: logs[0] ? logs[0].createdAt : null,
+      activeLogsCount: logs.length
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

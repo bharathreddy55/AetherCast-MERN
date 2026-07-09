@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, getProfile, refreshToken, googleLogin, verifyOtp, resendOtp, updateProfile } = require('../controllers/authController');
+const { 
+  register, 
+  login, 
+  logout, 
+  getProfile, 
+  refreshToken, 
+  googleLogin, 
+  verifyOtp, 
+  resendOtp, 
+  updateProfile,
+  logEmailSent,
+  getEmailCooldown
+} = require('../controllers/authController');
 const { protect } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
 
@@ -13,5 +25,9 @@ router.post('/refresh', refreshToken);
 router.post('/logout', protect, logout);
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
+
+// Rate-limiting logging helpers
+router.post('/log-email', logEmailSent);
+router.get('/email-cooldown', getEmailCooldown);
 
 module.exports = router;

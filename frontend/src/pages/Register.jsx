@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import './Pages.css';
 
@@ -75,6 +75,12 @@ export default function Register() {
     if (result.success) {
       if (result.requireConfirm) {
         setSuccess(result.message || 'Please check your email to verify your registration.');
+        // Log successful signup email to backend
+        fetch(`${API_BASE_URL}/auth/log-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'signup' })
+        }).catch(err => console.error('Failed to log signup email:', err));
       } else {
         navigate('/explore', { state: { showWelcome: true } });
       }
@@ -82,8 +88,23 @@ export default function Register() {
       setError(result.message || 'Registration failed');
       const msg = (result.message || '').toLowerCase();
       if (msg.includes('limit') || msg.includes('rate') || msg.includes('exceeded') || msg.includes('too many') || msg.includes('429')) {
-        localStorage.setItem('signUpLimitTime', Date.now().toString());
-        setSignupCooldown(3600);
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/email-cooldown`);
+          const data = await res.json();
+          let cooldownSeconds = 3600;
+          let trackingTime = Date.now();
+          if (data.success && data.oldestEmailTime) {
+            trackingTime = new Date(data.oldestEmailTime).getTime();
+            const elapsed = Math.floor((Date.now() - trackingTime) / 1000);
+            cooldownSeconds = Math.max(3600 - elapsed, 60);
+          }
+          localStorage.setItem('signUpLimitTime', trackingTime.toString());
+          setSignupCooldown(cooldownSeconds);
+        } catch (err) {
+          console.error(err);
+          localStorage.setItem('signUpLimitTime', Date.now().toString());
+          setSignupCooldown(3600);
+        }
       }
     }
   };
