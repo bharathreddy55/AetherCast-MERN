@@ -631,16 +631,27 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {usersList.map((usr) => (
-                    <tr key={usr._id} className="admin-user-row">
+                    <tr 
+                      key={usr._id} 
+                      className="admin-user-row"
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        e.currentTarget.style.setProperty('--row-spot-x', `${x}px`);
+                        e.currentTarget.style.setProperty('--row-spot-y', `${y}px`);
+                      }}
+                      style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}
+                    >
                       <td 
                         onClick={() => fetchUserDetails(usr._id)}
-                        className="admin-user-cell-profile"
+                        style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                         title="Click to view full user profile metrics"
                       >
                         {usr.avatar ? (
-                          <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" className="admin-user-avatar" />
+                          <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
-                          <div className="admin-avatar-placeholder">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                             {usr.name?.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -649,11 +660,12 @@ export default function AdminDashboard() {
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>@{usr.username} • {usr.email}</p>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ padding: '16px 8px' }}>
                         <select
                           value={usr.role}
                           onChange={(e) => handleChangeUserRole(usr._id, e.target.value)}
                           disabled={usr._id === user?._id}
+                          className="admin-user-role-badge"
                           style={{ 
                             padding: '6px 12px', 
                             borderRadius: '6px', 
@@ -670,8 +682,8 @@ export default function AdminDashboard() {
                           <option value="admin" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Admin</option>
                         </select>
                       </td>
-                      <td>
-                        <span style={{
+                      <td style={{ padding: '16px 8px' }}>
+                        <span className="admin-user-status-badge" style={{
                           fontSize: '0.75rem',
                           fontWeight: '600',
                           padding: '2px 8px',
@@ -682,7 +694,7 @@ export default function AdminDashboard() {
                           {usr.accountStatus}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="admin-user-actions-cell" style={{ padding: '16px 8px', textAlign: 'right' }}>
                         <button
                           onClick={() => handleToggleUserStatus(usr._id)}
                           disabled={usr._id === user?._id}
