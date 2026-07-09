@@ -811,3 +811,61 @@
   font-weight: 600;
   min-width: 28px;
 }
+
+/* ADMIN DASHBOARD ROW SPOTLIGHT EFFECT (OPTION 1) */
+.admin-user-row {
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+
+.admin-user-row td {
+  padding: 16px 8px;
+  transition: all 0.3s ease;
+}
+
+.admin-user-cell-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.admin-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--grad-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hover States */
+.admin-user-row:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+  box-shadow: inset 4px 0 0 var(--color-primary) !important;
+}
+
+.admin-user-row:hover .admin-user-cell-profile {
+  padding-left: 14px !important;
+}
+
+.admin-user-row:hover .admin-user-avatar,
+.admin-user-row:hover .admin-avatar-placeholder {
+  box-shadow: 0 0 0 3px var(--color-primary);
+  transform: scale(1.05);
+}
+

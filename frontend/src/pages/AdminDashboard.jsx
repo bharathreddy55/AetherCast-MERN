@@ -631,16 +631,16 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {usersList.map((usr) => (
-                    <tr key={usr._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                    <tr key={usr._id} className="admin-user-row">
                       <td 
                         onClick={() => fetchUserDetails(usr._id)}
-                        style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                        className="admin-user-cell-profile"
                         title="Click to view full user profile metrics"
                       >
                         {usr.avatar ? (
-                          <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                          <img src={window.getMediaUrl(usr.avatar)} alt="Avatar" className="admin-user-avatar" />
                         ) : (
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                          <div className="admin-avatar-placeholder">
                             {usr.name?.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
                           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>@{usr.username} • {usr.email}</p>
                         </div>
                       </td>
-                      <td style={{ padding: '16px 8px' }}>
+                      <td>
                         <select
                           value={usr.role}
                           onChange={(e) => handleChangeUserRole(usr._id, e.target.value)}
@@ -670,7 +670,7 @@ export default function AdminDashboard() {
                           <option value="admin" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Admin</option>
                         </select>
                       </td>
-                      <td style={{ padding: '16px 8px' }}>
+                      <td>
                         <span style={{
                           fontSize: '0.75rem',
                           fontWeight: '600',
@@ -682,7 +682,7 @@ export default function AdminDashboard() {
                           {usr.accountStatus}
                         </span>
                       </td>
-                      <td style={{ padding: '16px 8px', textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right' }}>
                         <button
                           onClick={() => handleToggleUserStatus(usr._id)}
                           disabled={usr._id === user?._id}
