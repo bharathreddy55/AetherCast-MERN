@@ -15,6 +15,7 @@ const {
   getEpisodesAdmin,
   deleteEpisodeAdmin,
   deleteUserAdmin,
+  getCommentsAdmin,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middlewares/auth');
 
@@ -40,6 +41,7 @@ router.delete('/episodes/:id', deleteEpisodeAdmin);
 router.get('/flagged', getFlaggedContent);
 
 // Comment actions
+router.get('/comments', getCommentsAdmin);
 router.delete('/comments/:id', deleteCommentAdmin);
 router.put('/comments/:id/dismiss', dismissCommentFlags);
 

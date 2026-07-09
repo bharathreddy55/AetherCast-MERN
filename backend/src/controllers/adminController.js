@@ -398,3 +398,33 @@ exports.deleteUserAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get all comments for Admin management (not just flagged ones)
+// @route   GET /api/admin/comments
+// @access  Private (Admin)
+exports.getCommentsAdmin = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const query = {};
+
+    if (search) {
+      query.content = { $regex: search, $options: 'i' };
+    }
+
+    const comments = await Comment.find(query)
+      .populate('userId', 'name username email')
+      .populate({
+        path: 'episodeId',
+        select: 'title',
+        populate: {
+          path: 'podcastId',
+          select: 'title'
+        }
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, comments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

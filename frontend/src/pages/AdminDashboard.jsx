@@ -43,6 +43,11 @@ export default function AdminDashboard() {
   const [episodesList, setEpisodesList] = useState([]);
   const [loadingEpisodes, setLoadingEpisodes] = useState(true);
 
+  // Global Comments CRUD
+  const [commentsList, setCommentsList] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentsSearch, setCommentsSearch] = useState('');
+
   useEffect(() => {
     if (activeSubTab === 'stats') {
       fetchStats();
@@ -54,6 +59,8 @@ export default function AdminDashboard() {
       fetchPodcasts();
     } else if (activeSubTab === 'episodes') {
       fetchEpisodes();
+    } else if (activeSubTab === 'comments') {
+      fetchComments(commentsSearch);
     }
   }, [activeSubTab, userPage, userRoleFilter, userStatusFilter]);
 
@@ -138,6 +145,22 @@ export default function AdminDashboard() {
       console.error(err);
     } finally {
       setLoadingEpisodes(false);
+    }
+  };
+
+  const fetchComments = async (searchVal = '') => {
+    setLoadingComments(true);
+    try {
+      const url = `${API_BASE_URL}/admin/comments${searchVal ? `?search=${encodeURIComponent(searchVal)}` : ''}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setCommentsList(data.comments);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingComments(false);
     }
   };
 
@@ -311,6 +334,35 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleDeleteCommentGlobal = (commentId) => {
+    setConfirmModal({
+      title: "Delete Comment?",
+      message: "Are you sure you want to permanently delete this comment? This cannot be undone.",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showNotification('Comment deleted successfully');
+            setCommentsList(prev => prev.filter(c => c._id !== commentId));
+            setFlaggedComments(prev => prev.filter(c => c._id !== commentId));
+            fetchStats();
+          } else {
+            showNotification(data.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showNotification('Failed to delete comment', 'error');
+        } finally {
+          setConfirmModal(null);
+        }
+      }
+    });
+  };
+
   const handleDismissComment = async (commentId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}/dismiss`, {
@@ -426,6 +478,14 @@ export default function AdminDashboard() {
         >
           <Music size={16} />
           Episodes CRUD
+        </button>
+        <button
+          onClick={() => setActiveSubTab('comments')}
+          className={activeSubTab === 'comments' ? 'btn-primary' : 'btn-secondary'}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '50px', fontSize: '0.85rem' }}
+        >
+          <MessageSquare size={16} />
+          Comments CRUD
         </button>
       </div>
 
@@ -825,6 +885,88 @@ export default function AdminDashboard() {
                           style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                         >
                           Delete Episode
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 6: COMMENTS CRUD */}
+      {activeSubTab === 'comments' && (
+        <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <h3 style={{ margin: 0 }}>Global Comments Management</h3>
+            <div style={{ display: 'flex', gap: '8px', width: '300px' }}>
+              <input
+                type="text"
+                placeholder="Search comments..."
+                value={commentsSearch}
+                onChange={(e) => setCommentsSearch(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: 'var(--bg-main)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  flexGrow: 1,
+                  fontSize: '0.85rem'
+                }}
+              />
+              <button 
+                onClick={() => fetchComments(commentsSearch)} 
+                className="btn-primary" 
+                style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+
+          {loadingComments ? (
+            <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>Loading comments...</div>
+          ) : commentsList.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>No comments found matching your query.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <th style={{ padding: '12px 8px' }}>Comment Text</th>
+                    <th style={{ padding: '12px 8px' }}>Author</th>
+                    <th style={{ padding: '12px 8px' }}>Episode & Show</th>
+                    <th style={{ padding: '12px 8px' }}>Date</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commentsList.map((c) => (
+                    <tr key={c._id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                      <td style={{ padding: '16px 8px', maxWidth: '300px', wordBreak: 'break-word', color: 'var(--text-primary)' }}>
+                        {c.content}
+                      </td>
+                      <td style={{ padding: '16px 8px' }}>
+                        <p style={{ margin: 0, color: 'var(--text-primary)' }}>{c.userId?.name || 'Deleted User'}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>@{c.userId?.username}</p>
+                      </td>
+                      <td style={{ padding: '16px 8px' }}>
+                        <p style={{ margin: 0, fontWeight: '600', color: 'var(--text-primary)' }}>{c.episodeId?.title || 'Deleted Episode'}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>{c.episodeId?.podcastId?.title}</p>
+                      </td>
+                      <td style={{ padding: '16px 8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: '16px 8px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleDeleteCommentGlobal(c._id)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                        >
+                          Delete Comment
                         </button>
                       </td>
                     </tr>
