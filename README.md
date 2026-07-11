@@ -1,6 +1,6 @@
-# VOX — Production-Style MERN Podcast Streaming Platform
+# AetherCast — Production-Style MERN Podcast Streaming Platform
 
-VOX is a production-ready, full-featured MERN stack podcast platform built for independent creators, listeners, and administrators. It features a custom green/dark dual-theme UI, a global sticky audio player, Supabase-secured authentication, interactive transcripts, AI-powered summaries, a creator drafts workspace, real-time listening parties, a full admin command center, and a premium custom cursor and navbar experience.
+AetherCast is a production-ready, full-featured MERN stack podcast platform built for independent creators, listeners, and administrators. It features a custom green/dark dual-theme UI, a global sticky audio player, Supabase-secured authentication, interactive transcripts, AI-powered summaries, a creator drafts workspace, real-time listening parties, a full admin command center, and a premium custom cursor and navbar experience.
 
 ### 🌐 Live Deployments
 - **Frontend App**: [aether-cast-mern.vercel.app](https://aether-cast-mern.vercel.app/)
