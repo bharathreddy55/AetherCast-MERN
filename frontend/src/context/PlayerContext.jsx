@@ -124,6 +124,23 @@ export const PlayerProvider = ({ children }) => {
     audioRef.current.playbackRate = playbackSpeed;
   }, [playbackSpeed]);
 
+  // Handle audio device change (headphones unplugged -> pause)
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      const handleDeviceChange = () => {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+          savePlaybackProgress(false);
+        }
+      };
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      return () => {
+        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+      };
+    }
+  }, [isPlaying]);
+
   // Save playback progress periodically (every 10 seconds)
   useEffect(() => {
     if (isPlaying && currentEpisode && token) {
@@ -162,7 +179,7 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-  const playEpisode = (episode, newPlaylist = []) => {
+  const playEpisode = async (episode, newPlaylist = []) => {
     if (!episode) return;
     
     initAnalyser();
@@ -190,10 +207,31 @@ export const PlayerProvider = ({ children }) => {
     const isSameEpisode = currentEpisode && currentEpisode._id === episode._id;
     
     if (!isSameEpisode) {
+      let startPosition = 0;
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/episodes/${episode._id}/progress`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success && data.progress && data.progress.position) {
+            if (!data.progress.completed) {
+              startPosition = data.progress.position;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch playback progress:', err);
+        }
+      }
+
       setCurrentEpisode(episode);
       audioRef.current.src = window.getMediaUrl(episode.audioUrl);
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.load();
+      if (startPosition > 0) {
+        audioRef.current.currentTime = startPosition;
+        setCurrentTime(startPosition);
+      }
     }
 
     audioRef.current.play()
