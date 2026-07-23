@@ -3,7 +3,19 @@ import { supabase } from '../supabase';
 
 const AuthContext = createContext(null);
 
-let rawBackendUrl = import.meta.env.VITE_API_URL || window.BACKEND_URL || 'http://localhost:5000';
+let rawBackendUrl = import.meta.env.VITE_API_URL || window.BACKEND_URL || '';
+if (!rawBackendUrl) {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      rawBackendUrl = 'http://localhost:5000';
+    } else {
+      rawBackendUrl = window.location.origin;
+    }
+  } else {
+    rawBackendUrl = 'http://localhost:5000';
+  }
+}
 if (rawBackendUrl.endsWith('/')) {
   rawBackendUrl = rawBackendUrl.slice(0, -1);
 }
