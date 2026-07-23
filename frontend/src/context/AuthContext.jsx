@@ -10,7 +10,7 @@ if (!rawBackendUrl) {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       rawBackendUrl = 'http://localhost:5000';
     } else {
-      rawBackendUrl = window.location.origin;
+      rawBackendUrl = 'https://podcast-backend-3lt7.onrender.com';
     }
   } else {
     rawBackendUrl = 'http://localhost:5000';

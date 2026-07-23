@@ -11,11 +11,12 @@
   },
   "rewrites": [
     {
-      "source": "/api(/.*)?",
-      "destination": {
-        "type": "service",
-        "service": "backend"
-      }
+      "source": "/api/(.*)",
+      "destination": "https://podcast-backend-3lt7.onrender.com/api/$1"
+    },
+    {
+      "source": "/api",
+      "destination": "https://podcast-backend-3lt7.onrender.com/api"
     },
     {
       "source": "/(.*)",
