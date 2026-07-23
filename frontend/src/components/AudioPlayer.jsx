@@ -3,7 +3,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
-  GripVertical, Maximize2, Minimize2
+  GripVertical, Maximize2, Minimize2, MessageSquare
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -36,6 +36,50 @@ export default function AudioPlayer() {
   const lyricsContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
   const { token, user } = useAuth();
+
+  // AI Chat States
+  const [showAiChat, setShowAiChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([
+    { sender: 'ai', text: 'Hi! Ask me anything about this episode\'s content.' }
+  ]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  useEffect(() => {
+    setChatHistory([
+      { sender: 'ai', text: 'Hi! Ask me anything about this episode\'s content.' }
+    ]);
+    setShowAiChat(false);
+  }, [currentEpisode]);
+
+  const handleSendChatMessage = async (e) => {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+
+    const userMsg = chatMessage.trim();
+    setChatMessage('');
+    setChatHistory(prev => [...prev, { sender: 'user', text: userMsg }]);
+    setChatLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: userMsg })
+      });
+      const data = await res.json();
+      if (data.success && data.answer) {
+        setChatHistory(prev => [...prev, { sender: 'ai', text: data.answer }]);
+      } else {
+        setChatHistory(prev => [...prev, { sender: 'ai', text: 'Sorry, I failed to process your question. Please try again.' }]);
+      }
+    } catch (err) {
+      console.error(err);
+      setChatHistory(prev => [...prev, { sender: 'ai', text: 'Error connecting to AI service.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   // Floating & Dragging states
   const [isFloating, setIsFloating] = useState(false);
@@ -227,6 +271,70 @@ export default function AudioPlayer() {
 
   return (
     <>
+      {/* AI Episode Copilot Chat slide-up panel */}
+      {showAiChat && (
+        <div className="lyrics-drawer glass-panel animate-scale-up" style={{ display: 'flex', flexDirection: 'column', height: '350px', zIndex: 100 }}>
+          <div className="lyrics-drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0, fontSize: '0.95rem' }}>
+              <MessageSquare size={16} style={{ color: 'var(--color-primary)' }} />
+              AI Episode Copilot
+            </h4>
+            <button onClick={() => setShowAiChat(false)} className="close-lyrics-btn" style={{ background: 'none', border: 0, color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {chatHistory.map((msg, idx) => (
+              <div 
+                key={idx} 
+                style={{
+                  alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  background: msg.sender === 'user' ? 'var(--color-primary)' : 'rgba(255,255,255,0.06)',
+                  color: 'var(--text-primary)',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  maxWidth: '80%',
+                  fontSize: '0.8rem',
+                  lineHeight: '1.4',
+                  boxShadow: msg.sender === 'user' ? '0 2px 8px rgba(255,122,0,0.2)' : 'none'
+                }}
+              >
+                {msg.text}
+              </div>
+            ))}
+            {chatLoading && (
+              <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                AI is thinking...
+              </div>
+            )}
+          </div>
+          <form onSubmit={handleSendChatMessage} style={{ borderTop: '1px solid var(--border-color)', padding: '10px 16px', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)' }}>
+            <input
+              type="text"
+              placeholder="Ask about this episode..."
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '50px',
+                padding: '8px 16px',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+            />
+            <button 
+              type="submit" 
+              disabled={chatLoading} 
+              className="btn-primary" 
+              style={{ padding: '8px 16px', borderRadius: '50px', fontSize: '0.85rem', height: '36px' }}
+            >
+              Ask
+            </button>
+          </form>
+        </div>
+      )}
+
       {/* Synced Lyrics slide-up panel */}
       {showLyrics && subtitles.length > 0 && (
         <div className="lyrics-drawer glass-panel" ref={lyricsContainerRef}>
@@ -366,12 +474,29 @@ export default function AudioPlayer() {
                 onClick={() => {
                   setShowListeningParty(!showListeningParty);
                   setShowLyrics(false);
+                  setShowAiChat(false);
                 }} 
                 className="volume-icon-btn"
                 style={{ color: showListeningParty ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
                 title="Join Listening Party"
               >
                 <Users size={18} />
+              </button>
+            )}
+
+            {/* AI Copilot Chat Button */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowAiChat(!showAiChat);
+                  setShowListeningParty(false);
+                  setShowLyrics(false);
+                }} 
+                className="volume-icon-btn"
+                style={{ color: showAiChat ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
+                title="AI Episode Copilot Chat"
+              >
+                <MessageSquare size={18} />
               </button>
             )}
 

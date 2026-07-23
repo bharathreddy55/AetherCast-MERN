@@ -18,6 +18,7 @@ const {
   generateAISummaryAndTags,
   getAllEpisodes,
   updateEpisodeTranscript,
+  askEpisodeAI
 } = require('../controllers/episodeController');
 const {
   addComment,
@@ -58,6 +59,7 @@ router.post('/:id/history', protect, addToListenHistory);
 
 // AI Features (Summary & Tags)
 router.post('/:id/ai-features', protect, generateAISummaryAndTags);
+router.post('/:id/chat', askEpisodeAI);
 
 // Transcript Editing
 router.put('/:id/transcript', protect, authorize('creator', 'admin'), updateEpisodeTranscript);

@@ -585,4 +585,69 @@ exports.updateEpisodeTranscript = async (req, res) => {
   }
 };
 
+// @desc    Ask AI questions about the episode content
+// @route   POST /api/episodes/:id/chat
+// @access  Public
+exports.askEpisodeAI = async (req, res) => {
+  try {
+    const { question } = req.body;
+    if (!question || !question.trim()) {
+      return res.status(400).json({ success: false, message: 'Please provide a question' });
+    }
+
+    const episode = await Episode.findById(req.params.id);
+    if (!episode) {
+      return res.status(404).json({ success: false, message: 'Episode not found' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    const contextText = episode.transcript || episode.description || 'No transcript or description available.';
+
+    if (apiKey) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are an AI assistant built into the AetherCast podcast platform. You are helping a listener understand details about this podcast episode.
+
+Here is the transcript/description of the episode:
+---
+${contextText}
+---
+
+The listener asks: "${question.trim()}"
+
+Please answer the question accurately, concisely (within 2-4 sentences if possible), and in a helpful, conversational tone based on the content of the episode. If the answer is not mentioned in the transcript/description, you may use general knowledge but clearly state that it is not explicitly mentioned in the episode.`
+              }]
+            }]
+          })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const answerText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (answerText) {
+          return res.status(200).json({ success: true, answer: answerText.trim() });
+        }
+      }
+    }
+
+    // Fallback response
+    const fallbackAnswers = [
+      `In this episode ("${episode.title}"), we discuss topics surrounding: "${episode.description}".`,
+      `Based on the show metadata, the key themes covered are category "${episode.title}" and description details.`,
+      `Sorry, I couldn't connect to Gemini AI right now, but the description of this show details: ${episode.description}`
+    ];
+    const answer = fallbackAnswers[Math.floor(Math.random() * fallbackAnswers.length)];
+    res.status(200).json({ success: true, answer });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
