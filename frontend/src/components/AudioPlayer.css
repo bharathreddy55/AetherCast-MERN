@@ -223,18 +223,30 @@
 }
 
 .speed-dropdown {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 0.8rem;
   color: var(--text-secondary);
   outline: none;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.speed-dropdown:hover {
+  border-color: var(--color-primary);
+  background: var(--hover-bg);
 }
 
 .speed-dropdown:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--spot-rgb), 0.15);
+}
+
+.speed-dropdown option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .volume-control-container {
