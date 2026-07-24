@@ -4,7 +4,7 @@ import {
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
   GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp, X,
-  Sliders, Bookmark, Trash2, Download
+  Sliders, Bookmark, Trash2, Download, Sparkles
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -55,6 +55,7 @@ export default function AudioPlayer() {
   const videoContainerRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
+  const [showFeaturesMenu, setShowFeaturesMenu] = useState(false);
 
   // AI Chat States
   const [showAiChat, setShowAiChat] = useState(false);
@@ -653,6 +654,309 @@ export default function AudioPlayer() {
         </div>
       )}
 
+      {/* Features Popover Menu */}
+      {showFeaturesMenu && (
+        <div 
+          className="glass-panel animate-scale-up" 
+          style={{
+            position: 'fixed',
+            bottom: isFloating ? 'auto' : '110px',
+            right: isFloating ? 'auto' : '180px',
+            left: isFloating ? `${dragPos.x + 80}px` : 'auto',
+            top: isFloating ? `${dragPos.y - 325}px` : 'auto',
+            width: '240px',
+            borderRadius: '16px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--glass-shadow)',
+            zIndex: 101,
+            overflow: 'hidden',
+            background: 'var(--bg-card)',
+            backdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.15)' }}>
+            <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>
+              Episode Features
+            </h4>
+            <button onClick={() => setShowFeaturesMenu(false)} style={{ background: 'none', border: 0, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', padding: 0 }}>×</button>
+          </div>
+
+          <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            
+            {/* Equalizer */}
+            <button 
+              onClick={() => {
+                setShowEqPanel(true);
+                setShowFeaturesMenu(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                width: '100%',
+                background: 'none',
+                border: 0,
+                borderRadius: '8px',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+            >
+              <Sliders size={16} style={{ color: 'var(--color-primary)' }} />
+              <span>Audio Equalizer</span>
+            </button>
+
+            {/* Smart Bookmarks */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowBookmarks(true);
+                  setShowFeaturesMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <Bookmark size={16} style={{ color: 'var(--color-primary)' }} />
+                <span>Bookmarks & Notes</span>
+              </button>
+            )}
+
+            {/* AI Copilot Chat */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowAiChat(true);
+                  setShowFeaturesMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <MessageSquare size={16} style={{ color: 'var(--color-primary)' }} />
+                <span>AI Episode Copilot</span>
+              </button>
+            )}
+
+            {/* Listening Party */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowListeningParty(true);
+                  setShowFeaturesMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <Users size={16} style={{ color: 'var(--color-primary)' }} />
+                <span>Listening Party</span>
+              </button>
+            )}
+
+            {/* Download/Offline Toggle */}
+            {token && (
+              <button 
+                onClick={() => {
+                  downloaded ? handleRemoveDownload() : handleDownload();
+                  setShowFeaturesMenu(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  borderRadius: '8px',
+                  color: downloaded ? '#10b981' : 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <Download size={16} style={{ color: downloaded ? '#10b981' : 'var(--color-primary)' }} />
+                <span>{downloaded ? "Remove Download" : (downloading ? "Downloading..." : "Download Offline")}</span>
+              </button>
+            )}
+
+            {/* Like Episode */}
+            {token && (
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/like`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await res.json();
+                    if (data.success) setLiked(data.liked);
+                  } catch (err) { console.error(err); }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <Heart size={16} fill={liked ? '#ef4444' : 'none'} style={{ color: liked ? '#ef4444' : 'var(--color-primary)' }} />
+                <span>{liked ? "Liked Episode" : "Like Episode"}</span>
+              </button>
+            )}
+
+            {/* Share Episode */}
+            <button 
+              onClick={() => {
+                const url = `${window.location.origin}/podcast/${currentEpisode.podcastId?._id}`;
+                if (navigator.share) {
+                  navigator.share({ title: currentEpisode.title, text: `Check out "${currentEpisode.title}" on VOX!`, url }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(url);
+                  alert('Copied link to clipboard!');
+                }
+                setShowFeaturesMenu(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                width: '100%',
+                background: 'none',
+                border: 0,
+                borderRadius: '8px',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+            >
+              <Share2 size={16} style={{ color: 'var(--color-primary)' }} />
+              <span>Share Episode</span>
+            </button>
+            
+            {/* Divider */}
+            <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 8px' }} />
+
+            {/* Sleep Timer Option inline */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <Moon size={15} style={{ color: 'var(--color-primary)' }} />
+                <span>Sleep Timer</span>
+              </div>
+              <select
+                value={sleepTimeRemaining === null ? 'off' : sleepTimeRemaining}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'off') {
+                    setSleepTimeRemaining(null);
+                  } else {
+                    setSleepTimeRemaining(parseInt(val, 10));
+                  }
+                }}
+                className="speed-dropdown"
+                style={{ maxWidth: '80px', fontSize: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', padding: '2px 4px' }}
+              >
+                <option value="off">Off</option>
+                <option value="900">15 min</option>
+                <option value="1800">30 min</option>
+                <option value="2700">45 min</option>
+                <option value="3600">1 hour</option>
+              </select>
+            </div>
+
+            {/* Playback Speed Option inline */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <Gauge size={15} style={{ color: 'var(--color-primary)' }} />
+                <span>Speed</span>
+              </div>
+              <select
+                value={playbackSpeed}
+                onChange={(e) => changeSpeed(parseFloat(e.target.value))}
+                className="speed-dropdown"
+                style={{ maxWidth: '80px', fontSize: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', padding: '2px 4px' }}
+              >
+                <option value="0.5">0.5x</option>
+                <option value="1">1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Equalizer Control Panel */}
       {showEqPanel && (
         <div 
@@ -975,137 +1279,6 @@ export default function AudioPlayer() {
               </button>
             )}
 
-            {/* Listening Party Button */}
-            {token && (
-              <button 
-                onClick={() => {
-                  setShowListeningParty(!showListeningParty);
-                  setShowLyrics(false);
-                  setShowAiChat(false);
-                }} 
-                className="volume-icon-btn"
-                style={{ color: showListeningParty ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
-                title="Join Listening Party"
-              >
-                <Users size={18} />
-              </button>
-            )}
-
-            {/* AI Copilot Chat Button */}
-            {token && (
-              <button 
-                onClick={() => {
-                  setShowAiChat(!showAiChat);
-                  setShowListeningParty(false);
-                  setShowLyrics(false);
-                }} 
-                className="volume-icon-btn"
-                style={{ color: showAiChat ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
-                title="AI Episode Copilot Chat"
-              >
-                <MessageSquare size={18} />
-              </button>
-            )}
-
-            {/* Equalizer Toggle Button */}
-            <button 
-              onClick={() => {
-                setShowEqPanel(!showEqPanel);
-                setShowLyrics(false);
-                setShowListeningParty(false);
-                setShowAiChat(false);
-                setShowBookmarks(false);
-              }} 
-              className="volume-icon-btn"
-              style={{ color: showEqPanel ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
-              title="Audio Equalizer"
-            >
-              <Sliders size={18} />
-            </button>
-
-            {/* Smart Bookmarks Toggle Button */}
-            {token && (
-              <button 
-                onClick={() => {
-                  setShowBookmarks(!showBookmarks);
-                  setShowLyrics(false);
-                  setShowListeningParty(false);
-                  setShowAiChat(false);
-                  setShowEqPanel(false);
-                }} 
-                className="volume-icon-btn"
-                style={{ color: showBookmarks ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
-                title="Episode Bookmarks & Notes"
-              >
-                <Bookmark size={18} />
-              </button>
-            )}
-
-            {/* Download/Offline Toggle Button */}
-            {token && (
-              <button 
-                onClick={downloaded ? handleRemoveDownload : handleDownload} 
-                disabled={downloading}
-                className="volume-icon-btn"
-                style={{ 
-                  color: downloaded ? '#10b981' : (downloading ? 'var(--color-primary)' : 'var(--text-secondary)'), 
-                  cursor: 'pointer', 
-                  background: 'none', 
-                  border: 0, 
-                  padding: '4px', 
-                  marginRight: '8px'
-                }}
-                title={downloaded ? "Remove Downloaded Episode" : (downloading ? "Downloading..." : "Download Episode for Offline")}
-              >
-                <Download size={18} style={{ animation: downloading ? 'spin 1.5s linear infinite' : 'none' }} />
-              </button>
-            )}
-
-            {/* Sleep Timer */}
-            <div className="speed-control sleep-timer-control" style={{ marginRight: '12px', display: 'flex', alignItems: 'center' }}>
-              <Moon size={16} className="aux-icon" style={{ color: sleepTimeRemaining !== null ? '#a855f7' : 'var(--text-secondary)' }} />
-              <select
-                value={sleepTimeRemaining === null ? 'off' : sleepTimeRemaining}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'off') {
-                    setSleepTimeRemaining(null);
-                  } else {
-                    setSleepTimeRemaining(parseInt(val, 10));
-                  }
-                }}
-                className="speed-dropdown"
-                title="Sleep Timer"
-              >
-                <option value="off">Off</option>
-                <option value="900">15 min</option>
-                <option value="1800">30 min</option>
-                <option value="2700">45 min</option>
-                <option value="3600">1 hour</option>
-              </select>
-              {sleepTimeRemaining !== null && (
-                <span style={{ fontSize: '0.65rem', color: '#a855f7', marginLeft: '4px' }}>
-                  {Math.ceil(sleepTimeRemaining / 60)}m
-                </span>
-              )}
-            </div>
-
-            {/* Speed Selector */}
-            <div className="speed-control speed-selector-control">
-              <Gauge size={16} className="aux-icon" />
-              <select
-                value={playbackSpeed}
-                onChange={(e) => changeSpeed(parseFloat(e.target.value))}
-                className="speed-dropdown"
-              >
-                <option value="0.5">0.5x</option>
-                <option value="1">1.0x</option>
-                <option value="1.25">1.25x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2.0x</option>
-              </select>
-            </div>
-
             {/* Volume Control (Vertical Hover Popover) */}
             <div className="volume-control-container">
               <div className="volume-slider-popover">
@@ -1125,48 +1298,37 @@ export default function AudioPlayer() {
               <button 
                 onClick={() => changeVolume(volume === 0 ? 0.8 : 0)} 
                 className="volume-icon-btn"
-                style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '6px' }}
                 title="Volume"
               >
                 {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
             </div>
 
-            {/* Share & Like */}
+            {/* Features Menu Button */}
             <button
-              onClick={() => {
-                const url = `${window.location.origin}/podcast/${currentEpisode.podcastId?._id}`;
-                if (navigator.share) {
-                  navigator.share({ title: currentEpisode.title, text: `Check out "${currentEpisode.title}" on VOX!`, url }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(url);
-                }
+              onClick={() => setShowFeaturesMenu(!showFeaturesMenu)}
+              className="volume-icon-btn features-menu-btn"
+              style={{
+                color: showFeaturesMenu ? 'var(--color-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                background: 'none',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '50px',
+                padding: '4px 10px',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginRight: '8px',
+                background: showFeaturesMenu ? 'rgba(255, 122, 0, 0.1)' : 'rgba(255, 255, 255, 0.02)'
               }}
-              className="volume-icon-btn"
-              style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
-              title="Share Episode"
+              title="Episode Features"
             >
-              <Share2 size={18} />
+              <Sparkles size={14} />
+              <span>Features</span>
             </button>
-            {token && (
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/like`, {
-                      method: 'POST',
-                      headers: { Authorization: `Bearer ${token}` },
-                    });
-                    const data = await res.json();
-                    if (data.success) setLiked(data.liked);
-                  } catch (err) { console.error(err); }
-                }}
-                className="volume-icon-btn"
-                style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', color: liked ? '#ef4444' : 'var(--text-secondary)' }}
-                title={liked ? 'Unlike' : 'Like'}
-              >
-                <Heart size={18} fill={liked ? '#ef4444' : 'none'} />
-              </button>
-            )}
             {/* Float / Dock Toggle */}
             <button
               onClick={(e) => {
