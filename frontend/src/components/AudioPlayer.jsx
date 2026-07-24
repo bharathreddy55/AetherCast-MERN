@@ -3,7 +3,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
-  GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp
+  GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp, X
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -27,6 +27,7 @@ export default function AudioPlayer() {
     changeVolume,
     playNext,
     playPrevious,
+    closePlayer,
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
@@ -316,6 +317,13 @@ export default function AudioPlayer() {
             title="Expand Player"
           >
             <ChevronUp size={16} />
+          </button>
+          <button 
+            onClick={closePlayer} 
+            className="player-collapsed-close-btn"
+            title="Close Player"
+          >
+            <X size={14} />
           </button>
         </div>
       </div>
@@ -692,6 +700,19 @@ export default function AudioPlayer() {
               title="Collapse Player"
             >
               <ChevronDown size={18} />
+            </button>
+
+            {/* Close/Stop Player Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                closePlayer();
+              }}
+              className="volume-icon-btn"
+              style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              title="Close Player"
+            >
+              <X size={18} />
             </button>
 
           </div>

@@ -288,6 +288,15 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
+  const closePlayer = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsPlaying(false);
+    savePlaybackProgress(false);
+    setCurrentEpisode(null);
+  };
+
   return (
     <PlayerContext.Provider
       value={{
@@ -308,6 +317,7 @@ export const PlayerProvider = ({ children }) => {
         changeVolume,
         playNext,
         playPrevious,
+        closePlayer,
       }}
     >
       {children}
