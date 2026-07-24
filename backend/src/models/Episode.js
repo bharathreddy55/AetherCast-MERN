@@ -56,6 +56,19 @@ const episodeSchema = new mongoose.Schema(
     aiTags: [{
       type: String,
     }],
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+    mediaType: {
+      type: String,
+      enum: ['audio', 'video'],
+      default: 'audio',
+    },
   },
   {
     timestamps: true,

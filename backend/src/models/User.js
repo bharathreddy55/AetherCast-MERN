@@ -81,6 +81,10 @@ const userSchema = new mongoose.Schema(
       podcastId: { type: mongoose.Schema.Types.ObjectId, ref: 'Podcast' },
       listenedAt: { type: Date, default: Date.now },
     }],
+    purchasedEpisodes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Episode',
+    }],
   },
   {
     timestamps: true,

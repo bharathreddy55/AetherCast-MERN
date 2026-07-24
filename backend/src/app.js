@@ -14,6 +14,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
 
 // Environment Validation
 const requiredEnv = ['MONGO_URI', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET'];
@@ -102,6 +104,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {

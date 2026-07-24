@@ -43,12 +43,12 @@ router.get('/liked', protect, getLikedEpisodes);
 
 // Episode CRUD
 router.route('/:id')
-  .get(getEpisodeById)
+  .get(optionalProtect, getEpisodeById)
   .put(protect, authorize('creator', 'admin'), upload.single('audio'), updateEpisode)
   .delete(protect, authorize('creator', 'admin'), deleteEpisode);
 
 // Streaming & Stats
-router.get('/:id/stream', streamEpisode);
+router.get('/:id/stream', optionalProtect, streamEpisode);
 router.post('/:id/play', incrementPlayCount);
 
 // Like / Unlike

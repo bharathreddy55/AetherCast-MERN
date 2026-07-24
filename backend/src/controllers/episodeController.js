@@ -79,9 +79,6 @@ exports.getEpisodesByPodcast = async (req, res) => {
   }
 };
 
-// @desc    Get a single episode
-// @route   GET /api/episodes/:id
-// @access  Public
 exports.getEpisodeById = async (req, res) => {
   try {
     const episode = await Episode.findById(req.params.id).populate('podcastId');
@@ -89,7 +86,15 @@ exports.getEpisodeById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Episode not found' });
     }
 
-    res.status(200).json({ success: true, episode });
+    const isAuthorized = 
+      !episode.isPremium || 
+      (req.user && (
+        req.user.role === 'admin' || 
+        (episode.podcastId && episode.podcastId.creatorId && episode.podcastId.creatorId.toString() === req.user._id.toString()) || 
+        req.user.purchasedEpisodes.includes(episode._id.toString())
+      ));
+
+    res.status(200).json({ success: true, episode, isAuthorized });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -182,21 +187,34 @@ exports.deleteEpisode = async (req, res) => {
 // @access  Public
 exports.streamEpisode = async (req, res) => {
   try {
-    const episode = await Episode.findById(req.params.id);
+    const episode = await Episode.findById(req.params.id).populate('podcastId');
     if (!episode) {
       return res.status(404).json({ success: false, message: 'Episode not found' });
+    }
+
+    const isAuthorized = 
+      !episode.isPremium || 
+      (req.user && (
+        req.user.role === 'admin' || 
+        (episode.podcastId && episode.podcastId.creatorId && episode.podcastId.creatorId.toString() === req.user._id.toString()) || 
+        req.user.purchasedEpisodes.includes(episode._id.toString())
+      ));
+
+    if (!isAuthorized) {
+      return res.status(402).json({ success: false, message: 'Payment Required: This is a premium episode.' });
     }
 
     // Resolve file path
     const audioPath = path.join(__dirname, '../../', episode.audioUrl);
 
     if (!fs.existsSync(audioPath)) {
-      return res.status(404).json({ success: false, message: 'Audio file not found on server' });
+      return res.status(404).json({ success: false, message: 'Media file not found on server' });
     }
 
     const stat = fs.statSync(audioPath);
     const fileSize = stat.size;
     const range = req.headers.range;
+    const contentType = episode.mediaType === 'video' ? 'video/mp4' : 'audio/mpeg';
 
     if (range) {
       const parts = range.replace(/bytes=/, '').split('-');
@@ -208,14 +226,14 @@ exports.streamEpisode = async (req, res) => {
         'Content-Range': `bytes ${start}-${end}/${fileSize}`,
         'Accept-Ranges': 'bytes',
         'Content-Length': chunksize,
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': contentType,
       };
       res.writeHead(206, head);
       file.pipe(res);
     } else {
       const head = {
         'Content-Length': fileSize,
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': contentType,
       };
       res.writeHead(200, head);
       fs.createReadStream(audioPath).pipe(res);

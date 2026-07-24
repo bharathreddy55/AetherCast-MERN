@@ -15,12 +15,19 @@ export const PlayerProvider = ({ children }) => {
   const [playlist, setPlaylist] = useState([]);
   const [subtitles, setSubtitles] = useState([]);
   const [analyser, setAnalyser] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(true);
+  const [eqGains, setEqGains] = useState({ low: 0, mid: 0, high: 0 });
+  const [eqPreset, setEqPreset] = useState('flat');
   
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(document.createElement('video'));
   const progressIntervalRef = useRef(null);
   const analyserRef = useRef(null);
   const audioCtxRef = useRef(null);
 
+  const lowFilterRef = useRef(null);
+  const midFilterRef = useRef(null);
+  const highFilterRef = useRef(null);
+  
   // Initialize analyser node securely on first playback interaction
   const initAnalyser = () => {
     if (analyserRef.current) return;
@@ -33,16 +40,77 @@ export const PlayerProvider = ({ children }) => {
       // Enable CORS on audio
       audioRef.current.crossOrigin = "anonymous";
 
+      // Create filter nodes
+      const lowFilter = ctx.createBiquadFilter();
+      lowFilter.type = 'lowshelf';
+      lowFilter.frequency.value = 150; // low band frequency limit
+      lowFilter.gain.value = eqGains.low;
+
+      const midFilter = ctx.createBiquadFilter();
+      midFilter.type = 'peaking';
+      midFilter.Q.value = 1.0;
+      midFilter.frequency.value = 1000; // mid band frequency
+      midFilter.gain.value = eqGains.mid;
+
+      const highFilter = ctx.createBiquadFilter();
+      highFilter.type = 'highshelf';
+      highFilter.frequency.value = 8000; // high band frequency limit
+      highFilter.gain.value = eqGains.high;
+
       const source = ctx.createMediaElementSource(audioRef.current);
-      source.connect(analyserNode);
+      
+      // Connect series: source -> low -> mid -> high -> analyser -> destination
+      source.connect(lowFilter);
+      lowFilter.connect(midFilter);
+      midFilter.connect(highFilter);
+      highFilter.connect(analyserNode);
       analyserNode.connect(ctx.destination);
 
       audioCtxRef.current = ctx;
       analyserRef.current = analyserNode;
       setAnalyser(analyserNode);
+
+      lowFilterRef.current = lowFilter;
+      midFilterRef.current = midFilter;
+      highFilterRef.current = highFilter;
     } catch (e) {
       console.error('Failed to initialize AudioContext', e);
     }
+  };
+
+  const changeEqualizer = (band, val) => {
+    setEqGains(prev => {
+      const newGains = { ...prev, [band]: val };
+      if (band === 'low' && lowFilterRef.current) {
+        lowFilterRef.current.gain.value = val;
+      } else if (band === 'mid' && midFilterRef.current) {
+        midFilterRef.current.gain.value = val;
+      } else if (band === 'high' && highFilterRef.current) {
+        highFilterRef.current.gain.value = val;
+      }
+      setEqPreset('custom');
+      return newGains;
+    });
+  };
+
+  const applyPreset = (presetName) => {
+    let gains = { low: 0, mid: 0, high: 0 };
+    if (presetName === 'bass-boost') {
+      gains = { low: 6, mid: 0, high: -2 };
+    } else if (presetName === 'voice-clarity') {
+      gains = { low: -4, mid: 4, high: 3 };
+    } else if (presetName === 'classic-podcast') {
+      gains = { low: 2, mid: 3, high: 1 };
+    } else if (presetName === 'music') {
+      gains = { low: 4, mid: -1, high: 4 };
+    }
+    
+    setEqPreset(presetName);
+    setEqGains(gains);
+
+    if (lowFilterRef.current) lowFilterRef.current.gain.value = gains.low;
+    if (midFilterRef.current) midFilterRef.current.gain.value = gains.mid;
+    if (highFilterRef.current) highFilterRef.current.gain.value = gains.high;
   };
 
   // Parse timestamps like [MM:SS] Subtitle Text
@@ -182,19 +250,48 @@ export const PlayerProvider = ({ children }) => {
   const playEpisode = async (episode, newPlaylist = []) => {
     if (!episode) return;
     
+    let authorized = true;
+    let finalEpisode = { ...episode };
+
+    // Fetch the latest details of the episode from the backend (to verify premium auth and get mediaType)
+    try {
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const epRes = await fetch(`${API_BASE_URL}/episodes/${episode._id}`, { headers });
+      const epData = await epRes.json();
+      if (epData.success) {
+        authorized = epData.isAuthorized;
+        setIsAuthorized(authorized);
+        finalEpisode = epData.episode;
+      }
+    } catch (err) {
+      console.error('Failed to verify episode details:', err);
+    }
+
+    if (!authorized) {
+      setCurrentEpisode(finalEpisode);
+      setIsPlaying(false);
+      audioRef.current.pause();
+      return;
+    }
+
+    setIsAuthorized(true);
+
     initAnalyser();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
     
     // Increment playCount on the backend asynchronously
-    fetch(`${API_BASE_URL}/episodes/${episode._id}/play`, {
+    fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/play`, {
       method: 'POST',
     }).catch(err => console.error('Failed to increment play count', err));
 
     // Track in listen history
     if (token) {
-      fetch(`${API_BASE_URL}/episodes/${episode._id}/history`, {
+      fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/history`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(err => console.error('Failed to add to listen history', err));
@@ -204,13 +301,13 @@ export const PlayerProvider = ({ children }) => {
       setPlaylist(newPlaylist);
     }
 
-    const isSameEpisode = currentEpisode && currentEpisode._id === episode._id;
+    const isSameEpisode = currentEpisode && currentEpisode._id === finalEpisode._id;
     
     if (!isSameEpisode) {
       let startPosition = 0;
       if (token) {
         try {
-          const res = await fetch(`${API_BASE_URL}/episodes/${episode._id}/progress`, {
+          const res = await fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/progress`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await res.json();
@@ -224,8 +321,8 @@ export const PlayerProvider = ({ children }) => {
         }
       }
 
-      setCurrentEpisode(episode);
-      audioRef.current.src = window.getMediaUrl(episode.audioUrl);
+      setCurrentEpisode(finalEpisode);
+      audioRef.current.src = window.getMediaUrl(finalEpisode.audioUrl);
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.load();
       if (startPosition > 0) {
@@ -241,6 +338,7 @@ export const PlayerProvider = ({ children }) => {
 
   const togglePlay = () => {
     if (!currentEpisode) return;
+    if (!isAuthorized) return; // Block play if not authorized
 
     initAnalyser();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
@@ -318,6 +416,13 @@ export const PlayerProvider = ({ children }) => {
         playNext,
         playPrevious,
         closePlayer,
+        audioRef,
+        isAuthorized,
+        setIsAuthorized,
+        eqGains,
+        eqPreset,
+        changeEqualizer,
+        applyPreset,
       }}
     >
       {children}

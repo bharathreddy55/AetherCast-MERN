@@ -3,7 +3,8 @@ import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
-  GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp, X
+  GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp, X,
+  Sliders, Bookmark, Trash2, Download
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -28,6 +29,13 @@ export default function AudioPlayer() {
     playNext,
     playPrevious,
     closePlayer,
+    audioRef,
+    isAuthorized,
+    eqGains,
+    eqPreset,
+    changeEqualizer,
+    applyPreset,
+    playEpisode,
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
@@ -37,6 +45,16 @@ export default function AudioPlayer() {
   const lyricsContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
   const { token, user } = useAuth();
+  
+  // New Enhanced States
+  const [transcriptSearchQuery, setTranscriptSearchQuery] = useState('');
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [newBookmarkNote, setNewBookmarkNote] = useState('');
+  const [showEqPanel, setShowEqPanel] = useState(false);
+  const videoContainerRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
 
   // AI Chat States
   const [showAiChat, setShowAiChat] = useState(false);
@@ -238,6 +256,163 @@ export default function AudioPlayer() {
     }
   }, [currentSubtitle, showLyrics]);
 
+  // 1. Fetch bookmarks for current episode
+  const fetchBookmarks = async () => {
+    if (!token || !currentEpisode) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/episode/${currentEpisode._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookmarks(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch bookmarks', err);
+    }
+  };
+
+  useEffect(() => {
+    if (showBookmarks) {
+      fetchBookmarks();
+    }
+  }, [showBookmarks, currentEpisode]);
+
+  // 2. Bookmark form submit handler
+  const handleAddBookmark = async (e) => {
+    e.preventDefault();
+    if (!newBookmarkNote.trim() || !token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookmarks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          episodeId: currentEpisode._id,
+          timestamp: currentTime,
+          note: newBookmarkNote
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewBookmarkNote('');
+        fetchBookmarks();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 3. Delete bookmark handler
+  const handleDeleteBookmark = async (bookmarkId) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchBookmarks();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 4. simulated Stripe checkout for premium episodes
+  const handleBuyEpisode = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/payments/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ episodeId: currentEpisode._id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Re-load the episode to trigger the verification check and retrieve auth
+        playEpisode(currentEpisode);
+      }
+    } catch (err) {
+      console.error('Simulated checkout failed:', err);
+    }
+  };
+
+  // 5. Mount video element if episode is video
+  useEffect(() => {
+    if (videoContainerRef.current && currentEpisode?.mediaType === 'video' && audioRef.current) {
+      videoContainerRef.current.appendChild(audioRef.current);
+      audioRef.current.style.width = '100%';
+      audioRef.current.style.height = '100%';
+      audioRef.current.style.objectFit = 'contain';
+      
+      // Ensure visual controls for native HTML video element are hidden since we build custom UI
+      audioRef.current.controls = false;
+      
+      return () => {
+        if (videoContainerRef.current && videoContainerRef.current.contains(audioRef.current)) {
+          videoContainerRef.current.removeChild(audioRef.current);
+        }
+      };
+    }
+  }, [currentEpisode, isCollapsed, showLyrics, showListeningParty, showAiChat, showBookmarks, isAuthorized]);
+
+  // 6. Check if episode is downloaded in Service Worker Cache
+  const checkIsDownloaded = async () => {
+    if (!currentEpisode) return;
+    try {
+      const cache = await caches.open('vox-audio-v1');
+      const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
+      const match = await cache.match(mediaUrl, { ignoreSearch: true });
+      setDownloaded(!!match);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    checkIsDownloaded();
+  }, [currentEpisode]);
+
+  const handleDownload = async () => {
+    if (!currentEpisode) return;
+    setDownloading(true);
+    const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
+    try {
+      const cache = await caches.open('vox-audio-v1');
+      const response = await fetch(mediaUrl);
+      if (response.status === 200) {
+        await cache.put(mediaUrl, response);
+        setDownloaded(true);
+      } else {
+        alert('Failed to download: Server returned ' + response.status);
+      }
+    } catch (err) {
+      console.error('Failed to cache for offline:', err);
+      alert('Failed to save for offline usage.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleRemoveDownload = async () => {
+    if (!currentEpisode) return;
+    const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
+    try {
+      const cache = await caches.open('vox-audio-v1');
+      await cache.delete(mediaUrl, { ignoreSearch: true });
+      setDownloaded(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!currentEpisode) return null;
 
   const formatTime = (seconds) => {
@@ -396,27 +571,243 @@ export default function AudioPlayer() {
         </div>
       )}
 
+      {/* Smart Bookmarks / Notes Drawer */}
+      {showBookmarks && token && (
+        <div className="lyrics-drawer glass-panel animate-scale-up" style={{ display: 'flex', flexDirection: 'column', height: '350px', zIndex: 100 }}>
+          <div className="lyrics-drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0, fontSize: '0.95rem' }}>
+              <Bookmark size={16} style={{ color: 'var(--color-primary)' }} />
+              Timestamp Bookmarks & Notes
+            </h4>
+            <button onClick={() => setShowBookmarks(false)} className="close-lyrics-btn" style={{ background: 'none', border: 0, color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }}>×</button>
+          </div>
+          
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {bookmarks.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '20px' }}>No bookmarks saved for this episode. Add one below!</p>
+            ) : (
+              bookmarks.map((bm) => (
+                <div 
+                  key={bm._id} 
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'rgba(255,255,255,0.04)',
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <div 
+                    onClick={() => seek(bm.timestamp)} 
+                    style={{ flex: 1, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}
+                  >
+                    <span style={{ fontSize: '0.7rem', color: 'var(--color-primary)', fontWeight: '600' }}>
+                      {formatTime(bm.timestamp)}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {bm.note}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteBookmark(bm._id)}
+                    style={{ background: 'none', border: 0, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                    title="Delete Bookmark"
+                  >
+                    <Trash2 size={14} onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <form onSubmit={handleAddBookmark} style={{ borderTop: '1px solid var(--border-color)', padding: '10px 16px', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', alignSelf: 'center', fontWeight: '600' }}>
+              {formatTime(currentTime)}
+            </span>
+            <input
+              type="text"
+              placeholder="Add note at this timestamp..."
+              value={newBookmarkNote}
+              onChange={(e) => setNewBookmarkNote(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '50px',
+                padding: '8px 16px',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+            />
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              style={{ padding: '8px 16px', borderRadius: '50px', fontSize: '0.85rem', height: '36px' }}
+            >
+              Add
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Equalizer Control Panel */}
+      {showEqPanel && (
+        <div 
+          className="glass-panel animate-scale-up" 
+          style={{
+            position: 'fixed',
+            bottom: isFloating ? 'auto' : '110px',
+            right: isFloating ? 'auto' : '150px',
+            left: isFloating ? `${dragPos.x}px` : 'auto',
+            top: isFloating ? `${dragPos.y - 195}px` : 'auto',
+            width: '220px',
+            padding: '16px',
+            borderRadius: '16px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--glass-shadow)',
+            zIndex: 102,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
+              Audio Equalizer
+            </h4>
+            <button onClick={() => setShowEqPanel(false)} style={{ background: 'none', border: 0, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>PRESETS</label>
+            <select 
+              value={eqPreset} 
+              onChange={(e) => applyPreset(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px',
+                borderRadius: '6px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                fontSize: '0.75rem',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="flat">Flat (Default)</option>
+              <option value="bass-boost">Bass Boost</option>
+              <option value="voice-clarity">Voice Clarity</option>
+              <option value="classic-podcast">Classic Podcast</option>
+              <option value="music">Music Boost</option>
+              <option value="custom" disabled>Custom</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <span>Bass (Low)</span>
+                <span>{eqGains.low > 0 ? `+${eqGains.low}` : eqGains.low} dB</span>
+              </div>
+              <input 
+                type="range"
+                min="-10"
+                max="10"
+                step="1"
+                value={eqGains.low}
+                onChange={(e) => changeEqualizer('low', parseFloat(e.target.value))}
+                style={{ width: '100%', height: '4px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <span>Vocal (Mid)</span>
+                <span>{eqGains.mid > 0 ? `+${eqGains.mid}` : eqGains.mid} dB</span>
+              </div>
+              <input 
+                type="range"
+                min="-10"
+                max="10"
+                step="1"
+                value={eqGains.mid}
+                onChange={(e) => changeEqualizer('mid', parseFloat(e.target.value))}
+                style={{ width: '100%', height: '4px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <span>Treble (High)</span>
+                <span>{eqGains.high > 0 ? `+${eqGains.high}` : eqGains.high} dB</span>
+              </div>
+              <input 
+                type="range"
+                min="-10"
+                max="10"
+                step="1"
+                value={eqGains.high}
+                onChange={(e) => changeEqualizer('high', parseFloat(e.target.value))}
+                style={{ width: '100%', height: '4px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Synced Lyrics slide-up panel */}
       {showLyrics && subtitles.length > 0 && (
-        <div className="lyrics-drawer glass-panel" ref={lyricsContainerRef}>
-          <div className="lyrics-drawer-header">
-            <h4>Live Synced Subtitles</h4>
-            <button onClick={() => setShowLyrics(false)} className="close-lyrics-btn">×</button>
+        <div className="lyrics-drawer glass-panel" ref={lyricsContainerRef} style={{ zIndex: 101 }}>
+          <div className="lyrics-drawer-header" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4>Live Synced Subtitles</h4>
+              <button onClick={() => setShowLyrics(false)} className="close-lyrics-btn">×</button>
+            </div>
+            <input 
+              type="text"
+              placeholder="Search transcript..."
+              value={transcriptSearchQuery}
+              onChange={(e) => setTranscriptSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8rem',
+                outline: 'none'
+              }}
+            />
           </div>
           <div className="lyrics-drawer-body">
-            {subtitles.map((sub, idx) => {
-              const isActive = currentSubtitle && currentSubtitle.time === sub.time;
-              return (
-                <div 
-                  key={idx} 
-                  onClick={() => seek(sub.time)}
-                  className={`lyric-line ${isActive ? 'active' : ''}`}
-                >
-                  <span className="lyric-time">{formatTime(sub.time)}</span>
-                  <span className="lyric-text">{sub.text}</span>
-                </div>
-              );
-            })}
+            {subtitles
+              .filter(sub => sub.text.toLowerCase().includes(transcriptSearchQuery.toLowerCase()))
+              .map((sub, idx) => {
+                const isActive = currentSubtitle && currentSubtitle.time === sub.time;
+                const highlightText = (text, query) => {
+                  if (!query) return text;
+                  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+                  return parts.map((part, index) => 
+                    part.toLowerCase() === query.toLowerCase() 
+                      ? <mark key={index} style={{ backgroundColor: 'var(--color-primary)', color: '#fff', borderRadius: '2px', padding: '0 2px' }}>{part}</mark> 
+                      : part
+                  );
+                };
+                return (
+                  <div 
+                    key={idx} 
+                    onClick={() => seek(sub.time)}
+                    className={`lyric-line ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="lyric-time">{formatTime(sub.time)}</span>
+                    <span className="lyric-text">{highlightText(sub.text, transcriptSearchQuery)}</span>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}
@@ -441,16 +832,71 @@ export default function AudioPlayer() {
           </div>
         )}
 
-        <div className="player-container">
-          
-          {/* Drag Handle */}
-          <div className="player-drag-handle" title="Drag to float or reposition player">
-            <GripVertical size={16} />
+        {!isAuthorized ? (
+          /* Premium Paywall Screen */
+          <div className="player-paywall-container" style={{ display: 'flex', flexDirection: isFloating ? 'column' : 'row', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%', padding: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', textAlign: isFloating ? 'center' : 'left', flexDirection: isFloating ? 'column' : 'row', minWidth: 0, flex: 1 }}>
+              {currentEpisode.podcastId?.coverImage ? (
+                <img 
+                  src={window.getMediaUrl(currentEpisode.podcastId.coverImage)} 
+                  alt="Cover" 
+                  className="player-cover-art" 
+                />
+              ) : (
+                <div className="player-cover-placeholder">
+                  <Music size={20} />
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <p className="player-track-title" style={{ fontSize: '0.85rem' }}>🔒 Premium: {currentEpisode.title}</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Unlock this episode to listen</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', width: isFloating ? '100%' : 'auto', justifyContent: 'center' }}>
+              <button 
+                onClick={handleBuyEpisode}
+                className="btn-primary" 
+                style={{ padding: '8px 16px', borderRadius: '50px', fontSize: '0.8rem', height: '32px', whiteSpace: 'nowrap' }}
+              >
+                Buy for ${currentEpisode.price || '1.99'}
+              </button>
+              <button 
+                onClick={closePlayer}
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 12px', borderRadius: '50px', fontSize: '0.8rem', cursor: 'pointer', height: '32px' }}
+              >
+                Close
+              </button>
+            </div>
           </div>
+        ) : (
+          <div className="player-container">
+            
+            {/* Drag Handle */}
+            <div className="player-drag-handle" title="Drag to float or reposition player">
+              <GripVertical size={16} />
+            </div>
           
           {/* Track Details */}
           <div className="player-track-info">
-            {currentEpisode.podcastId?.coverImage ? (
+            {currentEpisode.mediaType === 'video' ? (
+              <div 
+                ref={videoContainerRef} 
+                className="player-video-container"
+                style={{
+                  width: isFloating ? '100%' : '80px',
+                  height: isFloating ? '100px' : '56px',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  background: '#000',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              />
+            ) : currentEpisode.podcastId?.coverImage ? (
               <img 
                 src={window.getMediaUrl(currentEpisode.podcastId.coverImage)} 
                 alt="Cover" 
@@ -558,6 +1004,60 @@ export default function AudioPlayer() {
                 title="AI Episode Copilot Chat"
               >
                 <MessageSquare size={18} />
+              </button>
+            )}
+
+            {/* Equalizer Toggle Button */}
+            <button 
+              onClick={() => {
+                setShowEqPanel(!showEqPanel);
+                setShowLyrics(false);
+                setShowListeningParty(false);
+                setShowAiChat(false);
+                setShowBookmarks(false);
+              }} 
+              className="volume-icon-btn"
+              style={{ color: showEqPanel ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
+              title="Audio Equalizer"
+            >
+              <Sliders size={18} />
+            </button>
+
+            {/* Smart Bookmarks Toggle Button */}
+            {token && (
+              <button 
+                onClick={() => {
+                  setShowBookmarks(!showBookmarks);
+                  setShowLyrics(false);
+                  setShowListeningParty(false);
+                  setShowAiChat(false);
+                  setShowEqPanel(false);
+                }} 
+                className="volume-icon-btn"
+                style={{ color: showBookmarks ? 'var(--color-primary-hover)' : 'var(--text-secondary)', cursor: 'pointer', background: 'none', border: 0, padding: '4px', marginRight: '8px' }}
+                title="Episode Bookmarks & Notes"
+              >
+                <Bookmark size={18} />
+              </button>
+            )}
+
+            {/* Download/Offline Toggle Button */}
+            {token && (
+              <button 
+                onClick={downloaded ? handleRemoveDownload : handleDownload} 
+                disabled={downloading}
+                className="volume-icon-btn"
+                style={{ 
+                  color: downloaded ? '#10b981' : (downloading ? 'var(--color-primary)' : 'var(--text-secondary)'), 
+                  cursor: 'pointer', 
+                  background: 'none', 
+                  border: 0, 
+                  padding: '4px', 
+                  marginRight: '8px'
+                }}
+                title={downloaded ? "Remove Downloaded Episode" : (downloading ? "Downloading..." : "Download Episode for Offline")}
+              >
+                <Download size={18} style={{ animation: downloading ? 'spin 1.5s linear infinite' : 'none' }} />
               </button>
             )}
 
@@ -718,6 +1218,7 @@ export default function AudioPlayer() {
           </div>
 
         </div>
+        )}
       </div>
 
       {/* Listening Party slide-up panel */}
