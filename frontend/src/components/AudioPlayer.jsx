@@ -678,7 +678,7 @@ export default function AudioPlayer() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.15)' }}>
             <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>
-              Episode Features
+              More Options
             </h4>
             <button onClick={() => setShowFeaturesMenu(false)} style={{ background: 'none', border: 0, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', padding: 0 }}>×</button>
           </div>
@@ -1324,10 +1324,10 @@ export default function AudioPlayer() {
                 marginRight: '8px',
                 background: showFeaturesMenu ? 'rgba(255, 122, 0, 0.1)' : 'rgba(255, 255, 255, 0.02)'
               }}
-              title="Episode Features"
+              title="More Options"
             >
               <Sparkles size={14} />
-              <span>Features</span>
+              <span>More</span>
             </button>
             {/* Float / Dock Toggle */}
             <button
