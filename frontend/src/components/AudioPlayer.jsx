@@ -3,7 +3,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Gauge, Music, AlignLeft, Share2, Heart, Moon, Users,
-  GripVertical, Maximize2, Minimize2, MessageSquare
+  GripVertical, Maximize2, Minimize2, MessageSquare, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
@@ -85,6 +85,7 @@ export default function AudioPlayer() {
   const [isFloating, setIsFloating] = useState(false);
   const [dragPos, setDragPos] = useState({ x: window.innerWidth - 360, y: window.innerHeight - 300 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const playerPosStart = useRef({ x: 0, y: 0 });
 
@@ -268,6 +269,58 @@ export default function AudioPlayer() {
   const hasPrevious = playlist.findIndex((ep) => ep._id === currentEpisode._id) > 0;
 
   const percentage = duration ? (currentTime / duration) * 100 : 0;
+
+  if (isCollapsed) {
+    return (
+      <div 
+        className="audio-player-collapsed glass-panel animate-scale-up"
+        onClick={() => setIsCollapsed(false)}
+        title="Click to expand audio player"
+        style={isFloating ? {
+          position: 'fixed',
+          left: `${dragPos.x}px`,
+          top: `${dragPos.y}px`,
+          bottom: 'auto',
+          right: 'auto',
+          transform: 'none',
+        } : {}}
+      >
+        {currentEpisode.podcastId?.coverImage ? (
+          <img 
+            src={window.getMediaUrl(currentEpisode.podcastId.coverImage)} 
+            alt="Cover" 
+            className={`player-collapsed-cover ${isPlaying ? 'spinning' : ''}`} 
+          />
+        ) : (
+          <div className="player-collapsed-placeholder">
+            <Music size={16} />
+          </div>
+        )}
+        <div className="player-collapsed-info">
+          <p className="player-collapsed-title">{currentEpisode.title}</p>
+          <span className="player-collapsed-status">
+            {isPlaying ? 'Playing' : 'Paused'}
+          </span>
+        </div>
+        <div className="player-collapsed-controls" onClick={(e) => e.stopPropagation()}>
+          <button 
+            onClick={handlePlayClick} 
+            className="player-collapsed-play-btn"
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" style={{ marginLeft: '1px' }} />}
+          </button>
+          <button 
+            onClick={() => setIsCollapsed(false)} 
+            className="player-collapsed-expand-btn"
+            title="Expand Player"
+          >
+            <ChevronUp size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -626,6 +679,19 @@ export default function AudioPlayer() {
               title={isFloating ? "Dock Player to Bottom" : "Float Player"}
             >
               {isFloating ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
+
+            {/* Collapse Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed(true);
+              }}
+              className="volume-icon-btn"
+              style={{ background: 'none', border: 0, padding: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              title="Collapse Player"
+            >
+              <ChevronDown size={18} />
             </button>
 
           </div>
