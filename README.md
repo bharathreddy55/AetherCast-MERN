@@ -8,7 +8,7 @@ AetherCast is a production-ready, full-featured MERN stack podcast platform buil
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack & Architecture 
 
 - **Frontend**: React 18 (Vite), Context API, React Router v6, Lucide Icons, Canvas API, IntersectionObserver, Service Workers (PWA).
 - **Backend**: Node.js, Express.js, MVC Architecture, Mongoose ODM, Multer file uploads.
