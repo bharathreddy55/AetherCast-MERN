@@ -78,6 +78,18 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining:** Real two-device/browser WebSocket verification and hosted deployment are pending. Room state and limits currently use one Node process; distributed/multi-instance coordination is not implemented. These private rooms are optional and do not add public invitations or guest access.
 - **Next:** Add the music catalog foundation (tracks, artists, albums, and media assets), then connect it to music imports and the library.
 
+### 2026-10-28 — Change 7: Owner-scoped music catalog foundation
+
+- **Done locally:** Add Artist, Album, Track and MediaAsset models with immutable owners and catalog indexes. Keep podcast collections and episode playlists unchanged.
+- **Done locally:** Store primary/featured credits, compilation albums, artwork references, release dates, disc/track numbers, genres, language and explicit flags. MediaAsset holds private object references, format/codec/size/checksum information and processing state.
+- **Done locally:** Add protected list/detail/create/edit/soft-delete routes for artists, albums and tracks, with bounded pagination, literal search, and stable album ordering. Validate references against the authenticated owner and reject arbitrary ownership/source/status fields.
+- **Done locally:** Require owned ready audio for track creation, derive duration from the asset, and provide a dedicated short-lived track playback endpoint. Asset metadata is read-only through this API; future server imports manage asset creation and processing.
+- **Done locally:** Return explicit DTOs, hide object locations/credentials, and scope populated relations. Block deleting referenced artists/albums, soft-delete tracks, and retain original media for recovery. Add owner/checksum and active-track/asset duplicate protection.
+- **Done locally:** Document the API and additive migration/rollout plan in `MUSIC_CATALOG.md`. Initial music playlists will be separate from podcasts; mixed playlists are outside the first release.
+- **Verified:** All 137 backend tests pass. New tests cover schema validation, reference ownership, list/population scoping, ordering, invalid filters/IDs, soft deletion, duplicate handling, asset metadata privacy and temporary playback. Controller/utility syntax and whitespace checks pass. Frontend code is unchanged in this batch; its prior 28 passing tests and successful build remain the latest frontend verification.
+- **Remaining:** No live MongoDB migration, backup, music upload, metadata extraction, frontend music screen, or track-player integration has been performed. Existing podcast data is preserved. The current React player still calls episode APIs; the new track API is a foundation for the next import/library step.
+- **Next:** Implement server-side music importing and metadata extraction, then add the music library and player integration.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -111,7 +123,7 @@ Source references: `backend/src/middlewares/auth.js`, `backend/src/controllers/a
 
 - [ ] Store music and private artwork in private object storage with restrictive storage policies.
 - [ ] Store object keys and media metadata in the database instead of permanent public media URLs.
-  - New uploads store stable object references; existing rows are interpreted compatibly at delivery. Full MediaAsset metadata and stored-reference migration remain pending.
+  - New uploads store stable object references and new music MediaAsset records support file metadata. Existing podcast rows are interpreted compatibly at delivery; stored-reference migration remains pending.
 - [x] Issue short-lived playback/download URLs after checking ownership, or provide an authenticated streaming endpoint.
 - [x] Stop returning usable protected media URLs to unauthorized clients.
 - [ ] Audit list, detail, search, playlist, and podcast endpoints for private media and draft visibility.
@@ -141,18 +153,22 @@ The current `backend/src/controllers/paymentController.js` simulates a purchase 
 
 ## 4. Music catalog and data migration — P1
 
-- [ ] Add separate **Artist**, **Album**, **Track**, and **MediaAsset** models.
-- [ ] Track artist credits, album artists, album artwork, release date/year, disc number, track number, duration, genre, language, and optional explicit-content metadata.
-- [ ] Support multiple artists and compilation albums.
-- [ ] Store media format, codec, bitrate, sample rate where useful, byte size, object key, checksum, and processing status.
-- [ ] Add owner scoping to personal records and enforce it in database queries.
+- [x] Add separate **Artist**, **Album**, **Track**, and **MediaAsset** models.
+- [x] Track artist credits, album artists, album artwork, release date/year, disc number, track number, duration, genre, language, and optional explicit-content metadata.
+- [x] Support multiple artists and compilation albums.
+- [x] Store media format, codec, bitrate, sample rate where useful, byte size, object key, checksum, and processing status.
+- [x] Add owner scoping to personal records and enforce it in database queries.
+  - Applied to new music records and references. Existing podcast schemas remain unchanged.
 - [ ] Add saved albums, followed artists, liked tracks, listening events, and user playback preferences.
 - [ ] Introduce playlist items with stable IDs and explicit positions so reordering and repeated tracks have defined behavior.
-- [ ] Keep music tracks distinct from podcast episodes; define whether mixed playlists are supported.
+- [x] Keep music tracks distinct from podcast episodes; define whether mixed playlists are supported.
 - [ ] Define deletion behavior for tracks referenced by playlists, likes, downloads, and history.
+  - Track soft deletion and retention of originals are implemented; music-playlist/like/download/history reference behavior will be completed with those features.
 - [ ] Add indexes for ownership, artist/album relationships, search, playlist ordering, and listening history.
+  - Catalog ownership, artist/album relationships, ordering and duplicate indexes are implemented. Music-playlist/history indexes remain pending.
 - [ ] Move growing listening-history collections out of the user document; avoid unbounded embedded arrays.
-- [ ] Write a migration plan for existing podcast playlists, media URLs, history, and user records.
+- [x] Write a migration plan for existing podcast playlists, media URLs, history, and user records.
+  - See `MUSIC_CATALOG.md`; use additive collections and preserve existing podcast IDs/records. No live conversion has been run.
 - [ ] Back up existing data and make migration steps repeatable before applying them.
 
 Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/src/models/Podcast.js`, `backend/src/models/Playlist.js`, and `backend/src/models/User.js`.

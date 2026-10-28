@@ -76,3 +76,9 @@ The first joined device becomes host. Other owner devices can follow playback or
 Per-owner limits across connected devices reset each minute: 10 join/leave actions, 120 playback/host actions, and 30 chat messages. Messages are limited to 1000 characters; transport packets are capped at 16 KiB. Room state, host election, and counters currently reside in one server process and reset on restart.
 
 Deploy the persistent Node backend through `backend/src/server.js` for Socket.io support. The serverless REST entrypoint alone does not provide this feature. Before relying on rooms, test two owner devices, guest rejection, joining/rejoining, host transfer, token refresh/expiry, disconnect counts, invalid events, and rate-limit recovery against the hosted backend. Multi-instance deployments need shared room/limit coordination before enabling rooms across instances.
+
+## Music catalog rollout
+
+The new `/api/music` routes use the same owner authentication and private media delivery. They add separate Artist, Album, Track and MediaAsset collections, preserving existing podcast collections and IDs. See `MUSIC_CATALOG.md` for the API, index/deletion rules and additive rollout plan.
+
+No extra environment variables are introduced by the catalog. Existing private storage setup still applies. Verify the new MongoDB indexes and back up the library before real imports. The current website/player remains podcast-oriented until the import and music-library integration steps are completed; catalog APIs alone do not add a visible upload/listening workflow.

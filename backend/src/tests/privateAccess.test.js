@@ -127,6 +127,11 @@ test.each([
   ['get', '/api/recommendations'],
   ['post', '/api/episodes/example/play'],
   ['post', '/api/episodes/example/chat'],
+  ['get', '/api/music/artists'],
+  ['get', '/api/music/albums'],
+  ['get', '/api/music/tracks'],
+  ['get', '/api/music/tracks/507f1f77bcf86cd799439011/playback'],
+  ['get', '/api/music/assets/507f1f77bcf86cd799439011'],
 ])('blocks anonymous %s %s', async (method, route) => {
   const response = await request(app)[method](route);
   expect(response.status).toBe(401);
@@ -140,4 +145,13 @@ test('blocks a signed-in non-owner from browsing the catalog', async () => {
   const response = await request(app).get('/api/podcasts').set('Authorization', `Bearer ${token}`);
   expect(response.status).toBe(403);
   expect(User.findOne).not.toHaveBeenCalled();
+});
+
+test('owner requests with malformed music identifiers are rejected before database lookup', async () => {
+  const token = jwt.sign({ sub: ownerId, email: 'owner@example.com' }, secret, {
+    algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m',
+  });
+  const result = await request(app).get('/api/music/tracks/not-an-id').set('Authorization', `Bearer ${token}`);
+  expect(result.status).toBe(400);
+  expect(result.body.message).toBe('Invalid music record ID');
 });
