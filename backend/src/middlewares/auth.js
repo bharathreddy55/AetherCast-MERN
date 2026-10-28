@@ -1,87 +1,8 @@
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const crypto = require('crypto');
 const { requireOwnerIdentity } = require('../config/privateAccess');
 
-let cachedJWKS = null;
-let lastJWKSFetch = 0;
-
-const getSupabaseJWKS = async () => {
-  const now = Date.now();
-  if (cachedJWKS && (now - lastJWKSFetch < 3600000)) {
-    return cachedJWKS;
-  }
-
-  try {
-    const rawUrl = process.env.SUPABASE_URL || 'https://qapyqxqdswrocuoutdfs.supabase.co';
-    const jwksUrl = `${rawUrl.replace(/\/$/, '')}/auth/v1/.well-known/jwks.json`;
-    const anonKey = process.env.SUPABASE_ANON_KEY || '';
-
-    const headers = {};
-    if (anonKey) {
-      headers['apikey'] = anonKey;
-      headers['Authorization'] = `Bearer ${anonKey}`;
-    }
-
-    const res = await fetch(jwksUrl, { headers });
-    if (!res.ok) {
-      throw new Error(`HTTP error ${res.status}`);
-    }
-    const data = await res.json();
-    if (data && data.keys) {
-      cachedJWKS = data.keys;
-      lastJWKSFetch = now;
-      return cachedJWKS;
-    }
-    throw new Error('Invalid JWKS response');
-  } catch (err) {
-    console.error('Failed to fetch Supabase JWKS:', err.message);
-    if (cachedJWKS) return cachedJWKS;
-    throw err;
-  }
-};
-
-const verifySupabaseToken = async (token) => {
-  const decodedToken = jwt.decode(token, { complete: true });
-  if (!decodedToken) {
-    throw new Error('Invalid token format');
-  }
-
-  const { alg, kid } = decodedToken.header;
-  
-  // Whitelist algorithms to prevent algorithm confusion/signature bypass attacks
-  if (alg !== 'ES256' && alg !== 'HS256') {
-    throw new Error(`Unsupported JWT algorithm: ${alg}`);
-  }
-
-  let secretOrPublicKey;
-
-  if (alg === 'ES256') {
-    const keys = await getSupabaseJWKS();
-    const jwk = keys.find(k => k.kid === kid);
-    if (!jwk) {
-      throw new Error(`JWK for kid ${kid} not found`);
-    }
-    secretOrPublicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
-  } else {
-    const rawSecret = process.env.SUPABASE_JWT_SECRET || 'your-supabase-jwt-secret-here';
-    
-    // Prevent fallback secret in production
-    if (process.env.NODE_ENV === 'production' && rawSecret === 'your-supabase-jwt-secret-here') {
-      throw new Error('SUPABASE_JWT_SECRET environment variable is missing in production!');
-    }
-
-    secretOrPublicKey = rawSecret.length > 40 ? Buffer.from(rawSecret, 'base64') : rawSecret;
-  }
-
-  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
-  if (!supabaseUrl) throw new Error('SUPABASE_URL is required');
-  return jwt.verify(token, secretOrPublicKey, {
-    algorithms: [alg],
-    issuer: `${supabaseUrl}/auth/v1`,
-    audience: 'authenticated',
-  });
-};
+const { verifySupabaseToken } = require('../utils/supabaseTokens');
 
 const protect = async (req, res, next) => {
   if (req.user) return next();

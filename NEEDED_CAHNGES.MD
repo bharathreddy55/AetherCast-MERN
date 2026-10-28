@@ -55,6 +55,17 @@ This document is the implementation checklist and progress record. Checked items
 - **Limitations:** No live deployment or phone/browser playback session was performed. Offline write retry after reload, multi-device conflict resolution, music-specific resume defaults, and full queue behavior remain pending. Network/browser termination can still prevent a final save from arriving.
 - **Next:** Continue the remaining P0 authentication/storage checks and add the music catalog foundation before expanding queue and music-library behavior.
 
+### 2026-10-28 — Change 5: Signing-key rotation and explicit website access
+
+- **Done locally:** Extract Supabase token verification into a project-scoped verifier. Cache public signing keys for ten minutes, refresh when a new key ID appears, share concurrent fetches, bound repeated unknown-key refreshes, and time out failed fetches. Expired caches are not used after a failed refresh.
+- **Done locally:** Require token expiry and verify the signing key's type/curve/use, algorithm, issuer, audience and signature. Legacy HS256 is accepted only with an explicitly configured real secret, used as its exact string; secret length no longer triggers incorrect base64 decoding.
+- **Done locally:** Remove the hardcoded Supabase project fallback, placeholder JWT secrets, and unused custom registration/login/Google-token/OTP/refresh controllers. Existing MongoDB profiles and historical password fields are preserved; owner sign-in and refresh continue through Supabase.
+- **Done locally:** Share an explicit website-origin policy between HTTP, socket polling, and WebSocket upgrade checks. Permit only `CLIENT_URL` and individually listed `ADDITIONAL_CLIENT_ORIGINS`; arbitrary Vercel subdomains and localhost ports are rejected. Development permits localhost/127.0.0.1 on port 5173. Requests without an Origin header still require the existing API authentication checks.
+- **Done locally:** Validate required production configuration before serving requests, including project URL, owner UUID, storage/media credentials, MongoDB URI and HTTPS client origins. Legacy JWT secret and backend anon key are no longer required for ES256 verification. Frontend Supabase public-key configuration remains required separately.
+- **Verified:** All 94 backend tests pass. New coverage exercises signing-key rotation, shared fetches, cache expiry, failed refreshes, project isolation, forged/expired tokens, long raw legacy secrets, origin matching, production validation, and HTTP preflight/authentication behavior. Modified server modules pass syntax checks and the patch passes whitespace checks. Frontend source is unchanged in this batch; its previous 22 passing tests and successful build remain the latest frontend verification.
+- **Hosted setup pending:** Set `CLIENT_URL=https://aether-cast-mern.vercel.app` on the deployed backend. List each approved preview/custom domain explicitly if needed. Complete the earlier private storage and owner setup before expecting deployment to run.
+- **Remaining:** Socket origin checks do not replace socket owner authentication, room permissions, or event limits; those remain unchecked. Real Supabase rotation and hosted deployment have not been exercised from this workspace.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -71,14 +82,14 @@ This document is the implementation checklist and progress record. Checked items
 - [x] Assign roles through trusted server-side operations. Never create an administrator from user-editable Supabase `user_metadata.role`.
 - [x] Use the Supabase user ID (`sub`) as the durable external identity, with a unique database field, rather than relying only on email matching.
 - [x] Validate JWT issuer and audience as well as signature, allowed algorithm, and expiry.
-- [ ] Handle signing-key rotation by refreshing the key set when an unfamiliar key ID is encountered.
-- [ ] Remove placeholder authentication secrets and validate required configuration at startup.
+- [x] Handle signing-key rotation by refreshing the key set when an unfamiliar key ID is encountered.
+- [x] Remove placeholder authentication secrets and validate required configuration at startup.
 - [x] Check suspended/disabled account status in authentication middleware on every protected request.
 - [x] Await profile synchronization before completing authentication loading or redirecting protected pages.
 - [ ] Handle expired sessions, failed profile loads, refresh, logout, and account changes with clear recovery states.
-- [ ] Consolidate authentication around Supabase; retire unused legacy password, token, and OTP flows after checking callers and migrating any required data.
+- [x] Consolidate authentication around Supabase; retire unused legacy password, token, and OTP flows after checking callers and migrating any required data.
 - [x] Remove OTP handlers that return success without performing verification.
-- [ ] Restrict credentialed CORS to explicitly configured origins instead of accepting every Vercel subdomain.
+- [x] Restrict credentialed CORS to explicitly configured origins instead of accepting every Vercel subdomain.
 - [ ] Apply appropriate rate limits to authentication, uploads, search, and expensive processing.
 - [ ] If listening parties remain, authenticate sockets and enforce room membership, host permissions, payload limits, and event rate limits.
 

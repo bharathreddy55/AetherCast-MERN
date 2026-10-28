@@ -6,6 +6,7 @@ const { rateLimit } = require('express-rate-limit');
 const { protect } = require('./middlewares/auth');
 const { privateMediaResponses, getMediaSecret } = require('./utils/mediaLinks');
 const { deliverMedia } = require('./controllers/mediaController');
+const { validateProduction, corsOrigin } = require('./config/security');
 
 const authRoutes = require('./routes/authRoutes');
 const podcastRoutes = require('./routes/podcastRoutes');
@@ -19,17 +20,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 
-// Environment Validation
-const requiredEnv = ['MONGO_URI', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET', 'OWNER_SUPABASE_USER_ID', 'SUPABASE_SERVICE_ROLE_KEY', 'MEDIA_SIGNING_SECRET'];
-const missingEnv = requiredEnv.filter((key) => !process.env[key]);
-if (missingEnv.length > 0) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(`CRITICAL CONFIGURATION ERROR: Missing required environment variables in production: ${missingEnv.join(', ')}`);
-  } else {
-    console.warn(`WARNING: Missing environment variables for local development: ${missingEnv.join(', ')}`);
-  }
-}
-
+validateProduction();
 if (process.env.NODE_ENV === 'production') getMediaSecret();
 const app = express();
 
@@ -51,34 +42,8 @@ app.use(
   })
 );
 
-// CORS configuration to allow credential exchange (cookies)
-const isOriginAllowed = (origin) => {
-  if (!origin) return true;
-  let clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-  if (clientUrl.endsWith('/')) {
-    clientUrl = clientUrl.slice(0, -1);
-  }
-  return [
-    'http://localhost:5173',
-    'http://localhost:5000',
-    clientUrl
-  ].includes(origin) || 
-  origin.endsWith('.vercel.app') || 
-  origin.startsWith('http://localhost:');
-};
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (isOriginAllowed(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+// HTTP and Socket.io share the same explicit origin policy.
+app.use(cors({ origin: corsOrigin, credentials: true }));
 
 // Body Parsers & Cookie Parser
 app.use(express.json());

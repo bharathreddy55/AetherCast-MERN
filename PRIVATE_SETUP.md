@@ -56,3 +56,13 @@ Progress is sampled from the actual attached media every ten seconds while playi
 Natural completion records the full duration; positions at or above 95% are considered completed. The player keeps recent checkpoints in memory for quick returns and resumes after metadata is available. Finished episodes restart at zero. Existing content remains podcast-oriented; music-track resume rules will be added with the music catalog.
 
 Page-hide/unmount saves use browser `keepalive` as a best effort. Progress changes made offline are not yet persisted in a retry queue, and a browser/process termination can lose the latest unsent position. Cross-device write conflicts are not resolved in this phase. These changes need deployment and actual device verification.
+
+## Signing keys and allowed website origins
+
+- Set `CLIENT_URL=https://aether-cast-mern.vercel.app` on the backend host. Production requires an explicit HTTPS origin with no path, query, credentials, or wildcard.
+- If preview builds or a custom domain need access, list those exact origins in `ADDITIONAL_CLIENT_ORIGINS`, separated by commas. Other Vercel subdomains are denied. Local development allows `http://localhost:5173` and `http://127.0.0.1:5173`; other local ports need explicit configuration.
+- HTTP requests, Socket.io polling, and WebSocket upgrades use the same origin list. This does not complete socket owner/room authentication, which remains on the checklist.
+- ES256 verification uses the configured Supabase project's public key endpoint. The server refreshes on an unfamiliar key ID, shares in-flight fetches, and limits forced refreshes to once per 30 seconds. Normal key caching lasts ten minutes. Keys are not shared between projects, and an expired cache is not used when refresh fails.
+- `SUPABASE_JWT_SECRET` is optional for an ES256-only project. If the project still issues legacy HS256 tokens, configure the exact legacy secret string; the app does not guess an encoding from its length. Placeholder values and short production secrets are rejected.
+- Backend ES256 verification no longer needs `SUPABASE_ANON_KEY`. The frontend still requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Supabase sign-in; the server still needs its private storage credential for media.
+- Legacy application JWT/OTP login code has been removed. No user records or historical password hashes were deleted. Public registration remains closed in the application; hosted Supabase signup settings must also remain disabled.

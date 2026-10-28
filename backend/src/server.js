@@ -20,34 +20,12 @@ const startServer = async () => {
 
   // Initialize Socket.io
   const { Server } = require('socket.io');
-  const isOriginAllowed = (origin) => {
-    if (!origin) return true;
-    let clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    if (clientUrl.endsWith('/')) {
-      clientUrl = clientUrl.slice(0, -1);
-    }
-    return [
-      'http://localhost:5173',
-      'http://localhost:5000',
-      clientUrl
-    ].includes(origin) || 
-    origin.endsWith('.vercel.app') || 
-    origin.startsWith('http://localhost:');
-  };
-
+  const { corsOrigin, isOriginAllowed } = require('./config/security');
   const io = new Server(server, {
-    cors: {
-      origin: (origin, callback) => {
-        if (isOriginAllowed(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      },
-      credentials: true
-    }
+    cors: { origin: corsOrigin, credentials: true },
+    // WebSocket upgrades also need this check; CORS alone covers HTTP polling.
+    allowRequest: (req, callback) => callback(null, isOriginAllowed(req.headers.origin)),
   });
-
   io.on('connection', (socket) => {
     console.log(`WebSocket client connected: ${socket.id}`);
 
