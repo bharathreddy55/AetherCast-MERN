@@ -1,6 +1,6 @@
 # AetherCast — A Production-Style MERN Podcast Streaming Platform
 
-AetherCast is a production-ready, full-featured MERN stack podcast platform built for independent creators, listeners, and administrators. It features a custom green/dark dual-theme UI, a global sticky audio player, Supabase-secured authentication, interactive transcripts, AI-powered summaries, a creator drafts workspace, real-time listening parties, a full admin command center, and a premium custom cursor and navbar experience.
+AetherCast is being adapted into a private, ad-free music app for the owner's library, with optional podcasts. Follow [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for progress, [PRIVATE_SETUP.md](PRIVATE_SETUP.md) for required deployment settings, and [MUSIC_IMPORTS.md](MUSIC_IMPORTS.md) for music imports. Music browsing/player integration and hosted verification remain pending. The podcast platform documentation below describes the original app and may differ from current owner-only behavior.
 
 ### 🌐 Live Deployments
 - **Frontend App**: [aether-cast-mern.vercel.app](https://aether-cast-mern.vercel.app/)
@@ -116,7 +116,7 @@ erDiagram
 ## 🚀 Installation & Setup
 
 ### 1. Prerequisites
-- Node.js v18+
+- Node.js v22+
 - MongoDB Atlas cluster URL
 - Supabase Project URL & Anon Key
 - Google Gemini API Key (optional, for AI features)

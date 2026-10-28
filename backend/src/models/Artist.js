@@ -5,7 +5,9 @@ const schema = new mongoose.Schema({
   name: { type: String, required: true, trim: true, maxlength: 200 },
   biography: { type: String, trim: true, maxlength: 5000, default: '' },
   imageAssetId: reference('MediaAsset'),
+  importKey: { type: String, select: false },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 schema.index({ ownerId: 1, deletedAt: 1, name: 1 });
+schema.index({ ownerId: 1, importKey: 1 }, { unique: true, partialFilterExpression: { importKey: { $type: 'string' }, deletedAt: null } });
 module.exports = mongoose.model('Artist', schema);

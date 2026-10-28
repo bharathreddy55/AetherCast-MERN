@@ -17,6 +17,8 @@ const startServer = async () => {
   const server = app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   });
+  const stopImports = require('./services/musicImportWorker').startMusicImportWorker();
+  server.on('close', stopImports);
 
   // Initialize Socket.io
   const { Server } = require('socket.io');

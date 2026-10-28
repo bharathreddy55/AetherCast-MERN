@@ -76,6 +76,7 @@ export default function Navbar() {
             { to: '/', label: 'Explore', icon: <Compass size={16} /> },
             ...(user ? [
               { to: '/home', label: 'Home', icon: <Music size={16} /> },
+              { to: '/music/import', label: 'Import Music', icon: <Music size={16} /> },
               { to: '/playlists', label: 'Playlists', icon: <ListMusic size={16} /> },
               { to: '/library', label: 'Library', icon: <Clock size={16} /> },
               ...(user.role === 'creator' ? [{ to: '/creator', label: 'Dashboard', icon: <LayoutDashboard size={16} /> }] : []),
@@ -300,6 +301,7 @@ export default function Navbar() {
                   <ListMusic size={18} />
                   <span>Playlists</span>
                 </Link>
+                <Link to="/music/import" className={`mobile-nav-link ${isActive('/music/import') ? 'active' : ''}`}><Music size={18} /><span>Import Music</span></Link>
                 <Link to="/downloads" className={`mobile-nav-link ${isActive('/downloads') ? 'active' : ''}`}>
                   <Download size={18} />
                   <span>Downloads</span>

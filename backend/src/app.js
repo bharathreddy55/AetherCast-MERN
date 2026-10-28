@@ -20,6 +20,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const musicRoutes = require('./routes/musicRoutes');
+const musicImportRoutes = require('./routes/musicImportRoutes');
 
 validateProduction();
 if (process.env.NODE_ENV === 'production') getMediaSecret();
@@ -71,6 +72,7 @@ app.use('/api/auth', authRoutes);
 // All library data and operations require the configured owner, including
 // routes which previously accepted guest browsing or anonymous play events.
 app.use('/api', protect);
+app.use('/api/music/imports', musicImportRoutes);
 app.use('/api/music', musicRoutes);
 app.use('/api/podcasts', podcastRoutes);
 app.use('/api/episodes', episodeRoutes);

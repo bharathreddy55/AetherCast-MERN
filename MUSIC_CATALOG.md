@@ -4,7 +4,7 @@
 
 The backend has separate Artist, Album, Track, and MediaAsset collections and an owner-protected API under `/api/music`. Existing podcasts, episodes, playlists, history, downloads, and progress records keep their current schemas and IDs.
 
-Music importing, metadata extraction, music-library screens, track playback through the current React player, music playlists, and music listening history are subsequent work. This foundation does not yet provide an upload-to-listen workflow in the website.
+Music importing and metadata review are implemented at `/music/import`; see [MUSIC_IMPORTS.md](MUSIC_IMPORTS.md). Music-library screens, track playback through the current React player, music playlists, and music listening history are subsequent work. The website does not yet provide a complete upload-to-listen workflow.
 
 ## Data model
 
@@ -19,7 +19,7 @@ Owner IDs are immutable and refer to the existing MongoDB user profile linked to
 
 Tracks need at least one primary artist. Featured artists and multiple primary artists are supported. Ordinary albums need album artists; compilations can omit album artists while their tracks retain individual credits. Album detail orders tracks by disc number, track number, then record ID.
 
-Media processing states are `pending`, `processing`, `ready`, and `failed`. A ready audio asset needs a checksum and a positive finite duration. New tracks require an owned ready audio asset; their duration comes from that asset. Asset creation/status changes are reserved for the future server import workflow. The browser cannot register arbitrary storage URLs or mark a file ready through this catalog API.
+Media processing states are `pending`, `processing`, `ready`, and `failed`. A ready audio asset needs a checksum and a positive finite duration. New tracks require an owned ready audio asset; their duration comes from that asset. Asset creation/status changes are managed by the server import workflow. The browser cannot register arbitrary storage URLs or mark a file ready through this catalog API.
 
 ## API
 
@@ -90,7 +90,7 @@ MediaAsset stores object references, not permanent public URLs. Existing podcast
 1. Back up the current database and media before production imports or migration work.
 2. Deploy the additive catalog models/routes. MongoDB creates the new collections/indexes through the configured Mongoose connection; verify the indexes in the target database before importing real music.
 3. Keep existing Podcast/Episode/Playlist/User records and IDs intact. No podcast-to-track conversion or live database migration has been performed from this workspace.
-4. Add server imports that validate audio contents, extract metadata, calculate checksums, store originals privately, create/reuse owner-scoped artists/albums/assets, and register tracks only after processing succeeds.
+4. Enable the implemented server import workflow using the runtime, private storage, persistent worker and MongoDB replica-set requirements in `MUSIC_IMPORTS.md`. Imports register tracks only after processing and metadata confirmation succeed.
 5. Add music-library views and connect the player to the track playback API. Define track-specific history/progress and separate music playlists before enabling music queue features.
 6. Test real MongoDB CRUD/index behavior, private storage playback, large albums, duplicate imports, deletion, and backup restoration in the hosted environment.
 

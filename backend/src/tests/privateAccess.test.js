@@ -132,6 +132,8 @@ test.each([
   ['get', '/api/music/tracks'],
   ['get', '/api/music/tracks/507f1f77bcf86cd799439011/playback'],
   ['get', '/api/music/assets/507f1f77bcf86cd799439011'],
+  ['get', '/api/music/imports/config'],
+  ['post', '/api/music/imports'],
 ])('blocks anonymous %s %s', async (method, route) => {
   const response = await request(app)[method](route);
   expect(response.status).toBe(401);
@@ -154,4 +156,14 @@ test('owner requests with malformed music identifiers are rejected before databa
   const result = await request(app).get('/api/music/tracks/not-an-id').set('Authorization', `Bearer ${token}`);
   expect(result.status).toBe(400);
   expect(result.body.message).toBe('Invalid music record ID');
+});
+
+test('music upload routes reject disguised content after owner authentication', async () => {
+  const token = jwt.sign({ sub: ownerId, email: 'owner@example.com' }, secret, {
+    algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m',
+  });
+  const result = await request(app).post('/api/music/imports').set('Authorization', `Bearer ${token}`)
+    .attach('audio', Buffer.from('this is not an audio file'), 'pretend.mp3');
+  expect(result.status).toBe(400);
+  expect(result.body.message).toContain('contents');
 });

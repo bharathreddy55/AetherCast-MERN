@@ -90,6 +90,16 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining:** No live MongoDB migration, backup, music upload, metadata extraction, frontend music screen, or track-player integration has been performed. Existing podcast data is preserved. The current React player still calls episode APIs; the new track API is a foundation for the next import/library step.
 - **Next:** Implement server-side music importing and metadata extraction, then add the music library and player integration.
 
+### 2026-10-28 — Change 8: Private music import and metadata review
+
+- **Done locally:** Add owner-only `/music/import` with individual, multiple-file and folder selection, sequential uploads, per-file status, stop/retry controls and durable queued processing. Review extracted metadata before adding tracks to the catalog.
+- **Done locally:** Validate signatures and parse MP3, M4A, AAC, FLAC, OGG and WAV; extract audio details, tags and optional embedded JPEG/PNG artwork. Bound upload size, pending jobs, upload requests and parser time/memory. Preserve private originals and verify server-computed checksums before analysis.
+- **Done locally:** Recover interrupted jobs through expiring leases, reject stale/cancelled workers, and support manual retries. Reuse exact-file imports/assets. Confirm artists, album, track and job completion transactionally, with owner-scoped matching and duplicate indexes. Repeated confirmation does not overwrite an existing track.
+- **Verified:** 165 backend tests and 32 frontend tests pass; frontend production build passes. Coverage includes real WAV parsing, multipart denial/content validation, bounded private reads, new-upload cleanup, cancellation leases, retry limits, reviewed metadata and transaction/session contracts. Targeted frontend lint and whitespace checks pass. The existing bundle-size advisory remains.
+- **Deployment pending:** Backend Node.js 22+, MongoDB Atlas/replica set, private storage settings, index verification and a persistent `backend/src/server.js` worker process are required. No live database/storage/browser import session or deployment was performed. See `MUSIC_IMPORTS.md` and `PRIVATE_SETUP.md`.
+- **Remaining:** Music-library/player integration, conversion, thumbnails, likely-metadata duplicate review, bulk management, direct/resumable transfer and safe retained-original cleanup. Failed/cancelled originals remain stored; storage quota enforcement is pending. Dependency audit reports 14 advisories, including one critical advisory in existing framework dependencies; the new metadata parser is not listed. Dependency maintenance remains separate work.
+- **Next:** Add music browsing and connect tracks to the global player.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -133,7 +143,9 @@ Source references: `backend/src/middlewares/auth.js`, `backend/src/controllers/a
 - [x] Remove silent fallback to server-local files in production. Report storage failures instead of claiming a durable upload succeeded.
 - [x] Centralize API/media configuration; remove conflicting localhost and deployed-backend fallbacks.
 - [ ] Validate upload type using file contents and permitted formats, not just filename and declared MIME type.
+  - Music imports now check signatures and parse audio; legacy podcast uploads still need equivalent validation.
 - [ ] Set file-size, request, storage, and processing limits appropriate for a personal library.
+  - Music imports have upload/request/pending-job/parser limits. Comprehensive storage quotas and retention remain pending.
 - [ ] Clean up abandoned uploads, replaced artwork, failed imports, and deleted media safely.
 - [ ] Back up database metadata and original media; document and test restoration.
 
@@ -175,18 +187,25 @@ Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/s
 
 ## 5. Music import and management — P1
 
-- [ ] Support single-file, multi-file, and album/folder imports.
+- [x] Support single-file, multi-file, and album/folder imports.
 - [ ] Support an explicit initial format list, such as MP3, M4A/AAC, FLAC, OGG, and WAV, with conversion for unsupported playback formats where needed.
-- [ ] Extract embedded track titles, artists, album names, track/disc numbers, artwork, and duration automatically.
-- [ ] Provide an editable preview before committing an import.
+  - Six initial input formats are implemented. Browser compatibility/conversion remains pending.
+- [x] Extract embedded track titles, artists, album names, track/disc numbers, artwork, and duration automatically.
+- [x] Provide an editable preview before committing an import.
 - [ ] Detect exact duplicates using checksums and offer review for likely metadata duplicates.
-- [ ] Preserve original files; record any derived playback versions separately.
+  - Exact-file checksums and idempotent confirmation are implemented; likely metadata duplicates remain pending.
+- [x] Preserve original files; record any derived playback versions separately.
+  - Originals are retained; the asset schema links future derivatives to their originals. No conversion is generated yet.
 - [ ] Run metadata extraction, artwork processing, and audio conversion in background jobs rather than long API requests.
-- [ ] Show upload and processing progress, per-file failures, cancellation, and retry.
+  - Durable background metadata/artwork extraction is implemented. Audio conversion and thumbnails remain pending.
+- [x] Show upload and processing progress, per-file failures, cancellation, and retry.
+  - Per-file upload/processing states are shown; byte-percentage upload progress is not implemented.
 - [ ] Support resumable/direct uploads where file sizes justify them.
 - [ ] Allow metadata correction, album regrouping, artwork replacement, and bulk edits.
+  - Metadata correction before confirmation is implemented; library management and bulk editing remain pending.
 - [ ] Generate appropriately sized artwork thumbnails and provide attractive missing-artwork placeholders.
 - [ ] Make import jobs retry-safe so retries do not create duplicate tracks or orphan files.
+  - Checksum reuse, leases, transactionally confirmed tracks and cleanup of newly uploaded objects on failed asset registration are implemented. Retained/abandoned-file cleanup remains pending.
 
 ## 6. Playback correctness — P0/P1
 

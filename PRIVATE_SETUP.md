@@ -81,4 +81,10 @@ Deploy the persistent Node backend through `backend/src/server.js` for Socket.io
 
 The new `/api/music` routes use the same owner authentication and private media delivery. They add separate Artist, Album, Track and MediaAsset collections, preserving existing podcast collections and IDs. See `MUSIC_CATALOG.md` for the API, index/deletion rules and additive rollout plan.
 
-No extra environment variables are introduced by the catalog. Existing private storage setup still applies. Verify the new MongoDB indexes and back up the library before real imports. The current website/player remains podcast-oriented until the import and music-library integration steps are completed; catalog APIs alone do not add a visible upload/listening workflow.
+Existing private storage setup still applies. Verify the new MongoDB indexes and back up the library before real imports. The website now has an owner-only **Import Music** screen; music-library browsing and track-player integration remain pending.
+
+## Music import rollout
+
+Use backend Node.js 22 or newer and MongoDB Atlas or another replica set: reviewed import confirmation uses transactions. Run the persistent `backend/src/server.js` process to start the durable import queue worker; the serverless REST entrypoint alone does not process jobs. The optional `MUSIC_MAX_UPLOAD_MB` setting defaults to 50 and accepts integers from 1 to 200; hosting request limits and available memory must support the chosen value.
+
+Cancelled, failed and unconfirmed originals are retained privately. Review storage capacity until retention/cleanup and storage quotas are implemented. See `MUSIC_IMPORTS.md` for limits, API, retry/cancel behavior and remaining verification. No hosted import or live database transaction has been verified from this workspace.

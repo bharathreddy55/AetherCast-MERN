@@ -1,0 +1,19 @@
+.music-import-page { max-width: 1040px; margin: 40px auto; padding: 0 24px 160px; }
+.music-import-page header { margin-bottom: 28px; }
+.music-import-page h1 { margin: 12px 0; font-size: clamp(1.8rem, 4vw, 2.8rem); }
+.music-import-page p { color: var(--text-secondary); line-height: 1.6; margin: 12px 0; }
+.music-import-panel { padding: 24px; margin: 18px 0; border: 1px solid var(--border-color); }
+.music-import-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0; }
+.music-import-actions label { display: inline-flex; align-items: center; gap: 8px; position: relative; }
+.music-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.music-import-actions label:focus-within { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.music-import-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.music-import-field { display: flex; flex-direction: column; gap: 8px; font-size: .85rem; color: var(--text-secondary); }
+.music-import-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 10px; }
+.music-import-heading h3, .music-import-filename { overflow-wrap: anywhere; }
+.music-import-alert { padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); }
+.music-upload-list { list-style: none; padding: 0; margin: 20px 0; }
+.music-upload-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border-color); overflow-wrap: anywhere; }
+.music-upload-list small { grid-column: 1 / -1; color: var(--text-secondary); }
+.music-review-form input[type=checkbox] { width: 16px; height: 16px; }
+@media (max-width: 640px) { .music-import-page { padding-left: 16px; padding-right: 16px; } .music-import-panel { padding: 16px; } .music-import-fields { grid-template-columns: 1fr; } .music-import-heading { align-items: flex-start; flex-wrap: wrap; } .music-upload-list li { grid-template-columns: 1fr; } }

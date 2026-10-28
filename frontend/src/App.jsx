@@ -21,6 +21,7 @@ import Settings from './pages/Settings';
 import ResetPassword from './pages/ResetPassword';
 import ListenHistory from './pages/ListenHistory';
 import AdminDashboard from './pages/AdminDashboard';
+import MusicImports from './pages/MusicImports';
 
 // Helper for protecting user routes
 function ProtectedRoute({ children }) {
@@ -83,6 +84,7 @@ function MainLayout() {
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Routes */}
+          <Route path="/music/import" element={<ProtectedRoute><MusicImports /></ProtectedRoute>} />
           <Route 
             path="/home" 
             element={
