@@ -20,7 +20,7 @@ Owner enforcement now applies to all application API routes outside the authenti
 
 Application media now uses scoped links valid for 15 minutes. The `/uploads` directory is closed to direct requests; the signed media handler streams local development files or proxies private Supabase objects. API responses rewrite owned audio/artwork references to temporary links. New uploads store `supabase://bucket/object-key` references instead of public URLs. Existing URLs belonging to the configured Supabase project/bucket are interpreted as object references when delivered, without rewriting the database.
 
-Hosted storage policies, existing externally public files, listening-party sockets, complete offline launch, and device verification still need the work tracked in `NEEDED_CAHNGES.MD`. Do not consider the deployed library fully private until required hosted setup and verification are complete.
+Hosted storage policies, existing externally public files, complete offline launch, and device verification still need the work tracked in `NEEDED_CAHNGES.MD`. Listening-room connections now enforce owner authentication in the application. Do not consider the deployed library fully private until required hosted setup and verification are complete.
 
 API and media URL configuration now share `frontend/src/lib/config.js`. `VITE_API_URL` should be the backend base URL, without `/api`; it is used for both API calls and local-upload media links. The shared fallback is localhost in development and the existing Render backend on deployed hosts.
 
@@ -61,8 +61,18 @@ Page-hide/unmount saves use browser `keepalive` as a best effort. Progress chang
 
 - Set `CLIENT_URL=https://aether-cast-mern.vercel.app` on the backend host. Production requires an explicit HTTPS origin with no path, query, credentials, or wildcard.
 - If preview builds or a custom domain need access, list those exact origins in `ADDITIONAL_CLIENT_ORIGINS`, separated by commas. Other Vercel subdomains are denied. Local development allows `http://localhost:5173` and `http://127.0.0.1:5173`; other local ports need explicit configuration.
-- HTTP requests, Socket.io polling, and WebSocket upgrades use the same origin list. This does not complete socket owner/room authentication, which remains on the checklist.
+- HTTP requests, Socket.io polling, and WebSocket upgrades use the same origin list. Listening-room owner authentication and room permissions are also enforced by the application.
 - ES256 verification uses the configured Supabase project's public key endpoint. The server refreshes on an unfamiliar key ID, shares in-flight fetches, and limits forced refreshes to once per 30 seconds. Normal key caching lasts ten minutes. Keys are not shared between projects, and an expired cache is not used when refresh fails.
 - `SUPABASE_JWT_SECRET` is optional for an ES256-only project. If the project still issues legacy HS256 tokens, configure the exact legacy secret string; the app does not guess an encoding from its length. Placeholder values and short production secrets are rejected.
 - Backend ES256 verification no longer needs `SUPABASE_ANON_KEY`. The frontend still requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Supabase sign-in; the server still needs its private storage credential for media.
 - Legacy application JWT/OTP login code has been removed. No user records or historical password hashes were deleted. Public registration remains closed in the application; hosted Supabase signup settings must also remain disabled.
+
+## Private listening rooms
+
+Rooms are for devices signed in to the configured owner's account. Guests and other accounts cannot connect. The server revalidates sessions before each room action, disconnects sockets when their handshake token expires, and rejects suspended/invalidated owner profiles. The client reconnects with current credentials when Supabase refreshes the session.
+
+The first joined device becomes host. Other owner devices can follow playback or choose **Take playback control**. Only the current host can broadcast playback changes. Room IDs must identify existing episodes, and events for unjoined rooms are rejected. Names and artwork come from the server profile rather than client messages.
+
+Per-owner limits across connected devices reset each minute: 10 join/leave actions, 120 playback/host actions, and 30 chat messages. Messages are limited to 1000 characters; transport packets are capped at 16 KiB. Room state, host election, and counters currently reside in one server process and reset on restart.
+
+Deploy the persistent Node backend through `backend/src/server.js` for Socket.io support. The serverless REST entrypoint alone does not provide this feature. Before relying on rooms, test two owner devices, guest rejection, joining/rejoining, host transfer, token refresh/expiry, disconnect counts, invalid events, and rate-limit recovery against the hosted backend. Multi-instance deployments need shared room/limit coordination before enabling rooms across instances.

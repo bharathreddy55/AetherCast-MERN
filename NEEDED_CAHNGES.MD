@@ -66,6 +66,18 @@ This document is the implementation checklist and progress record. Checked items
 - **Hosted setup pending:** Set `CLIENT_URL=https://aether-cast-mern.vercel.app` on the deployed backend. List each approved preview/custom domain explicitly if needed. Complete the earlier private storage and owner setup before expecting deployment to run.
 - **Remaining:** Socket origin checks do not replace socket owner authentication, room permissions, or event limits; those remain unchecked. Real Supabase rotation and hosted deployment have not been exercised from this workspace.
 
+### 2026-10-28 — Change 6: Private listening-room connections
+
+- **Done locally:** Share owner-token authentication between HTTP and sockets. Room connections reject guests and non-owner accounts, disconnect at token expiry, and recheck the owner/account status before each action.
+- **Done locally:** Validate episode existence and room IDs before joining. Keep one episode room per connection and reject playback/chat for rooms the connection has not joined.
+- **Done locally:** Elect a host from actual room membership; only the host can sync play/pause/seek. Another signed-in owner device can explicitly take control. Reassign the host and publish member counts when a device leaves/disconnects.
+- **Done locally:** Validate finite playback positions against known episode duration, limit messages to 1000 characters, cap transport packets at 16 KiB, serialize each connection's room actions, and impose per-owner minute limits across connections: 10 room joins/leaves, 120 playback/host actions, and 30 chat messages.
+- **Done locally:** Derive names/avatars from the authenticated server profile rather than supplied event fields. Do not log room messages or tokens. Handle malformed legacy artwork without breaking disconnect cleanup.
+- **Done locally:** Fetch a current session token for socket handshakes, reconnect/rejoin after token refresh, remove stale playback closures, and clean up listeners/timers on close. Show connection/action errors and host controls; display outgoing messages and clear drafts only after server acceptance.
+- **Verified:** All 109 backend tests and 28 frontend tests pass (137 total); the frontend production build passes. Backend policy/adapter tests cover owner denial, membership, host permissions/takeover, bad positions, chat validation, shared event limits, expiry/account invalidation, host reassignment, and room changes. Frontend tests cover handshake token refresh, reconnect/rejoin, control permissions, server acknowledgements, stale-room/old-connection events, and cleanup. Targeted frontend lint, backend syntax checks, and whitespace checks pass; the existing frontend bundle-size advisory remains.
+- **Remaining:** Real two-device/browser WebSocket verification and hosted deployment are pending. Room state and limits currently use one Node process; distributed/multi-instance coordination is not implemented. These private rooms are optional and do not add public invitations or guest access.
+- **Next:** Add the music catalog foundation (tracks, artists, albums, and media assets), then connect it to music imports and the library.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -91,7 +103,7 @@ This document is the implementation checklist and progress record. Checked items
 - [x] Remove OTP handlers that return success without performing verification.
 - [x] Restrict credentialed CORS to explicitly configured origins instead of accepting every Vercel subdomain.
 - [ ] Apply appropriate rate limits to authentication, uploads, search, and expensive processing.
-- [ ] If listening parties remain, authenticate sockets and enforce room membership, host permissions, payload limits, and event rate limits.
+- [x] If listening parties remain, authenticate sockets and enforce room membership, host permissions, payload limits, and event rate limits.
 
 Source references: `backend/src/middlewares/auth.js`, `backend/src/controllers/authController.js`, `backend/src/app.js`, `backend/src/server.js`, `frontend/src/context/AuthContext.jsx`.
 
