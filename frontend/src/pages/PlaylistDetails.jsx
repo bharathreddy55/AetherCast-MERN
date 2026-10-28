@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
@@ -23,7 +24,7 @@ export default function PlaylistDetails() {
   const fetchAllEpisodesList = async (query = '') => {
     setLoadingAllEpisodes(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes?search=${encodeURIComponent(query)}`);
+      const res = await apiFetch(`${API_BASE_URL}/episodes?search=${encodeURIComponent(query)}`);
       const data = await res.json();
       if (data.success) {
         setAllEpisodes(data.episodes);
@@ -37,7 +38,7 @@ export default function PlaylistDetails() {
 
   const handleAddEpisodeToPlaylist = async (episodeId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists/${id}/episodes`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists/${id}/episodes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ episodeId }),
@@ -56,7 +57,7 @@ export default function PlaylistDetails() {
 
   const fetchPlaylistDetails = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists/${id}`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -87,7 +88,7 @@ export default function PlaylistDetails() {
   const confirmRemoveEpisode = async () => {
     if (!episodeToRemove) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists/${id}/episodes/${episodeToRemove}`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists/${id}/episodes/${episodeToRemove}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });

@@ -1,79 +1,51 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { uploadsRoot } = require('./mediaReferences');
 
-/**
- * Uploads a file buffer to Supabase storage.
- * @param {Buffer} fileBuffer The raw file buffer
- * @param {string} originalName The original file name
- * @param {string} mimeType The file mime type
- * @param {string} folder The bucket sub-folder ('covers', 'banners', 'audios', 'avatars')
- * @returns {Promise<string|null>} The public CDN URL of the uploaded asset, or null if failed/not configured
- */
-const uploadToSupabase = async (fileBuffer, originalName, mimeType, folder = 'uploads') => {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
+const objectPath = (bucket, key) => [bucket, ...key.split('/')].map(encodeURIComponent).join('/');
 
-  if (!supabaseUrl || !anonKey) {
-    return null; // Fallback to local storage
-  }
+function storageConfig() {
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, '');
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Private storage requires SUPABASE_URL and a server-only SUPABASE_SERVICE_ROLE_KEY');
+  return {
+    url, bucket: process.env.SUPABASE_STORAGE_BUCKET || 'vox',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+  };
+}
 
-  const cleanUrl = supabaseUrl.replace(/\/$/, '');
-  const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'vox';
-  
-  // Clean filename: timestamp + alphanumeric
-  const cleanExt = path.extname(originalName).toLowerCase();
-  const cleanBase = path.basename(originalName, cleanExt).replace(/[^a-zA-Z0-9]/g, '_');
-  const filePath = `${folder}/${Date.now()}-${cleanBase}${cleanExt}`;
-  
-  const uploadUrl = `${cleanUrl}/storage/v1/object/${bucketName}/${filePath}`;
+async function assertPrivateBucket(config) {
+  const response = await fetch(`${config.url}/storage/v1/bucket/${encodeURIComponent(config.bucket)}`, {
+    headers: config.headers, signal: AbortSignal.timeout(10000), redirect: 'error',
+  });
+  if (!response.ok) throw new Error('Unable to verify private media storage configuration');
+  const bucket = await response.json();
+  if (bucket.public !== false) throw new Error('Media storage bucket must be private before uploading or streaming');
+}
 
-  try {
-    const res = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: {
-        'apikey': anonKey,
-        'Authorization': `Bearer ${anonKey}`,
-        'Content-Type': mimeType,
-      },
-      body: fileBuffer,
-    });
+async function uploadToSupabase(fileBuffer, originalName, mimeType, folder = 'uploads') {
+  // Development without cloud credentials uses local files. Configured cloud
+  // uploads never fall back on failure; production always requires cloud storage.
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV !== 'production') return null;
+  const config = storageConfig();
+  await assertPrivateBucket(config);
+  if (!/^[a-zA-Z0-9_-]+$/.test(folder)) throw new Error('Invalid upload folder');
+  const key = `${folder}/${crypto.randomUUID()}${path.extname(originalName).toLowerCase()}`;
+  const response = await fetch(`${config.url}/storage/v1/object/${objectPath(config.bucket, key)}`, {
+    method: 'POST', headers: { ...config.headers, 'Content-Type': mimeType, 'x-upsert': 'false' },
+    body: fileBuffer, signal: AbortSignal.timeout(120000), redirect: 'error',
+  });
+  if (!response.ok) throw new Error('Private media upload failed. Please retry; no local fallback was used.');
+  return `supabase://${config.bucket}/${key}`;
+}
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.warn(`Supabase Storage Upload failed with status ${res.status}: ${errText}. Falling back to local filesystem.`);
-      return null;
-    }
-
-    // Return the public URL
-    return `${cleanUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-  } catch (err) {
-    console.warn(`Supabase Storage Fetch Exception: ${err.message}. Falling back to local filesystem.`);
-    return null;
-  }
-};
-
-/**
- * Helper to write buffer to local file system when Supabase is not configured.
- * @param {object} file Multer file object
- * @param {string} folder Local sub-folder inside workspace
- * @returns {string} The public local URL path (e.g. /uploads/filename.mp3)
- */
-const saveFileLocally = (file, folder = 'uploads') => {
-  const uploadDir = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  const cleanExt = path.extname(file.originalname).toLowerCase();
-  const cleanBase = path.basename(file.originalname, cleanExt).replace(/[^a-zA-Z0-9]/g, '_');
-  const filename = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${cleanExt}`;
-  const filePath = path.join(uploadDir, filename);
-
-  fs.writeFileSync(filePath, file.buffer);
+function saveFileLocally(file) {
+  if (process.env.NODE_ENV === 'production') throw new Error('Local media storage is disabled in production');
+  fs.mkdirSync(uploadsRoot, { recursive: true });
+  const filename = `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`;
+  fs.writeFileSync(path.join(uploadsRoot, filename), file.buffer);
   return `/uploads/${filename}`;
-};
+}
 
-module.exports = {
-  uploadToSupabase,
-  saveFileLocally
-};
+module.exports = { uploadToSupabase, saveFileLocally, storageConfig, assertPrivateBucket, objectPath };

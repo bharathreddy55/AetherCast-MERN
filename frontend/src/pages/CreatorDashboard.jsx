@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { 
@@ -77,7 +78,7 @@ export default function CreatorDashboard() {
         formData.append('bannerImage', editBannerFile);
       }
 
-      const res = await fetch(`${API_BASE_URL}/podcasts/${editingPodcast._id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${editingPodcast._id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`
@@ -115,7 +116,7 @@ export default function CreatorDashboard() {
   const fetchCreatorStats = async () => {
     setLoadingStats(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/analytics/creator`, {
+      const res = await apiFetch(`${API_BASE_URL}/analytics/creator`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -162,7 +163,7 @@ export default function CreatorDashboard() {
   const fetchMyPodcasts = async () => {
     setLoadingPodcasts(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts?creatorId=${user.id || user._id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts?creatorId=${user.id || user._id}`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -204,7 +205,7 @@ export default function CreatorDashboard() {
     try {
       const allDrafts = [];
       for (const podcast of myPodcasts) {
-        const res = await fetch(`${API_BASE_URL}/podcasts/${podcast._id}/episodes`, {
+        const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcast._id}/episodes`, {
           headers: getAuthHeaders()
         });
         const data = await res.json();
@@ -236,7 +237,7 @@ export default function CreatorDashboard() {
       message: 'Are you sure you want to publish this episode and notify your followers?',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/episodes/${id}`, {
+          const res = await apiFetch(`${API_BASE_URL}/episodes/${id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -280,7 +281,7 @@ export default function CreatorDashboard() {
     if (pBanner) formData.append('bannerImage', pBanner);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
@@ -334,7 +335,7 @@ export default function CreatorDashboard() {
     formData.append('audio', epAudio);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${epPodcastId}/episodes`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${epPodcastId}/episodes`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
@@ -369,7 +370,7 @@ export default function CreatorDashboard() {
       message: 'Are you sure you want to delete this podcast? All episodes will be deleted.',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
+          const res = await apiFetch(`${API_BASE_URL}/podcasts/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
           });
@@ -397,7 +398,7 @@ export default function CreatorDashboard() {
       message: 'Are you sure you want to make this podcast show live and visible to all listeners?',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/podcasts/${id}`, {
+          const res = await apiFetch(`${API_BASE_URL}/podcasts/${id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

@@ -62,18 +62,18 @@ export default function Landing() {
     }
     const cat = (podcast.category || '').toLowerCase();
     if (cat.includes('tech')) {
-      return window.getMediaUrl('/uploads/defaults/tech_cover.jpg');
+      return window.getMediaUrl('/artwork/tech_cover.jpg');
     }
     if (cat.includes('bus') || cat.includes('fin')) {
-      return window.getMediaUrl('/uploads/defaults/business_cover.jpg');
+      return window.getMediaUrl('/artwork/business_cover.jpg');
     }
     if (cat.includes('edu') || cat.includes('science')) {
-      return window.getMediaUrl('/uploads/defaults/education_cover.jpg');
+      return window.getMediaUrl('/artwork/education_cover.jpg');
     }
     if (cat.includes('entertain') || cat.includes('show') || cat.includes('comedy')) {
-      return window.getMediaUrl('/uploads/defaults/entertainment_cover.jpg');
+      return window.getMediaUrl('/artwork/entertainment_cover.jpg');
     }
-    return window.getMediaUrl('/uploads/defaults/default_cover.jpg');
+    return window.getMediaUrl('/artwork/default_cover.jpg');
   };
 
   return (

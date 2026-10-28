@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { Star, MessageSquare, Flag } from 'lucide-react';
@@ -15,7 +16,7 @@ export default function RatingWidget({ podcastId, onChange }) {
 
   const fetchReviews = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews`);
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews`);
       const data = await res.json();
       if (data.success) {
         setReviews(data.reviews);
@@ -37,7 +38,7 @@ export default function RatingWidget({ podcastId, onChange }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ rating, comment: reviewText }),
@@ -59,7 +60,7 @@ export default function RatingWidget({ podcastId, onChange }) {
   const handleFlag = async (reviewId) => {
     if (!window.confirm('Flag this review as inappropriate?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews/${reviewId}/flag`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcastId}/reviews/${reviewId}/flag`, {
         method: 'POST',
         headers: getAuthHeaders(),
       });

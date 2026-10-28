@@ -1,98 +1,43 @@
-const CACHE_NAME = 'vox-static-v1';
-const AUDIO_CACHE_NAME = 'vox-audio-v1';
+const CACHE_NAME = 'aether-static-v2';
+const DOWNLOAD_CACHE_PREFIX = 'aether-audio-v2-';
+const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
-];
-
-// Install Service Worker and cache static shell
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
-// Activate & remove old cache directories
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME && key !== AUDIO_CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys
+    .filter(key => !key.startsWith(DOWNLOAD_CACHE_PREFIX) && key !== CACHE_NAME &&
+      (key.startsWith('vox-') || key.startsWith('aether-static-')))
+    .map(key => caches.delete(key)))));
   self.clients.claim();
 });
 
-// Helper to determine if a request matches cached audio
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
-
-  // If it's an audio stream request (local uploads or Supabase public storage objects)
-  if (url.pathname.includes('/uploads/') || url.pathname.includes('/storage/v1/object/public/')) {
-    e.respondWith(
-      caches.open(AUDIO_CACHE_NAME).then((cache) => {
-        return cache.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
-          if (cachedResponse) {
-            const rangeHeader = e.request.headers.get('range');
-            if (rangeHeader) {
-              return cachedResponse.arrayBuffer().then((arrayBuffer) => {
-                const bytes = /^bytes=(\d+)-(\d+)?$/.exec(rangeHeader);
-                if (bytes) {
-                  const start = parseInt(bytes[1], 10);
-                  const end = bytes[2] ? parseInt(bytes[2], 10) : arrayBuffer.byteLength - 1;
-                  const slice = arrayBuffer.slice(start, end + 1);
-                  return new Response(slice, {
-                    status: 206,
-                    statusText: 'Partial Content',
-                    headers: {
-                      'Content-Range': `bytes ${start}-${end}/${arrayBuffer.byteLength}`,
-                      'Accept-Ranges': 'bytes',
-                      'Content-Length': slice.byteLength,
-                      'Content-Type': cachedResponse.headers.get('content-type') || 'audio/mpeg'
-                    }
-                  });
-                }
-              });
-            }
-            return cachedResponse;
-          }
-          return fetch(e.request);
-        });
-      })
-    );
-    return;
-  }
-
-  // Standard static caching logic (network-first fallback to cache)
-  if (e.request.method === 'GET' && !url.pathname.includes('/api/')) {
-    e.respondWith(
-      fetch(e.request)
-        .then((response) => {
-          // Clone and cache the fresh asset
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(e.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Serve from cache if offline
-          return caches.match(e.request);
-        })
-    );
-  }
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // Temporary media capabilities and private APIs must reach the server so an
+  // expired/revoked link cannot be revived from an automatic shared cache.
+  // Explicit downloads live in account-scoped caches and are read by the player.
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin ||
+      url.pathname.startsWith('/api/') || url.pathname.startsWith('/media/') ||
+      url.pathname.startsWith('/uploads/') || url.pathname.startsWith('/__offline_media/')) return;
+  if (event.request.mode !== 'navigate' && !ASSETS.includes(url.pathname) && !url.pathname.startsWith('/assets/')) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+      const response = await fetch(event.request);
+      if (response.ok) await cache.put(event.request, response.clone());
+      return response;
+    } catch {
+      const cached = await cache.match(event.request);
+      if (cached) return cached;
+      if (event.request.mode === 'navigate') {
+        const shell = await cache.match('/index.html');
+        if (shell) return shell;
+      }
+      return new Response('Unavailable offline', { status: 503 });
+    }
+  })());
 });

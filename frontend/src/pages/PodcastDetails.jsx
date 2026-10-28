@@ -1,3 +1,5 @@
+import { listDownloads, downloadEpisode as saveEpisodeDownload, removeDownload } from '../lib/downloads';
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
@@ -48,7 +50,7 @@ export default function PodcastDetails() {
   const handleGenerateAIFeatures = async (episodeId) => {
     setLoadingAI(prev => ({ ...prev, [episodeId]: true }));
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/${episodeId}/ai-features`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/${episodeId}/ai-features`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -73,26 +75,18 @@ export default function PodcastDetails() {
 
   useEffect(() => {
     const checkDownloads = () => {
-      const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
+      const saved = listDownloads(user?.id || user?._id);
       setDownloadedIds(saved.map(item => item._id));
     };
     checkDownloads();
-  }, []);
+    window.addEventListener('library-downloads-changed', checkDownloads);
+    return () => window.removeEventListener('library-downloads-changed', checkDownloads);
+  }, [user]);
 
   const downloadEpisode = async (episode) => {
     try {
       setDownloadingMap(prev => ({ ...prev, [episode._id]: 'downloading' }));
-      const audioUrl = episode.audioUrl;
-      const url = audioUrl.startsWith('http') ? audioUrl : `${window.BACKEND_URL}${audioUrl}`;
-
-      const cache = await caches.open('vox-audio-v1');
-      await cache.add(url);
-
-      const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
-      if (!saved.some(item => item._id === episode._id)) {
-        saved.push(episode);
-        localStorage.setItem('downloads', JSON.stringify(saved));
-      }
+      await saveEpisodeDownload(user?.id || user?._id, episode);
 
       setDownloadedIds(prev => [...prev, episode._id]);
       setDownloadingMap(prev => ({ ...prev, [episode._id]: 'done' }));
@@ -104,14 +98,7 @@ export default function PodcastDetails() {
 
   const deleteDownload = async (episode) => {
     try {
-      const audioUrl = episode.audioUrl;
-      const url = audioUrl.startsWith('http') ? audioUrl : `${window.BACKEND_URL}${audioUrl}`;
-      const cache = await caches.open('vox-audio-v1');
-      await cache.delete(url);
-
-      const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
-      const filtered = saved.filter(item => item._id !== episode._id);
-      localStorage.setItem('downloads', JSON.stringify(filtered));
+      await removeDownload(user?.id || user?._id, episode._id);
 
       setDownloadedIds(prev => prev.filter(id => id !== episode._id));
       setDownloadingMap(prev => {
@@ -127,14 +114,14 @@ export default function PodcastDetails() {
   const fetchDetails = async () => {
     try {
       // Fetch podcast
-      const res = await fetch(`${API_BASE_URL}/podcasts/${id}`);
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${id}`);
       const data = await res.json();
       if (data.success) {
         setPodcast(data.podcast);
       }
 
       // Fetch episodes
-      const epRes = await fetch(`${API_BASE_URL}/podcasts/${id}/episodes`);
+      const epRes = await apiFetch(`${API_BASE_URL}/podcasts/${id}/episodes`);
       const epData = await epRes.json();
       if (epData.success) {
         setEpisodes(epData.episodes);
@@ -142,7 +129,7 @@ export default function PodcastDetails() {
 
       // Check follow status if logged in
       if (token) {
-        const followRes = await fetch(`${API_BASE_URL}/podcasts/${id}/follow-status`, {
+        const followRes = await apiFetch(`${API_BASE_URL}/podcasts/${id}/follow-status`, {
           headers: getAuthHeaders(),
         });
         const followData = await followRes.json();
@@ -151,7 +138,7 @@ export default function PodcastDetails() {
         }
 
         // Fetch playlists
-        const playlistsRes = await fetch(`${API_BASE_URL}/playlists`, {
+        const playlistsRes = await apiFetch(`${API_BASE_URL}/playlists`, {
           headers: getAuthHeaders(),
         });
         const playlistsData = await playlistsRes.json();
@@ -199,7 +186,7 @@ export default function PodcastDetails() {
         formData.append('bannerImage', editBannerFile);
       }
 
-      const res = await fetch(`${API_BASE_URL}/podcasts/${podcast._id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcast._id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`
@@ -227,7 +214,7 @@ export default function PodcastDetails() {
     setLoadingFollow(true);
     try {
       const endpoint = following ? 'unfollow' : 'follow';
-      const res = await fetch(`${API_BASE_URL}/podcasts/${podcast._id}/${endpoint}`, {
+      const res = await apiFetch(`${API_BASE_URL}/podcasts/${podcast._id}/${endpoint}`, {
         method: 'POST',
         headers: getAuthHeaders(),
       });
@@ -249,7 +236,7 @@ export default function PodcastDetails() {
 
   const handleAddToPlaylist = async (playlistId, episodeId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists/${playlistId}/episodes`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists/${playlistId}/episodes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ episodeId }),
@@ -309,18 +296,18 @@ export default function PodcastDetails() {
     }
     const cat = (podcast.category || '').toLowerCase();
     if (cat.includes('tech')) {
-      return window.getMediaUrl('/uploads/defaults/tech_cover.jpg');
+      return window.getMediaUrl('/artwork/tech_cover.jpg');
     }
     if (cat.includes('bus') || cat.includes('fin')) {
-      return window.getMediaUrl('/uploads/defaults/business_cover.jpg');
+      return window.getMediaUrl('/artwork/business_cover.jpg');
     }
     if (cat.includes('edu') || cat.includes('science')) {
-      return window.getMediaUrl('/uploads/defaults/education_cover.jpg');
+      return window.getMediaUrl('/artwork/education_cover.jpg');
     }
     if (cat.includes('entertain') || cat.includes('show') || cat.includes('comedy')) {
-      return window.getMediaUrl('/uploads/defaults/entertainment_cover.jpg');
+      return window.getMediaUrl('/artwork/entertainment_cover.jpg');
     }
-    return window.getMediaUrl('/uploads/defaults/default_cover.jpg');
+    return window.getMediaUrl('/artwork/default_cover.jpg');
   };
 
   return (
@@ -518,14 +505,14 @@ export default function PodcastDetails() {
                                   return;
                                 }
                                 try {
-                                  const createRes = await fetch(`${API_BASE_URL}/playlists`, {
+                                  const createRes = await apiFetch(`${API_BASE_URL}/playlists`, {
                                     method: 'POST',
                                     headers: getAuthHeaders(),
                                     body: JSON.stringify({ name: playlistName.trim() }),
                                   });
                                   const createData = await createRes.json();
                                   if (createData.success) {
-                                    const refreshedRes = await fetch(`${API_BASE_URL}/playlists`, {
+                                    const refreshedRes = await apiFetch(`${API_BASE_URL}/playlists`, {
                                       headers: getAuthHeaders(),
                                     });
                                     const refreshedData = await refreshedRes.json();
@@ -600,7 +587,7 @@ export default function PodcastDetails() {
                         <button
                           onClick={async () => {
                             try {
-                              const res = await fetch(`${API_BASE_URL}/episodes/${ep._id}/like`, {
+                              const res = await apiFetch(`${API_BASE_URL}/episodes/${ep._id}/like`, {
                                 method: 'POST',
                                 headers: { Authorization: `Bearer ${token}` },
                               });

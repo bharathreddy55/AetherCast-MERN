@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
@@ -19,7 +20,7 @@ export default function Playlists() {
 
   const fetchPlaylists = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -46,7 +47,7 @@ export default function Playlists() {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ name, description }),
@@ -72,7 +73,7 @@ export default function Playlists() {
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/playlists/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });

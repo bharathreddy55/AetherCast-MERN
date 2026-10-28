@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -20,7 +21,7 @@ export default function ListenHistory() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/history`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -34,7 +35,7 @@ export default function ListenHistory() {
 
   const fetchLiked = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/liked`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/liked`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

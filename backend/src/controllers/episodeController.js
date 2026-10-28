@@ -3,6 +3,7 @@ const Podcast = require('../models/Podcast');
 const Progress = require('../models/Progress');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 // @desc    Create a new episode for a podcast
 // @route   POST /api/podcasts/:podcastId/episodes
@@ -86,13 +87,8 @@ exports.getEpisodeById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Episode not found' });
     }
 
-    const isAuthorized = 
-      !episode.isPremium || 
-      (req.user && (
-        req.user.role === 'admin' || 
-        (episode.podcastId && episode.podcastId.creatorId && episode.podcastId.creatorId.toString() === req.user._id.toString()) || 
-        req.user.purchasedEpisodes.includes(episode._id.toString())
-      ));
+    // Owner authentication is enforced before every catalog endpoint.
+    const isAuthorized = true;
 
     res.status(200).json({ success: true, episode, isAuthorized });
   } catch (error) {
@@ -185,64 +181,21 @@ exports.deleteEpisode = async (req, res) => {
 // @desc    Stream episode audio file (supports HTTP Range Requests)
 // @route   GET /api/episodes/:id/stream
 // @access  Public
-exports.streamEpisode = async (req, res) => {
+exports.streamEpisode = async (req, res, next) => {
   try {
-    const episode = await Episode.findById(req.params.id).populate('podcastId');
-    if (!episode) {
-      return res.status(404).json({ success: false, message: 'Episode not found' });
+    const episode = await Episode.findById(req.params.id);
+    if (!episode) return res.status(404).json({ success: false, message: 'Episode not found' });
+    const { createMediaLink } = require('../utils/mediaLinks');
+    const link = createMediaLink(episode.audioUrl);
+    if (!link.startsWith('/media/')) {
+      return res.status(400).json({ success: false, message: 'Import this external media into your private library before streaming it through the server.' });
     }
-
-    const isAuthorized = 
-      !episode.isPremium || 
-      (req.user && (
-        req.user.role === 'admin' || 
-        (episode.podcastId && episode.podcastId.creatorId && episode.podcastId.creatorId.toString() === req.user._id.toString()) || 
-        req.user.purchasedEpisodes.includes(episode._id.toString())
-      ));
-
-    if (!isAuthorized) {
-      return res.status(402).json({ success: false, message: 'Payment Required: This is a premium episode.' });
-    }
-
-    // Resolve file path
-    const audioPath = path.join(__dirname, '../../', episode.audioUrl);
-
-    if (!fs.existsSync(audioPath)) {
-      return res.status(404).json({ success: false, message: 'Media file not found on server' });
-    }
-
-    const stat = fs.statSync(audioPath);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    const contentType = episode.mediaType === 'video' ? 'video/mp4' : 'audio/mpeg';
-
-    if (range) {
-      const parts = range.replace(/bytes=/, '').split('-');
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunksize = end - start + 1;
-      const file = fs.createReadStream(audioPath, { start, end });
-      const head = {
-        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-        'Accept-Ranges': 'bytes',
-        'Content-Length': chunksize,
-        'Content-Type': contentType,
-      };
-      res.writeHead(206, head);
-      file.pipe(res);
-    } else {
-      const head = {
-        'Content-Length': fileSize,
-        'Content-Type': contentType,
-      };
-      res.writeHead(200, head);
-      fs.createReadStream(audioPath).pipe(res);
-    }
+    req.params.token = link.slice('/media/'.length);
+    return require('./mediaController').deliverMedia(req, res, next);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
-
 // @desc    Increment episode plays count
 // @route   POST /api/episodes/:id/play
 // @access  Public
@@ -268,17 +221,24 @@ exports.incrementPlayCount = async (req, res) => {
 exports.saveProgress = async (req, res) => {
   try {
     const { position, duration } = req.body;
-    if (position === undefined || !duration) {
-      return res.status(400).json({ success: false, message: 'Please provide position and duration' });
+    if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid episode ID' });
+    }
+    if (typeof position !== 'number' || !Number.isFinite(position) || position < 0 ||
+        typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || position > duration) {
+      return res.status(400).json({ success: false, message: 'Position and duration must be finite numbers with 0 <= position <= duration and duration > 0' });
+    }
+    if (!await Episode.exists({ _id: req.params.id })) {
+      return res.status(404).json({ success: false, message: 'Episode not found' });
     }
 
     // Determine if completed (e.g., >95% finished)
-    const completed = position / duration > 0.95;
+    const completed = position / duration >= 0.95;
 
     const progress = await Progress.findOneAndUpdate(
       { userId: req.user._id, episodeId: req.params.id },
-      { position, duration, completed },
-      { new: true, upsert: true }
+      { $set: { position, duration, completed } },
+      { new: true, upsert: true, runValidators: true }
     );
 
     res.status(200).json({ success: true, progress });
@@ -292,6 +252,9 @@ exports.saveProgress = async (req, res) => {
 // @access  Private
 exports.getProgress = async (req, res) => {
   try {
+    if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid episode ID' });
+    }
     const progress = await Progress.findOne({
       userId: req.user._id,
       episodeId: req.params.id,

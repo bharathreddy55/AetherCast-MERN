@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { Users, Radio, ShieldAlert, Award, Star, MessageSquare, Trash2, Eye, RefreshCw, Search, Music } from 'lucide-react';
@@ -70,7 +71,7 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -90,7 +91,7 @@ export default function AdminDashboard() {
       if (userRoleFilter) url += `&role=${userRoleFilter}`;
       if (userStatusFilter) url += `&status=${userStatusFilter}`;
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -107,7 +108,7 @@ export default function AdminDashboard() {
 
   const fetchFlagged = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/flagged`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/flagged`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -125,7 +126,7 @@ export default function AdminDashboard() {
   const fetchPodcasts = async () => {
     setLoadingPodcasts(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/podcasts`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/podcasts`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -140,7 +141,7 @@ export default function AdminDashboard() {
   const fetchEpisodes = async () => {
     setLoadingEpisodes(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/episodes`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/episodes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
     setLoadingComments(true);
     try {
       const url = `${API_BASE_URL}/admin/comments${searchVal ? `?search=${encodeURIComponent(searchVal)}` : ''}`;
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
   const fetchUserDetails = async (userId) => {
     setLoadingUserDetail(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -194,7 +195,7 @@ export default function AdminDashboard() {
       message: "Are you sure you want to permanently delete this podcast and all its episodes? This cannot be undone.",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/podcasts/${podcastId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/podcasts/${podcastId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -221,7 +222,7 @@ export default function AdminDashboard() {
       message: "Are you sure you want to permanently delete this episode? This cannot be undone.",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/episodes/${episodeId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/episodes/${episodeId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -248,7 +249,7 @@ export default function AdminDashboard() {
       message: "Are you sure you want to permanently delete this user's profile from MongoDB? This cannot be undone.",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -276,7 +277,7 @@ export default function AdminDashboard() {
       message: "Change status of this user's account (Suspend/Activate)?",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -304,7 +305,7 @@ export default function AdminDashboard() {
       message: `Are you sure you want to change this user's role to "${newRole.toUpperCase()}"?`,
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -336,7 +337,7 @@ export default function AdminDashboard() {
       message: "Delete this comment permanently?",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -364,7 +365,7 @@ export default function AdminDashboard() {
       message: "Are you sure you want to permanently delete this comment? This cannot be undone.",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -389,7 +390,7 @@ export default function AdminDashboard() {
 
   const handleDismissComment = async (commentId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/comments/${commentId}/dismiss`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/comments/${commentId}/dismiss`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -410,7 +411,7 @@ export default function AdminDashboard() {
       message: "Delete this review permanently?",
       onConfirm: async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
+          const res = await apiFetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -434,7 +435,7 @@ export default function AdminDashboard() {
 
   const handleDismissReview = async (reviewId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/dismiss`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/reviews/${reviewId}/dismiss`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });

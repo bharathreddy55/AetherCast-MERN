@@ -2,8 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const path = require('path');
 const { rateLimit } = require('express-rate-limit');
+const { protect } = require('./middlewares/auth');
+const { privateMediaResponses, getMediaSecret } = require('./utils/mediaLinks');
+const { deliverMedia } = require('./controllers/mediaController');
 
 const authRoutes = require('./routes/authRoutes');
 const podcastRoutes = require('./routes/podcastRoutes');
@@ -18,7 +20,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 
 // Environment Validation
-const requiredEnv = ['MONGO_URI', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET'];
+const requiredEnv = ['MONGO_URI', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_JWT_SECRET', 'OWNER_SUPABASE_USER_ID', 'SUPABASE_SERVICE_ROLE_KEY', 'MEDIA_SIGNING_SECRET'];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 if (missingEnv.length > 0) {
   if (process.env.NODE_ENV === 'production') {
@@ -28,6 +30,7 @@ if (missingEnv.length > 0) {
   }
 }
 
+if (process.env.NODE_ENV === 'production') getMediaSecret();
 const app = express();
 
 // Request Logging Middleware
@@ -35,7 +38,8 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`[${req.method}] ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    const loggedUrl = req.path.startsWith('/media/') ? '/media/[redacted]' : req.path;
+    console.log(`[${req.method}] ${loggedUrl} - ${res.statusCode} (${duration}ms)`);
   });
   next();
 });
@@ -91,11 +95,16 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Static uploads serving
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Original files are never publicly served. Browsers use temporary scoped links.
+app.use('/uploads', (_req, res) => res.sendStatus(404));
+app.get('/media/:token', deliverMedia);
+app.use('/api', privateMediaResponses);
 
 // API Routes
 app.use('/api/auth', authRoutes);
+// All library data and operations require the configured owner, including
+// routes which previously accepted guest browsing or anonymous play events.
+app.use('/api', protect);
 app.use('/api/podcasts', podcastRoutes);
 app.use('/api/episodes', episodeRoutes);
 app.use('/api/playlists', playlistRoutes);

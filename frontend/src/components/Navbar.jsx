@@ -271,7 +271,6 @@ export default function Navbar() {
           ) : (
             <div className="navbar-auth-buttons">
               <Link to="/login" className="btn-secondary">Log In</Link>
-              <Link to="/register" className="btn-primary">Sign Up</Link>
             </div>
           )}
         </div>
@@ -359,7 +358,6 @@ export default function Navbar() {
           ) : (
             <div className="mobile-auth-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
               <Link to="/login" className="btn-secondary" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex' }}>Log In</Link>
-              <Link to="/register" className="btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex' }}>Sign Up</Link>
             </div>
           )}
         </div>

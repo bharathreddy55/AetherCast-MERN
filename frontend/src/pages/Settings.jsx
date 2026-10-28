@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -39,7 +40,7 @@ export default function Settings() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+      const res = await apiFetch(`${API_BASE_URL}/auth/profile`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`

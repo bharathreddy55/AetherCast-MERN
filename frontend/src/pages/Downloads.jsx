@@ -1,35 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
-import { Download, Play, Trash, Music, Calendar, Clock } from 'lucide-react';
+import { Download, Play, Trash, Calendar, Clock } from 'lucide-react';
 import './Pages.css';
+import { listDownloads, removeDownload } from '../lib/downloads';
 
 export default function Downloads() {
-  const { token } = useAuth();
+  const { user } = useAuth();
+  const ownerId = user?.id || user?._id;
   const { playEpisode, currentEpisode, isPlaying } = usePlayer();
 
   const [downloadedEpisodes, setDownloadedEpisodes] = useState([]);
 
-  const loadDownloads = () => {
-    const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
+  const loadDownloads = useCallback(() => {
+    const saved = listDownloads(ownerId);
     setDownloadedEpisodes(saved);
-  };
+  }, [ownerId]);
 
   useEffect(() => {
     loadDownloads();
-  }, []);
+    window.addEventListener('library-downloads-changed', loadDownloads);
+    return () => window.removeEventListener('library-downloads-changed', loadDownloads);
+  }, [loadDownloads]);
 
   const handleDelete = async (episode) => {
     try {
-      const url = window.getMediaUrl(episode.audioUrl);
-      const cache = await caches.open('vox-audio-v1');
-      await cache.delete(url);
-
-      const saved = JSON.parse(localStorage.getItem('downloads') || '[]');
-      const filtered = saved.filter((item) => item._id !== episode._id);
-      localStorage.setItem('downloads', JSON.stringify(filtered));
-
-      setDownloadedEpisodes(filtered);
+      await removeDownload(ownerId, episode._id);
+      loadDownloads();
     } catch (err) {
       console.error('Failed to delete cached audio file', err);
     }

@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
@@ -49,7 +50,7 @@ export default function Explore() {
           url += `search=${encodeURIComponent(search)}&`;
         }
 
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         const data = await res.json();
         if (data.success) {
           setPodcasts(data.podcasts);

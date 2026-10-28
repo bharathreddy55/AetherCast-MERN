@@ -15,12 +15,14 @@ const progressSchema = new mongoose.Schema(
     position: {
       type: Number,
       required: true,
+      min: 0,
+      validate: { validator: Number.isFinite, message: 'Position must be finite' },
       default: 0, // In seconds
     },
     duration: {
       type: Number,
       required: true,
-      default: 0, // In seconds
+      validate: { validator: value => Number.isFinite(value) && value > 0, message: 'Duration must be finite and greater than zero' },
     },
     completed: {
       type: Boolean,

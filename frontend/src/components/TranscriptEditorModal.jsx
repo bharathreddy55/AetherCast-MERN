@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState } from 'react';
 import { X, Search, Replace, Save, AlertCircle } from 'lucide-react';
 import { API_BASE_URL } from '../context/AuthContext';
@@ -36,7 +37,7 @@ export default function TranscriptEditorModal({ episode, token, onClose, onSaveS
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/${episode._id}/transcript`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/${episode._id}/transcript`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

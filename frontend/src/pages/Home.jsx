@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -20,7 +21,7 @@ export default function Home() {
 
     const fetchContinueListening = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/episodes/continue-listening`, {
+        const res = await apiFetch(`${API_BASE_URL}/episodes/continue-listening`, {
           headers: getAuthHeaders(),
         });
         const data = await res.json();
@@ -36,7 +37,7 @@ export default function Home() {
 
     const fetchFollowed = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/podcasts/followed`, {
+        const res = await apiFetch(`${API_BASE_URL}/podcasts/followed`, {
           headers: getAuthHeaders(),
         });
         const data = await res.json();

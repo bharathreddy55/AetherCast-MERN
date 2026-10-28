@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { Send, Trash2, MessageSquare, Flag } from 'lucide-react';
@@ -12,7 +13,7 @@ export default function CommentsSection({ episodeId }) {
 
   const fetchComments = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/${episodeId}/comments`);
+      const res = await apiFetch(`${API_BASE_URL}/episodes/${episodeId}/comments`);
       const data = await res.json();
       if (data.success) {
         setComments(data.comments);
@@ -34,7 +35,7 @@ export default function CommentsSection({ episodeId }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/${episodeId}/comments`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/${episodeId}/comments`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ content: newComment }),
@@ -55,7 +56,7 @@ export default function CommentsSection({ episodeId }) {
   const handleDelete = async (commentId) => {
     if (!window.confirm('Are you sure you want to delete this comment?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+      const res = await apiFetch(`${API_BASE_URL}/comments/${commentId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -71,7 +72,7 @@ export default function CommentsSection({ episodeId }) {
   const handleFlag = async (commentId) => {
     if (!window.confirm('Flag this comment as inappropriate?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/comments/${commentId}/flag`, {
+      const res = await apiFetch(`${API_BASE_URL}/comments/${commentId}/flag`, {
         method: 'POST',
         headers: getAuthHeaders(),
       });

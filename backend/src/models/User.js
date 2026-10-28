@@ -3,6 +3,12 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
+    supabaseUserId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      immutable: true,
+    },
     username: {
       type: String,
       required: [true, 'Please provide a username'],

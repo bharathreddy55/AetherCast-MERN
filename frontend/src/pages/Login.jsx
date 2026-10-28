@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { supabase } from '../supabase';
 import { LogIn, Eye, EyeOff, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
 import './Pages.css';
 
 export default function Login() {
-  const { login, user } = useAuth();
+  const { login, user, loading, authError } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/explore');
+    if (user && !loading) {
+      navigate('/home', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,9 +71,7 @@ export default function Login() {
     const result = await login(email, password);
     setSubmitting(false);
 
-    if (result.success) {
-      navigate('/explore', { state: { showWelcome: true } });
-    } else {
+    if (!result.success) {
       setError(result.message || 'Invalid credentials');
     }
   };
@@ -132,7 +130,7 @@ export default function Login() {
           <p>Sign in to continue to your dashboard</p>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {(error || authError) && <div className="auth-error" role="alert">{error || authError}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -217,10 +215,7 @@ export default function Login() {
 
         <div className="auth-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
           <p style={{ fontFamily: 'var(--font-sans)' }}>
-            Don't have an account?{' '}
-            <Link to="/register" className="auth-link" style={{ color: 'var(--color-primary)' }}>
-              Sign up
-            </Link>
+            This is a private library. Sign in with the owner's account.
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
@@ -13,7 +14,7 @@ export default function NotificationsBell() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/notifications`, {
+      const res = await apiFetch(`${API_BASE_URL}/notifications`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -36,7 +37,7 @@ export default function NotificationsBell() {
 
   const handleMarkRead = async (id, podcastId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+      const res = await apiFetch(`${API_BASE_URL}/notifications/${id}/read`, {
         method: 'PUT',
         headers: getAuthHeaders(),
       });
@@ -57,7 +58,7 @@ export default function NotificationsBell() {
 
   const handleMarkAllRead = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+      const res = await apiFetch(`${API_BASE_URL}/notifications/read-all`, {
         method: 'PUT',
         headers: getAuthHeaders(),
       });

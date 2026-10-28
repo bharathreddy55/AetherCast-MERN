@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { 
@@ -10,6 +11,7 @@ import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import './AudioPlayer.css';
 import AudioVisualizer from './AudioVisualizer';
 import ListeningPartyDrawer from './ListeningPartyDrawer';
+import { readDownload, downloadEpisode, removeDownload } from '../lib/downloads';
 
 export default function AudioPlayer() {
   const {
@@ -36,6 +38,7 @@ export default function AudioPlayer() {
     changeEqualizer,
     applyPreset,
     playEpisode,
+    playbackError,
   } = usePlayer();
 
   const [showLyrics, setShowLyrics] = useState(false);
@@ -82,7 +85,7 @@ export default function AudioPlayer() {
     setChatLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/chat`, {
+      const res = await apiFetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: userMsg })
@@ -261,7 +264,7 @@ export default function AudioPlayer() {
   const fetchBookmarks = async () => {
     if (!token || !currentEpisode) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/episode/${currentEpisode._id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/bookmarks/episode/${currentEpisode._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -284,7 +287,7 @@ export default function AudioPlayer() {
     e.preventDefault();
     if (!newBookmarkNote.trim() || !token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks`, {
+      const res = await apiFetch(`${API_BASE_URL}/bookmarks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -310,7 +313,7 @@ export default function AudioPlayer() {
   const handleDeleteBookmark = async (bookmarkId) => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
+      const res = await apiFetch(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -327,7 +330,7 @@ export default function AudioPlayer() {
   const handleBuyEpisode = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/payments/checkout`, {
+      const res = await apiFetch(`${API_BASE_URL}/payments/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -368,9 +371,7 @@ export default function AudioPlayer() {
   const checkIsDownloaded = async () => {
     if (!currentEpisode) return;
     try {
-      const cache = await caches.open('vox-audio-v1');
-      const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
-      const match = await cache.match(mediaUrl, { ignoreSearch: true });
+      const match = await readDownload(user?.id || user?._id, currentEpisode._id);
       setDownloaded(!!match);
     } catch (err) {
       console.error(err);
@@ -379,21 +380,16 @@ export default function AudioPlayer() {
 
   useEffect(() => {
     checkIsDownloaded();
-  }, [currentEpisode]);
+    window.addEventListener('library-downloads-changed', checkIsDownloaded);
+    return () => window.removeEventListener('library-downloads-changed', checkIsDownloaded);
+  }, [currentEpisode, user]);
 
   const handleDownload = async () => {
     if (!currentEpisode) return;
     setDownloading(true);
-    const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
     try {
-      const cache = await caches.open('vox-audio-v1');
-      const response = await fetch(mediaUrl);
-      if (response.status === 200) {
-        await cache.put(mediaUrl, response);
-        setDownloaded(true);
-      } else {
-        alert('Failed to download: Server returned ' + response.status);
-      }
+      await downloadEpisode(user?.id || user?._id, currentEpisode);
+      setDownloaded(true);
     } catch (err) {
       console.error('Failed to cache for offline:', err);
       alert('Failed to save for offline usage.');
@@ -404,17 +400,15 @@ export default function AudioPlayer() {
 
   const handleRemoveDownload = async () => {
     if (!currentEpisode) return;
-    const mediaUrl = window.getMediaUrl(currentEpisode.audioUrl);
     try {
-      const cache = await caches.open('vox-audio-v1');
-      await cache.delete(mediaUrl, { ignoreSearch: true });
+      await removeDownload(user?.id || user?._id, currentEpisode._id);
       setDownloaded(false);
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (!currentEpisode) return null;
+  if (!currentEpisode) return playbackError ? <div role="alert" style={{ position: 'fixed', bottom: '16px', left: '16px', right: '16px', zIndex: 200, padding: '12px', background: 'var(--bg-card)' }}>{playbackError}</div> : null;
 
   const formatTime = (seconds) => {
     if (isNaN(seconds)) return '0:00';
@@ -452,7 +446,7 @@ export default function AudioPlayer() {
       <div 
         className="audio-player-collapsed glass-panel animate-scale-up"
         onClick={() => setIsCollapsed(false)}
-        title="Click to expand audio player"
+        title={playbackError || 'Click to expand audio player'}
         style={isFloating ? {
           position: 'fixed',
           left: `${dragPos.x}px`,
@@ -508,6 +502,7 @@ export default function AudioPlayer() {
 
   return (
     <>
+      {playbackError && <div role="alert" style={{ position: 'fixed', bottom: '110px', left: '16px', right: '16px', zIndex: 200, padding: '12px', background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>{playbackError}</div>}
       {/* AI Episode Copilot Chat slide-up panel */}
       {showAiChat && (
         <div className="lyrics-drawer glass-panel animate-scale-up" style={{ display: 'flex', flexDirection: 'column', height: '350px', zIndex: 100 }}>
@@ -838,7 +833,7 @@ export default function AudioPlayer() {
               <button 
                 onClick={async () => {
                   try {
-                    const res = await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/like`, {
+                    const res = await apiFetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/like`, {
                       method: 'POST',
                       headers: { Authorization: `Bearer ${token}` },
                     });

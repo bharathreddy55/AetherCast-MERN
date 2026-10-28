@@ -1,27 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  register, 
-  login, 
   logout, 
   getProfile, 
-  refreshToken, 
-  googleLogin, 
-  verifyOtp, 
-  resendOtp, 
   updateProfile,
   logEmailSent,
   getEmailCooldown
 } = require('../controllers/authController');
 const { protect } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
+const { registrationClosed } = require('../config/privateAccess');
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/google', googleLogin);
-router.post('/verify-otp', verifyOtp);
-router.post('/resend-otp', resendOtp);
-router.post('/refresh', refreshToken);
+// Supabase handles owner sign-in. Close legacy public account/token flows.
+router.post(['/register', '/login', '/google', '/verify-otp', '/resend-otp', '/refresh'], registrationClosed);
 router.post('/logout', protect, logout);
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('avatar'), updateProfile);

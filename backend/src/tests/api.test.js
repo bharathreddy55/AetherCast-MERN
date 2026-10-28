@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../app');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 // Mock User Model
 jest.mock('../models/User', () => {
@@ -62,16 +64,30 @@ beforeAll(async () => {
   jest.spyOn(mongoose, 'connect').mockResolvedValue(true);
 });
 
+const originalEnv = { ...process.env };
+let ownerToken;
+beforeEach(() => {
+  process.env.OWNER_SUPABASE_USER_ID = 'test-owner';
+  process.env.SUPABASE_URL = 'https://test.supabase.co';
+  process.env.SUPABASE_JWT_SECRET = 'test-secret';
+  User.findOne.mockResolvedValue({ _id: 'owner', supabaseUserId: 'test-owner', role: 'listener', accountStatus: 'active' });
+  ownerToken = jwt.sign({ sub: 'test-owner', email: 'owner@example.com' }, 'test-secret', {
+    algorithm: 'HS256', issuer: 'https://test.supabase.co/auth/v1', audience: 'authenticated', expiresIn: '5m',
+  });
+});
+
 afterAll(async () => {
   jest.restoreAllMocks();
+  process.env = originalEnv;
 });
 
 describe('VOX Backend API Integration Tests', () => {
   
-  describe('GET /api/podcasts (Public Catalog Access)', () => {
-    it('should successfully return the list of published podcasts', async () => {
+  describe('GET /api/podcasts (Owner Catalog Access)', () => {
+    it('returns the catalog to the authenticated owner', async () => {
       const res = await request(app)
         .get('/api/podcasts')
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect('Content-Type', /json/)
         .expect(200);
 
@@ -81,10 +97,11 @@ describe('VOX Backend API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/episodes (Public Search Access)', () => {
-    it('should return published episodes list', async () => {
+  describe('GET /api/episodes (Owner Search Access)', () => {
+    it('returns published episodes to the authenticated owner', async () => {
       const res = await request(app)
         .get('/api/episodes')
+        .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
 
       expect(res.body.success).toBe(true);
@@ -104,14 +121,15 @@ describe('VOX Backend API Integration Tests', () => {
     });
   });
 
-  describe('POST /api/auth/register (Validation Limits)', () => {
-    it('should return 500 or 400 Bad Request when mandatory register parameters are missing', async () => {
+  describe('POST /api/auth/register (Private library)', () => {
+    it('rejects public registration before creating any account', async () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({ email: 'test@example.com' }) // Missing password/name/username
-        .expect(500);
+        .expect(403);
 
       expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Public registration is disabled');
     });
   });
 

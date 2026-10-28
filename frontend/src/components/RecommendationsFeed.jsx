@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE_URL } from '../context/AuthContext';
 import { Sparkles } from 'lucide-react';
@@ -12,7 +13,7 @@ export default function RecommendationsFeed() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/recommendations`, {
+        const res = await apiFetch(`${API_BASE_URL}/recommendations`, {
           headers: getAuthHeaders(),
         });
         const data = await res.json();

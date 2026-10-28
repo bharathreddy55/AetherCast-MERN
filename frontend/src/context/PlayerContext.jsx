@@ -1,10 +1,14 @@
-import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import { apiFetch } from '../lib/apiClient';
+import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { useAuth, API_BASE_URL } from './AuthContext';
+import { readDownload } from '../lib/downloads';
+import { resolveEpisodeMedia } from '../lib/resolveEpisodeMedia';
+import { createProgressTracker, createProgressSender } from '../lib/playbackProgress';
 
 const PlayerContext = createContext(null);
 
 export const PlayerProvider = ({ children }) => {
-  const { token, getAuthHeaders } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   
   const [currentEpisode, setCurrentEpisode] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -16,17 +20,71 @@ export const PlayerProvider = ({ children }) => {
   const [subtitles, setSubtitles] = useState([]);
   const [analyser, setAnalyser] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(true);
+  const [playbackError, setPlaybackError] = useState('');
   const [eqGains, setEqGains] = useState({ low: 0, mid: 0, high: 0 });
   const [eqPreset, setEqPreset] = useState('flat');
   
-  const audioRef = useRef(document.createElement('video'));
-  const progressIntervalRef = useRef(null);
+  const audioRef = useRef(null);
+  if (!audioRef.current) audioRef.current = document.createElement('video');
+  const playRequestRef = useRef(0);
+  const blobUrlRef = useRef(null);
+  const mediaLoadedAtRef = useRef(0);
+  const activeMediaRef = useRef(null);
+  const pendingSeekRef = useRef(null);
+  const commandsRef = useRef({});
+  const authRef = useRef(null);
+  authRef.current = { token, ownerId: user?.id || user?._id };
+  const progressTrackerRef = useRef(null);
+  if (!progressTrackerRef.current) progressTrackerRef.current = createProgressTracker({
+    getSnapshot: () => {
+      const media = activeMediaRef.current;
+      const auth = authRef.current;
+      if (!media?.ready || media.ownerId !== auth?.ownerId) return null;
+      return { ...auth, episodeId: media.episode._id, position: audioRef.current.currentTime, duration: audioRef.current.duration };
+    },
+    send: createProgressSender(API_BASE_URL),
+    onError: () => console.warn('Playback progress could not be saved. Listening can continue.'),
+  });
+  const progressTracker = progressTrackerRef.current;
+  const savePlaybackProgress = useCallback((completed = false, options = {}) => progressTracker.save({ ...options, completed }), [progressTracker]);
   const analyserRef = useRef(null);
   const audioCtxRef = useRef(null);
 
   const lowFilterRef = useRef(null);
   const midFilterRef = useRef(null);
   const highFilterRef = useRef(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      void progressTracker.stop({ keepalive: true });
+      ++playRequestRef.current;
+      audio.pause();
+      activeMediaRef.current = null;
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    };
+  }, [progressTracker]);
+
+  useEffect(() => {
+    if (authLoading || user) return;
+    void progressTracker.stop({ save: false });
+    progressTracker.clear();
+    ++playRequestRef.current;
+    activeMediaRef.current = null;
+    pendingSeekRef.current = null;
+    audioRef.current.pause();
+    audioRef.current.removeAttribute('src');
+    audioRef.current.load();
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    blobUrlRef.current = null;
+    setIsPlaying(false);
+    setCurrentEpisode(null);
+    setPlaylist([]);
+    setCurrentTime(0);
+    setDuration(0);
+    setPlaybackError('');
+  }, [user, authLoading, progressTracker]);
   
   // Initialize analyser node securely on first playback interaction
   const initAnalyser = () => {
@@ -153,35 +211,68 @@ export const PlayerProvider = ({ children }) => {
   });
   const currentSubtitle = activeSubtitleIndex !== -1 ? subtitles[activeSubtitleIndex] : null;
 
-  // Configure audio event listeners
+  // Bind once; live refs identify the media actually attached to the element.
   useEffect(() => {
     const audio = audioRef.current;
-
     const onTimeUpdate = () => {
+      if (activeMediaRef.current?.ready) setCurrentTime(audio.currentTime);
+    };
+    const onLoadedMetadata = () => {
+      const media = activeMediaRef.current;
+      if (!media) return;
+      if (audio.currentSrc && audio.currentSrc !== media.source) return;
+      media.ready = true;
+      setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+      const pendingSeek = pendingSeekRef.current;
+      if (pendingSeek && pendingSeek.requestId === media.requestId) {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          audio.currentTime = Math.max(0, Math.min(pendingSeek.position, audio.duration));
+        }
+        pendingSeekRef.current = null;
+      }
       setCurrentTime(audio.currentTime);
     };
-
-    const onLoadedMetadata = () => {
-      setDuration(audio.duration);
+    const onPlaying = () => {
+      if (!activeMediaRef.current || audio.paused) return;
+      if (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source) return;
+      setIsPlaying(true);
+      setPlaybackError('');
+      progressTracker.start();
     };
-
-    const onEnded = () => {
+    const onPause = () => {
+      if (!audio.paused) return;
       setIsPlaying(false);
-      savePlaybackProgress(true); // Complete progress
-      playNext();
+      void progressTracker.stop();
     };
-
-    audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('loadedmetadata', onLoadedMetadata);
-    audio.addEventListener('ended', onEnded);
-
+    const onEnded = () => {
+      if (!activeMediaRef.current || !audio.ended) return;
+      setIsPlaying(false);
+      void progressTracker.stop({ completed: true });
+      commandsRef.current.playNext?.();
+    };
+    const onError = () => {
+      if (!activeMediaRef.current) return;
+      setIsPlaying(false);
+      void progressTracker.stop();
+      setPlaybackError('Playback interrupted. Press play to refresh the media link, or try again when connected.');
+    };
+    const onLifecycleSave = () => { void savePlaybackProgress(false, { keepalive: true }); };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') onLifecycleSave();
+    };
+    const handlers = { timeupdate: onTimeUpdate, loadedmetadata: onLoadedMetadata,
+      playing: onPlaying, pause: onPause, ended: onEnded, error: onError };
+    Object.entries(handlers).forEach(([event, handler]) => audio.addEventListener(event, handler));
+    window.addEventListener('pagehide', onLifecycleSave);
+    window.addEventListener('library-before-logout', onLifecycleSave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-      audio.removeEventListener('ended', onEnded);
+      Object.entries(handlers).forEach(([event, handler]) => audio.removeEventListener(event, handler));
+      window.removeEventListener('pagehide', onLifecycleSave);
+      window.removeEventListener('library-before-logout', onLifecycleSave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [playlist, currentEpisode]);
-
+  }, [progressTracker, savePlaybackProgress]);
   // Adjust volume
   useEffect(() => {
     audioRef.current.volume = volume;
@@ -207,75 +298,35 @@ export const PlayerProvider = ({ children }) => {
         navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
       };
     }
-  }, [isPlaying]);
-
-  // Save playback progress periodically (every 10 seconds)
-  useEffect(() => {
-    if (isPlaying && currentEpisode && token) {
-      progressIntervalRef.current = setInterval(() => {
-        savePlaybackProgress(false);
-      }, 10000);
-    } else {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    }
-
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [isPlaying, currentEpisode, currentTime, token]);
-
-  const savePlaybackProgress = async (completed = false) => {
-    if (!currentEpisode || !token) return;
-    try {
-      await fetch(`${API_BASE_URL}/episodes/${currentEpisode._id}/progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          position: currentTime,
-          duration,
-        }),
-      });
-    } catch (err) {
-      console.error('Failed to save playback progress', err);
-    }
-  };
+  }, [isPlaying, savePlaybackProgress]);
 
   const playEpisode = async (episode, newPlaylist = []) => {
-    if (!episode) return;
+    if (!episode || !user) return;
+    const requestId = ++playRequestRef.current;
+    const isSameEpisode = activeMediaRef.current?.episode._id === episode._id;
+    const resumePosition = isSameEpisode && !audioRef.current.ended ? audioRef.current.currentTime : 0;
+    void progressTracker.stop(); // Capture the outgoing media before any source change.
+    audioRef.current.pause();
+    setIsPlaying(false);
+    setPlaybackError('');
     
-    let authorized = true;
     let finalEpisode = { ...episode };
+    let downloadedResponse;
 
-    // Fetch the latest details of the episode from the backend (to verify premium auth and get mediaType)
+    // Cached audio belongs to the signed-in owner. Streaming always resolves a
+    // fresh authorized media link and never falls back to an old public URL.
     try {
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const epRes = await fetch(`${API_BASE_URL}/episodes/${episode._id}`, { headers });
-      const epData = await epRes.json();
-      if (epData.success) {
-        authorized = epData.isAuthorized;
-        setIsAuthorized(authorized);
-        finalEpisode = epData.episode;
-      }
+      const resolved = await resolveEpisodeMedia(episode, {
+        readDownload: id => readDownload(user.id || user._id, id),
+        fetchEpisode: id => apiFetch(`${API_BASE_URL}/episodes/${id}`),
+      });
+      finalEpisode = resolved.episode;
+      downloadedResponse = resolved.downloadedResponse;
     } catch (err) {
-      console.error('Failed to verify episode details:', err);
-    }
-
-    if (!authorized) {
-      setCurrentEpisode(finalEpisode);
-      setIsPlaying(false);
-      audioRef.current.pause();
+      if (requestId === playRequestRef.current) setPlaybackError(err.message || 'Unable to load media. Please try again.');
       return;
     }
+    if (requestId !== playRequestRef.current) return;
 
     setIsAuthorized(true);
 
@@ -285,33 +336,29 @@ export const PlayerProvider = ({ children }) => {
     }
     
     // Increment playCount on the backend asynchronously
-    fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/play`, {
+    apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/play`, {
       method: 'POST',
     }).catch(err => console.error('Failed to increment play count', err));
 
     // Track in listen history
     if (token) {
-      fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/history`, {
+      apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/history`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(err => console.error('Failed to add to listen history', err));
     }
 
-    if (newPlaylist && newPlaylist.length > 0) {
-      setPlaylist(newPlaylist);
-    }
-
-    const isSameEpisode = currentEpisode && currentEpisode._id === finalEpisode._id;
-    
-    if (!isSameEpisode) {
-      let startPosition = 0;
-      if (token) {
+    {
+      let startPosition = resumePosition;
+      const localProgress = progressTracker.latest(user.id || user._id, finalEpisode._id);
+      if (!isSameEpisode && localProgress) startPosition = localProgress.completed ? 0 : localProgress.position;
+      if (token && !isSameEpisode && !localProgress && !downloadedResponse) {
         try {
-          const res = await fetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/progress`, {
+          const res = await apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/progress`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await res.json();
-          if (data.success && data.progress && data.progress.position) {
+          if (res.ok && data.success && data.progress && Number.isFinite(data.progress.position) && data.progress.position >= 0) {
             if (!data.progress.completed) {
               startPosition = data.progress.position;
             }
@@ -321,45 +368,74 @@ export const PlayerProvider = ({ children }) => {
         }
       }
 
+      if (requestId !== playRequestRef.current) return;
+      let mediaUrl;
+      if (downloadedResponse) {
+        let blob;
+        try { blob = await downloadedResponse.blob(); }
+        catch {
+          if (requestId === playRequestRef.current) setPlaybackError('Unable to read this download. Remove it and download it again.');
+          return;
+        }
+        if (requestId !== playRequestRef.current) return;
+        mediaUrl = URL.createObjectURL(blob);
+      } else mediaUrl = window.getMediaUrl(finalEpisode.audioUrl);
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = downloadedResponse ? mediaUrl : null;
+      activeMediaRef.current = { episode: finalEpisode, ownerId: user.id || user._id, ready: false, requestId,
+        source: new URL(mediaUrl, window.location.href).href };
+      pendingSeekRef.current = { requestId, position: startPosition };
+      if (newPlaylist?.length) setPlaylist(newPlaylist);
       setCurrentEpisode(finalEpisode);
-      audioRef.current.src = window.getMediaUrl(finalEpisode.audioUrl);
+      setDuration(0);
+      audioRef.current.src = mediaUrl;
+      mediaLoadedAtRef.current = Date.now();
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.load();
-      if (startPosition > 0) {
-        audioRef.current.currentTime = startPosition;
-        setCurrentTime(startPosition);
-      }
+      setCurrentTime(startPosition);
     }
 
-    audioRef.current.play()
-      .then(() => setIsPlaying(true))
-      .catch((err) => console.error('Playback failed:', err));
+    // Actual playing/pause events update state, not a potentially stale promise.
+    audioRef.current.play().catch(() => {
+      if (requestId === playRequestRef.current) setPlaybackError('Unable to start playback. Press play to retry.');
+    });
   };
 
   const togglePlay = () => {
     if (!currentEpisode) return;
     if (!isAuthorized) return; // Block play if not authorized
+    if (audioRef.current.paused && (audioRef.current.error || (!blobUrlRef.current && Date.now() - mediaLoadedAtRef.current > 12 * 60 * 1000))) {
+      void playEpisode(currentEpisode);
+      return;
+    }
+    setPlaybackError('');
 
     initAnalyser();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
 
-    if (isPlaying) {
+    const commandId = ++playRequestRef.current;
+    if (!audioRef.current.paused) {
+      void progressTracker.stop();
       audioRef.current.pause();
       setIsPlaying(false);
-      savePlaybackProgress(false);
     } else {
       audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch((err) => console.error('Playback restart failed:', err));
+        .catch(() => {
+          if (commandId === playRequestRef.current) setPlaybackError('Unable to start playback. Press play to retry.');
+        });
     }
   };
 
   const seek = (time) => {
-    if (!currentEpisode) return;
-    audioRef.current.currentTime = time;
-    setCurrentTime(time);
+    if (!activeMediaRef.current?.ready || !Number.isFinite(time)) return;
+    const limit = audioRef.current.duration;
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const clamped = Math.max(0, Math.min(time, limit));
+    audioRef.current.currentTime = clamped;
+    setCurrentTime(clamped);
+    void savePlaybackProgress();
   };
 
   const changeSpeed = (speed) => {
@@ -387,13 +463,24 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const closePlayer = () => {
+    void progressTracker.stop();
+    ++playRequestRef.current;
     if (audioRef.current) {
       audioRef.current.pause();
     }
     setIsPlaying(false);
-    savePlaybackProgress(false);
+    activeMediaRef.current = null;
+    pendingSeekRef.current = null;
     setCurrentEpisode(null);
+    setCurrentTime(0);
+    setDuration(0);
+    audioRef.current.removeAttribute('src');
+    audioRef.current.load();
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    blobUrlRef.current = null;
   };
+
+  commandsRef.current = { playNext };
 
   return (
     <PlayerContext.Provider
@@ -418,6 +505,7 @@ export const PlayerProvider = ({ children }) => {
         closePlayer,
         audioRef,
         isAuthorized,
+        playbackError,
         setIsAuthorized,
         eqGains,
         eqPreset,

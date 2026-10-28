@@ -9,11 +9,9 @@ import Navbar from './components/Navbar';
 import AudioPlayer from './components/AudioPlayer';
 import CustomCursor from './components/CustomCursor';
 
-import Landing from './pages/Landing';
 import Explore from './pages/Explore';
 import PodcastDetails from './pages/PodcastDetails';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Home from './pages/Home';
 import CreatorDashboard from './pages/CreatorDashboard';
 import Playlists from './pages/Playlists';
@@ -77,11 +75,11 @@ function MainLayout() {
       <main>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/podcast/:id" element={<PodcastDetails />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+          <Route path="/podcast/:id" element={<ProtectedRoute><PodcastDetails /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Routes */}
