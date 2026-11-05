@@ -107,3 +107,9 @@ The old `Not authorized, token failed` message covered both token verification a
 Owner mismatch/suspension continues to return 403. Missing owner configuration returns 503. Do not change the configured owner UID unless Supabase confirms the intended owner's actual UID.
 
 Public checks on 2026-11-05 confirmed the frontend's expected project, reachable ES256 public keys and a connected Render database. The authenticated failure remains unverified. Share only the stage/reason or displayed error when seeking help; passwords, bearer tokens and backend secrets are unnecessary.
+
+### Duplicate-profile recovery and Render proxy setup
+
+The owner's subsequent live logs confirmed successful token verification followed by `profile_sync / duplicate_profile`. Change 11 generates new internal usernames on the server, handles simultaneous profile creation by verified identity, and preserves existing library IDs during legacy email linking. Deploy the latest backend and retry sign-in. Do not delete existing user records or remove unique indexes to work around this error. If a duplicate remains, the safe log now includes recognized conflicting field names (without their values) to identify the specific constraint.
+
+Express now detects Render through its built-in `RENDER=true` environment setting and trusts one nearest proxy hop before applying rate limits. Other environments trust none by default. Optional `TRUST_PROXY_HOPS` accepts an integer 0–5; use a value matching the verified hosting path if additional proxies require it. Do not use unrestricted `trust proxy=true` or disable rate-limit validation to suppress the error. Client-IP behavior with the actual deployed forwarding chain still needs verification.

@@ -7,6 +7,7 @@ const { protect } = require('./middlewares/auth');
 const { privateMediaResponses, getMediaSecret } = require('./utils/mediaLinks');
 const { deliverMedia } = require('./controllers/mediaController');
 const { validateProduction, corsOrigin } = require('./config/security');
+const { trustedProxyHops } = require('./config/proxy');
 
 const authRoutes = require('./routes/authRoutes');
 const podcastRoutes = require('./routes/podcastRoutes');
@@ -25,6 +26,7 @@ const musicImportRoutes = require('./routes/musicImportRoutes');
 validateProduction();
 if (process.env.NODE_ENV === 'production') getMediaSecret();
 const app = express();
+app.set('trust proxy', trustedProxyHops());
 
 // Request Logging Middleware
 app.use((req, res, next) => {

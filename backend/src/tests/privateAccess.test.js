@@ -4,7 +4,7 @@ const app = require('../app');
 const { protect } = require('../middlewares/auth');
 const User = require('../models/User');
 
-jest.mock('../models/User', () => ({ findOne: jest.fn(), findOneAndUpdate: jest.fn(), create: jest.fn() }));
+jest.mock('../models/User', () => ({ findOne: jest.fn(), findOneAndUpdate: jest.fn(), findById: jest.fn(), create: jest.fn() }));
 
 const originalEnv = { ...process.env };
 const ownerId = '11111111-1111-4111-8111-111111111111';
@@ -86,7 +86,7 @@ test('links an existing email profile without replacing its library identity', a
   expect(req.user._id).toBe(oldUser._id);
   expect(req.user.role).toBe('creator');
   expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-    { _id: oldUser._id, supabaseUserId: { $exists: false } },
+    { _id: oldUser._id, $or: [{ supabaseUserId: { $exists: false } }, { supabaseUserId: null }, { supabaseUserId: '' }] },
     { $set: { supabaseUserId: ownerId } },
     { new: true, runValidators: true, overwriteImmutable: true },
   );
@@ -106,6 +106,93 @@ test('uses the linked identity even if the owner email has changed', async () =>
   expect(next).toHaveBeenCalledTimes(1);
   expect(User.findOne).toHaveBeenCalledTimes(1);
   expect(User.findOne).toHaveBeenCalledWith({ supabaseUserId: ownerId });
+});
+
+test('new owner usernames are server-generated instead of reusing conflicting editable metadata', async () => {
+  User.findOne.mockResolvedValue(null);
+  User.create.mockImplementation(async data => ({ _id: 'new-owner', ...data }));
+  const { req, next } = await authenticate({ user_metadata: { username: 'taken-username', role: 'admin' } });
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(req.user.username).toMatch(/^owner-[a-f0-9]{32}$/);
+  expect(req.user.username).not.toBe('taken-username');
+  expect(req.user.role).toBe('listener');
+});
+
+test('concurrent first-login creation reuses the verified owner instead of failing on a duplicate', async () => {
+  const linked = { _id: 'winning-owner-profile', supabaseUserId: ownerId, role: 'listener' };
+  let created = false;
+  User.findOne.mockImplementation(async query => created && query.supabaseUserId === ownerId ? linked : null);
+  User.create.mockImplementation(async () => { created = true; throw Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { supabaseUserId: 1 } }); });
+  const { req, next } = await authenticate();
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(req.user._id).toBe(linked._id);
+  expect(User.create).toHaveBeenCalledTimes(1);
+});
+
+test('a username collision generates a new name without adopting the unrelated username profile', async () => {
+  User.findOne.mockResolvedValue(null);
+  User.create.mockRejectedValueOnce(Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { username: 1 } }))
+    .mockImplementationOnce(async data => ({ _id: 'new-owner', ...data }));
+  const { next } = await authenticate();
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(User.create).toHaveBeenCalledTimes(2);
+  expect(User.create.mock.calls[0][0].username).not.toBe(User.create.mock.calls[1][0].username);
+  expect(User.findOne.mock.calls.some(([query]) => Object.hasOwn(query, 'username'))).toBe(false);
+});
+
+test('profile creation retries are bounded and never retry unknown conflicting indexes blindly', async () => {
+  User.findOne.mockResolvedValue(null);
+  User.create.mockRejectedValue(Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { username: 1 } }));
+  const first = await authenticate();
+  expect(first.res.status).toHaveBeenCalledWith(503);
+  expect(User.create).toHaveBeenCalledTimes(3);
+  User.create.mockClear().mockRejectedValue(Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { googleId: 1 } }));
+  const second = await authenticate();
+  expect(second.res.status).toHaveBeenCalledWith(503);
+  expect(User.create).toHaveBeenCalledTimes(1);
+});
+
+test('case-insensitive legacy email matching preserves the existing library ID and role', async () => {
+  const old = { _id: 'legacy-library', role: 'creator', supabaseUserId: null };
+  User.findOne.mockImplementation(async query => query.email instanceof RegExp && query.email.test('OWNER@EXAMPLE.COM') ? old : null);
+  User.findOneAndUpdate.mockResolvedValue({ ...old, supabaseUserId: ownerId });
+  const { req, next } = await authenticate({ email: 'Owner@Example.com' });
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(req.user._id).toBe(old._id);
+  expect(req.user.role).toBe('creator');
+  expect(User.create).not.toHaveBeenCalled();
+});
+
+test('duplicate recovery does not adopt an email profile bound to a different identity', async () => {
+  let attempted = false;
+  User.findOne.mockImplementation(async query => attempted && query.email === 'owner@example.com' ? { _id: 'other', supabaseUserId: 'another-identity' } : null);
+  User.create.mockImplementation(async () => { attempted = true; throw Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { email: 1 } }); });
+  const { res, next } = await authenticate();
+  expect(res.status).toHaveBeenCalledWith(403);
+  expect(next).not.toHaveBeenCalled();
+  expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+});
+
+test('duplicate recovery still rejects a suspended owner profile', async () => {
+  let attempted = false;
+  User.findOne.mockImplementation(async () => attempted ? { _id: 'owner', supabaseUserId: ownerId, accountStatus: 'suspended' } : null);
+  User.create.mockImplementation(async () => { attempted = true; throw Object.assign(new Error('duplicate'), { code: 11000, keyPattern: { supabaseUserId: 1 } }); });
+  const { res, next } = await authenticate();
+  expect(res.status).toHaveBeenCalledWith(403);
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('the profile HTTP route returns the newly provisioned owner after successful sign-in', async () => {
+  User.findOne.mockResolvedValue(null);
+  const profile = { _id: 'library-owner', id: 'library-owner', supabaseUserId: ownerId, role: 'listener' };
+  User.create.mockResolvedValue(profile);
+  User.findById.mockResolvedValue(profile);
+  const token = jwt.sign({ sub: ownerId, email: 'owner@example.com', user_metadata: { username: 'already-used' } }, secret,
+    { algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m' });
+  const response = await request(app).get('/api/auth/profile').set('Authorization', `Bearer ${token}`);
+  expect(response.status).toBe(200);
+  expect(response.body.user._id).toBe(profile._id);
+  expect(User.findById).toHaveBeenCalledWith(profile._id);
 });
 
 test('reports missing signing configuration as a server setup error', async () => {
