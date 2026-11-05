@@ -83,7 +83,7 @@ MediaAsset stores object references, not permanent public URLs. Existing podcast
 - Deleting a track sets `deletedAt`, hides it from catalog/playback queries, and retains original media for recovery. Physical file/object cleanup is not performed.
 - Deleting an artist is blocked with 409 while active tracks or albums reference it. Deleting an album is blocked while active tracks reference it.
 - A unique owner/audio-asset index prevents duplicate active track records for the same asset. An owner/checksum index supports file-level deduplication during importing. Deleting a track permits a later catalog record to reuse its retained asset.
-- Restore, orphan-file cleanup, music-playlist unavailable-item handling, and music-history retention will be implemented with those features. Existing episode playlists cannot refer to new tracks. Initial music playlists will remain separate; mixed music/podcast playlists are outside the first release.
+- Music playlists retain deleted tracks as removable unavailable entries; saved rows can also be removed when their reference disappears. Listening sessions retain a title snapshot and expire after 180 days through a TTL index. See `MUSIC_COLLECTIONS.md`. Restore and orphan-file cleanup remain future work. Existing episode playlists cannot refer to new tracks; mixed music/podcast playlists are outside the first release.
 
 ## Migration and rollout
 
@@ -91,7 +91,7 @@ MediaAsset stores object references, not permanent public URLs. Existing podcast
 2. Deploy the additive catalog models/routes. MongoDB creates the new collections/indexes through the configured Mongoose connection; verify the indexes in the target database before importing real music.
 3. Keep existing Podcast/Episode/Playlist/User records and IDs intact. No podcast-to-track conversion or live database migration has been performed from this workspace.
 4. Enable the implemented server import workflow using the runtime, private storage, persistent worker and MongoDB replica-set requirements in `MUSIC_IMPORTS.md`. Imports register tracks only after processing and metadata confirmation succeed.
-5. Deploy the implemented music-library/player/queue integration. Complete album/filtered contexts load across pages up to 2,000 songs, with distinct queue occurrences, editing, shuffle and repeat. Define track-specific history and separate music playlists next; offline development is deferred.
+5. Deploy the implemented music-library/player/queue and personal collections integration. Complete album/filtered contexts load across pages up to 2,000 songs, with distinct queue occurrences, editing, shuffle and repeat. Separate music likes, saves, follows, playlists and history use additive collections; verify their indexes before relying on concurrent updates. Offline development is deferred.
 6. Test real MongoDB CRUD/index behavior, private storage playback, large albums, duplicate imports, deletion, and backup restoration in the hosted environment.
 
 Current verification uses schema validation and owner/query/API tests with mocked database operations; a live MongoDB/storage/browser music session has not been run. Import jobs and any eventual migration must remain retry-safe and preserve existing podcast data.

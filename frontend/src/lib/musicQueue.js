@@ -1,4 +1,8 @@
 export const MAX_QUEUE_SIZE = 2000;
+export function selectMusicOccurrence(entries, track, index) {
+  if (index === undefined) return entries.find(entry => entry.track._id === track._id);
+  return Number.isSafeInteger(index) && index >= 0 && entries[index]?.track._id === track._id ? entries[index] : null;
+}
 export const emptyMusicQueue = () => ({ items: [], order: [], currentId: null, history: [], future: [], shuffle: false, repeat: 'off' });
 export const queueEntry = (state, id = state.currentId) => state.items.find(item => item.queueItemId === id) || null;
 export const orderedQueue = state => {

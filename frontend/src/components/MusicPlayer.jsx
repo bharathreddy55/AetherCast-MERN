@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Pause, SkipBack, SkipForward, X, Volume2, VolumeX, ListMusic, Maximize2, ChevronDown, Shuffle, Repeat, Repeat1, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, X, Volume2, VolumeX, ListMusic, Maximize2, ChevronDown, Shuffle, Repeat, Repeat1, ArrowUp, ArrowDown, Trash2, Heart } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { artistNames, formatMusicTime } from '../lib/musicPlayback';
 import { musicShortcut } from '../lib/listeningInterface';
 import MusicArtwork from './MusicArtwork';
 import './MusicPlayer.css';
+import { useMusicLibraryState } from '../lib/useMusicLibraryState';
+import PlaylistPicker from './PlaylistPicker';
 
 function Transport({ compact = false }) {
   const { isPlaying, currentTime, duration, volume, togglePlay, playNext, playPrevious, seek, changeVolume,
@@ -48,6 +50,8 @@ export default function MusicPlayer() {
   const { currentEpisode: track, currentTime, volume, playlist, musicQueue, togglePlay, seek, changeVolume, closePlayer, playbackError } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [panel, setPanel] = useState('playing');
+  const [playlistTrack, setPlaylistTrack] = useState(null);
+  const library = useMusicLibraryState([track], 'tracks');
   const dialog = useRef(null);
   const commands = useRef(null);
   const lastVolume = useRef(volume || .8);
@@ -82,6 +86,8 @@ export default function MusicPlayer() {
       {playbackError && !expanded && <p className="music-player-error" role="alert">{playbackError}</p>}
       <button className="music-mini-info" onClick={() => open('playing')} aria-label={`Open Now Playing: ${track.title}`} aria-haspopup="dialog"><MusicArtwork src={track.coverImage} title={track.title} eager /><span><strong>{track.title}</strong><small>{artistNames(track)}</small></span></button>
       <Transport compact />
+      <button className="music-mini-playlist" aria-label="Add current song to a playlist" title="Add to playlist" onClick={() => setPlaylistTrack(track)}><ListMusic size={19} /></button>
+      <button aria-label={library.saved.includes(track._id) ? 'Unlike current song' : 'Like current song'} aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} onClick={() => void library.toggle(track._id)}><Heart size={19} fill={library.saved.includes(track._id) ? 'currentColor' : 'none'} /></button>
       <button className="music-open-queue" aria-label="Open current queue" aria-haspopup="dialog" onClick={() => open('queue')}><ListMusic size={21} /><small>{index >= 0 ? `${index + 1}/${playlist.length}` : ''}</small></button>
       <button className="music-expand-button" aria-label="Expand Now Playing" onClick={() => open('playing')}><Maximize2 size={19} /></button>
       <button aria-label="Close music player" onClick={closePlayer}><X size={19} /></button>
@@ -92,10 +98,12 @@ export default function MusicPlayer() {
         <header className="music-now-header"><button onClick={() => setExpanded(false)} aria-label="Minimize Now Playing"><ChevronDown size={25} /></button><h2 id="now-playing-title">Your listening space</h2><button onClick={closePlayer} aria-label="Stop and close player"><X size={21} /></button></header>
         <div className="music-now-layout"><div className="music-now-art"><MusicArtwork src={track.coverImage} title={track.title} eager /><p>YOUR LIBRARY · PRIVATE LISTENING</p></div>
           <div className="music-now-content"><div className="music-now-tabs" role="group" aria-label="Player view"><button aria-pressed={panel === 'playing'} onClick={() => setPanel('playing')}>Now playing</button><button aria-pressed={panel === 'queue'} onClick={() => setPanel('queue')}>Queue · {playlist.length}</button></div>
-            {panel === 'playing' ? <><div className="music-now-metadata"><h3>{track.title}</h3><p>{artistNames(track)}</p>{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`} onClick={() => setExpanded(false)}>{track.album.title}</Link>}{track.explicit && <small>Explicit</small>}</div><Transport /><p className="music-now-caption">{index >= 0 ? `Song ${index + 1} of ${playlist.length}` : 'Playing from your library'} · Original audio</p></> : <QueuePanel />}
+            {panel === 'playing' ? <><div className="music-now-metadata"><h3>{track.title}</h3><p>{artistNames(track)}</p>{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`} onClick={() => setExpanded(false)}>{track.album.title}</Link>}{track.explicit && <small>Explicit</small>}</div><div className="music-player-library-actions"><button aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} onClick={() => void library.toggle(track._id)}><Heart size={18} fill={library.saved.includes(track._id) ? "currentColor" : "none"} />{library.saved.includes(track._id) ? "Liked" : "Like song"}</button><button onClick={() => setPlaylistTrack(track)}>Add to playlist</button></div><Transport /><p className="music-now-caption">{index >= 0 ? `Song ${index + 1} of ${playlist.length}` : 'Playing from your library'} · Original audio</p></> : <QueuePanel />}
             {playbackError && <p className="music-now-error" role="alert">{playbackError}</p>}
           </div></div>
       </>}
     </dialog>
+    {playlistTrack && <PlaylistPicker track={playlistTrack} onClose={() => setPlaylistTrack(null)} />}
+    {library.error && <p className="music-library-player-error" role="alert">{library.error} <button onClick={library.reload}>Retry</button></p>}
   </>;
 }

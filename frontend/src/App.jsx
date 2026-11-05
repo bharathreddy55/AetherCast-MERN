@@ -22,6 +22,7 @@ import ListenHistory from './pages/ListenHistory';
 import AdminDashboard from './pages/AdminDashboard';
 import MusicImports from './pages/MusicImports';
 import MusicLibrary from './pages/MusicLibrary';
+import MusicCollections from './pages/MusicCollections';
 
 // Helper for protecting user routes
 function ProtectedRoute({ children }) {
@@ -86,6 +87,7 @@ function MainLayout() {
 
           {/* Protected Routes */}
           <Route path="/music" element={<ProtectedRoute><MusicLibrary /></ProtectedRoute>} />
+          <Route path="/music/collections" element={<ProtectedRoute><MusicCollections /></ProtectedRoute>} />
           <Route path="/music/import" element={<ProtectedRoute><MusicImports /></ProtectedRoute>} />
           <Route 
             path="/podcasts"

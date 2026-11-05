@@ -37,3 +37,8 @@
 .music-queue-tools p { color: var(--text-secondary); font-size: .75rem; }
 .music-queue-tools button { font-size: .7rem; padding: 6px 10px; }
 @media(max-width: 600px) { .music-player-buttons { gap: 12px; } .music-queue-select > small { display: none; } .music-queue-panel .music-artwork { width: 30px; } }
+.music-player-library-actions { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 16px 0; }
+.music-player-library-actions button { padding: 8px 12px; font-size: .8rem; }
+.music-library-player-error { position: fixed; bottom: 140px; right: 20px; z-index: 210; padding: 14px; border-radius: 12px; background: var(--bg-card); color: var(--text-primary); }
+.music-library-player-error button { padding: 8px; margin-left: 8px; }
+@media(max-width: 900px) { .music-mini-playlist { display: none !important; } }

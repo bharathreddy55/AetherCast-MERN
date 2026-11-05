@@ -41,3 +41,7 @@
 .music-song-queue-actions button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary); cursor: pointer; }
 .music-song-queue-actions button:hover { color: var(--color-primary); background: var(--bg-card); }
 @media(max-width: 600px) { .music-song-queue-actions { flex-direction: column; gap: 0; } .music-song-queue-actions button { min-height: 44px; } }
+.music-song-queue-actions button[aria-pressed=true] { color: var(--color-primary); }
+.music-library-tabs { flex-wrap: wrap; }
+@media(max-width: 600px) { .music-song-queue-actions { display: grid; grid-template-columns: repeat(2, 40px); } .music-song-queue-actions button { min-width: 40px; min-height: 44px; } }
+@media(max-width: 420px) { .music-song-duration { display: none; } }

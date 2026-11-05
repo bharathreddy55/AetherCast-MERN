@@ -22,6 +22,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const musicRoutes = require('./routes/musicRoutes');
 const musicImportRoutes = require('./routes/musicImportRoutes');
+const musicLibraryRoutes = require('./routes/musicLibraryRoutes');
 
 validateProduction();
 if (process.env.NODE_ENV === 'production') getMediaSecret();
@@ -75,6 +76,7 @@ app.use('/api/auth', authRoutes);
 // routes which previously accepted guest browsing or anonymous play events.
 app.use('/api', protect);
 app.use('/api/music/imports', musicImportRoutes);
+app.use('/api/music/library', musicLibraryRoutes);
 app.use('/api/music', musicRoutes);
 app.use('/api/podcasts', podcastRoutes);
 app.use('/api/episodes', episodeRoutes);

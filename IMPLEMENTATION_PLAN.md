@@ -18,7 +18,7 @@ Build a private, ad-free music app for the owner's library, with optional podcas
 
 ## Current implementation baseline
 
-Foundations include owner authentication, in-memory explicit credential sessions, private media links, separate Artist/Album/Track/MediaAsset models, background imports with metadata review, music browsing and track playback. Change 14 adds an occurrence-based editable queue, complete paginated contexts up to 2,000 songs, shuffle and repeat. Music likes/playlists/history remain unfinished; offline/download development is deferred. Podcast features retain their own models and APIs.
+Foundations include owner authentication, in-memory explicit credential sessions, private media links, separate Artist/Album/Track/MediaAsset models, background imports with metadata review, music browsing and track playback. Change 14 adds an occurrence-based editable queue, complete paginated contexts up to 2,000 songs, shuffle and repeat. Change 15 adds music likes, saved albums, followed artists, versioned playlists and listening history; aggregate statistics remain future work. Offline/download development is deferred. Podcast features retain their own models and APIs.
 
 The Echo-inspired interface recorded as Change 13 in `NEEDED_CAHNGES.MD` includes new navigation, artwork components and expanded Now Playing/queue views. Change 14 integrates and verifies that draft with the queue implementation. Hosted desktop/phone verification is still required; local builds/tests do not establish deployment success.
 
@@ -74,15 +74,15 @@ Rough capacity examples, not hosting prices: 1,000 four-minute songs at 128 kbps
 
 **Acceptance:** repeated-track queues, last-item completion, rapid selection, shuffle history, each repeat mode, removing/reordering the active item, unavailable tracks and a 100+ track album behave predictably. Logout/page locking stops playback and invalidates pending selections.
 
-## Phase 2 — Add the personal music library
+## Phase 2 — Add the personal music library (core implemented; hosted acceptance pending)
 
-**Proposed backend records:** separate `TrackLike`, `SavedAlbum`, `FollowedArtist`, `MusicPlaylist`, `MusicPlaylistItem` and `ListeningEvent` collections. These are proposed additions, not existing models. Every record/query uses the immutable MongoDB owner ID.
+**Implemented records:** separate `TrackLike`, `SavedAlbum`, `FollowedArtist`, `MusicPlaylist` and `ListeningEvent` collections. Playlist items use bounded ordered subdocuments with stable IDs instead of the initially proposed separate `MusicPlaylistItem` collection. A version-checked single-document update makes reorder atomic without a cross-record transaction. Every record/query uses the immutable MongoDB owner ID. See [MUSIC_COLLECTIONS.md](MUSIC_COLLECTIONS.md) for API, retention and delivery limits.
 
 - Likes/saves/follows use suitable owner/reference uniqueness; do not append music IDs into episode-like fields.
 - Playlist items have their own IDs and explicit order, allowing repeated track occurrences. Use version checks for conflicting edits and transactions where a reorder spans records.
 - Add playlist create/rename/delete, add/remove/reorder and unavailable-track handling. Soft-deleted tracks remain identifiable without silently destroying history or playlist order.
 - Record real play/start/skip/completion events with idempotency keys, bounded retention and correct media identity. Avoid unbounded user-document arrays and duplicate events on retries.
-- Build Liked Songs, saved collections, music playlists, recently played and basic private listening statistics using real records only.
+- Build Liked Songs, saved collections, music playlists and recently played using real records only. These views and per-session elapsed listening are implemented; aggregate statistics remain future work.
 
 **Acceptance:** a liked song and playlist survive re-login and appear on another authorized device; repeated songs keep distinct positions; concurrent edits report/recover conflicts; non-owner requests are rejected; deleting a track retains recoverable references.
 
@@ -139,4 +139,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Current feature batch implements **queue occurrence IDs, full-album context, next-up/add/remove/reorder, shuffle and repeat** alongside the existing interface draft. Recommended next: **owner-scoped likes, music playlists and listening history**, after verifying deployed queue behavior. Queue restoration is a later follow-up; offline/download work is deferred. The owner can revise these priorities.
+Change 15 implements **owner-scoped likes, saved albums, artist follows, music playlists and listening history**. Local tests/build pass; hosted acceptance remains pending. Recommended next: **grouped private-library search and everyday browsing**, followed by lyrics and explainable recommendations. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.

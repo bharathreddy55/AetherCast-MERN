@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Music, Play, Pause, ArrowLeft, ArrowRight, ListPlus, CornerDownRight } from 'lucide-react';
+import { Music, Play, Pause, ArrowLeft, ArrowRight, ListPlus, CornerDownRight, Heart, ListMusic } from 'lucide-react';
 import { apiFetch } from '../lib/apiClient';
 import { API_BASE_URL } from '../lib/config';
 import { usePlayer } from '../context/PlayerContext';
@@ -9,6 +9,8 @@ import MusicArtwork from '../components/MusicArtwork';
 import { artistNames, formatMusicTime, sameMedia } from '../lib/musicPlayback';
 import './MusicLibrary.css';
 import { loadMusicContext } from '../lib/musicQueue';
+import { useMusicLibraryState } from '../lib/useMusicLibraryState';
+import PlaylistPicker from '../components/PlaylistPicker';
 
 export default function MusicLibrary() {
   const [params, setParams] = useSearchParams();
@@ -28,6 +30,7 @@ export default function MusicLibrary() {
   const [refresh, setRefresh] = useState(0);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueNotice, setQueueNotice] = useState('');
+  const [playlistTrack, setPlaylistTrack] = useState(null);
   const selectionRef = useRef(null);
   const cancelSelection = useCallback(() => selectionRef.current?.abort(), []);
   const { playTrack, addToMusicQueue, currentEpisode, isPlaying, togglePlay } = usePlayer();
@@ -51,6 +54,7 @@ export default function MusicLibrary() {
   }, [identity, refresh]);
   const data = result?.identity === identity ? result : null;
   const items = data?.[view] || [];
+  const library = useMusicLibraryState(items, view);
   const goPage = number => { const next = new URLSearchParams(params); next.set('page', String(number)); setParams(next); };
   const play = async track => {
     selectionRef.current?.abort();
@@ -73,7 +77,7 @@ export default function MusicLibrary() {
   };
   return <div className="music-library">
     <header className="music-library-welcome"><div><span className="badge-mono">MADE FOR YOUR EVERYDAY</span><h1>Your music, your moment.</h1><p>Welcome, {user?.name?.split(' ')[0] || 'music lover'}. Find your next favorite in your own collection.</p></div><Link className="btn-primary" to="/music/import">Import music</Link></header>
-    <nav className="music-library-tabs" aria-label="Music collections">{[['tracks', 'Songs'], ['albums', 'Albums'], ['artists', 'Artists']].map(([key, label]) => <Link key={key} to={`/music?view=${key}`} aria-current={view === key && !albumId && !artistId ? 'page' : undefined}>{label}</Link>)}</nav>
+    <nav className="music-library-tabs" aria-label="Music collections">{[['tracks', 'Songs'], ['albums', 'Albums'], ['artists', 'Artists']].map(([key, label]) => <Link key={key} to={`/music?view=${key}`} aria-current={view === key && !albumId && !artistId ? 'page' : undefined}>{label}</Link>)}<Link to="/music/collections?view=likes">Liked</Link><Link to="/music/collections?view=playlists">Playlists</Link><Link to="/music/collections?view=history">History</Link></nav>
     {(albumId || artistId) && <p>Showing {albumId ? 'album songs in disc and track order' : 'songs by this artist'}. <Link to="/music">Show all songs</Link></p>}
     <form className="music-library-search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(params); next.set('search', draft.trim()); next.delete('page'); setParams(next); }}>
       <label htmlFor="music-search" className="music-search-label">Search {view === 'tracks' ? 'song titles' : view}</label><input ref={searchInput} id="music-search" className="form-input" value={draft} maxLength={200} onChange={event => setDraft(event.target.value)} placeholder={`Search ${view === 'tracks' ? 'songs' : view}`} /><button className="btn-secondary">Search</button>
@@ -82,6 +86,7 @@ export default function MusicLibrary() {
     </form>
     {queueLoading && <p role="status">Loading the complete listening queue… <button className="btn-secondary" onClick={() => { cancelSelection(); setQueueLoading(false); }}>Cancel</button></p>}
     {queueNotice && <p role="status">{queueNotice}</p>}
+    {library.error && <p role="alert">{library.error} <button className="btn-secondary" onClick={library.reload}>Retry library state</button></p>}
     {error ? <div role="alert"><p>{error}</p><button className="btn-secondary" onClick={() => setRefresh(value => value + 1)}>Try again</button></div> : !data ? <p role="status">Loading music…</p> : <>
       {!items.length ? <div className="music-library-empty"><Music size={40} /><h2>{search || albumId || artistId ? 'No matching music' : 'Your collection starts here'}</h2><p>{search || albumId || artistId ? 'Try another search or return to all songs.' : 'Import your first songs, then confirm their details to see them here.'}</p><Link to="/music/import">Import songs</Link></div> : view === 'tracks' ? <>
         {!albumId && !artistId && !search && page === 1 && sort === 'recent' && <section className="music-fresh-section" aria-label="Recently added music"><h2>Fresh from your library</h2><div className="music-fresh-grid">{items.slice(0, 4).map(track => <button className="music-fresh-card" key={track._id} onClick={() => play(track)}><MusicArtwork src={track.coverImage} title={track.title} /><span><strong>{track.title}</strong><small>{artistNames(track)}</small></span><span className="music-fresh-play">{sameMedia(track, currentEpisode) && isPlaying ? <Pause size={18} /> : <Play size={18} />}</span></button>)}</div></section>}
@@ -92,12 +97,14 @@ export default function MusicLibrary() {
           <div className="music-song-title"><strong>{track.title}{track.explicit && <small aria-label="Explicit content"> E</small>}</strong><span>{artistNames(track)}</span></div>
           <div className="music-song-album">{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`}>{track.album.title}</Link>}{albumId && <small>Disc {track.discNumber} · Track {track.trackNumber}</small>}</div>
           <span className="music-song-duration">{formatMusicTime(track.duration)}</span>
-          <div className="music-song-queue-actions"><button aria-label={`Play ${track.title} next`} title="Play next" onClick={() => enqueue(track, true)}><CornerDownRight size={17} /></button><button aria-label={`Add ${track.title} to queue`} title="Add to queue" onClick={() => enqueue(track, false)}><ListPlus size={17} /></button></div>
+          <div className="music-song-queue-actions"><button aria-label={`${library.saved.includes(track._id) ? 'Unlike' : 'Like'} ${track.title}`} aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} title="Like song" onClick={() => void library.toggle(track._id)}><Heart size={17} fill={library.saved.includes(track._id) ? 'currentColor' : 'none'} /></button><button aria-label={`Add ${track.title} to a playlist`} title="Add to playlist" onClick={() => setPlaylistTrack(track)}><ListMusic size={17} /></button><button aria-label={`Play ${track.title} next`} title="Play next" onClick={() => enqueue(track, true)}><CornerDownRight size={17} /></button><button aria-label={`Add ${track.title} to queue`} title="Add to queue" onClick={() => enqueue(track, false)}><ListPlus size={17} /></button></div>
         </li>)}</ol><p className="music-queue-note">Playback loads this complete filtered collection across pages, up to 2,000 songs. Open the player queue to reorder or remove upcoming songs.</p>
-      </> : <div className="music-catalog-grid">{items.map(item => <Link className="glass-panel music-catalog-card" key={item._id} to={`/music?view=tracks&${view === 'albums' ? 'albumId' : 'artistId'}=${encodeURIComponent(item._id)}`}>
-        <MusicArtwork className="music-catalog-art" src={item.coverImage} title={item.title || item.name} /><h2>{item.title || item.name}</h2><p>{view === 'albums' ? item.artists.map(artist => artist.name).join(', ') || (item.isCompilation ? 'Various artists' : 'Unknown artist') : 'View songs'}</p>
-      </Link>)}</div>}
+      </> : <div className="music-catalog-grid">{items.map(item => <article className="glass-panel music-catalog-card" key={item._id}><Link to={`/music?view=tracks&${view === 'albums' ? 'albumId' : 'artistId'}=${encodeURIComponent(item._id)}`}>
+        <MusicArtwork className="music-catalog-art" src={item.coverImage} title={item.title || item.name} /><h2>{item.title || item.name}</h2><p>{view === 'albums' ? item.artists.map(artist => artist.name).join(', ') || (item.isCompilation ? 'Various artists' : 'Unknown artist') : 'View songs'}</p></Link>
+        <button className="btn-secondary" disabled={!library.ready || library.busy.includes(item._id)} aria-pressed={library.saved.includes(item._id)} onClick={() => void library.toggle(item._id)}>{view === 'albums' ? library.saved.includes(item._id) ? 'Saved album' : 'Save album' : library.saved.includes(item._id) ? 'Following' : 'Follow artist'}</button>
+      </article>)}</div>}
       <div className="music-library-pagination"><button className="btn-secondary" disabled={page <= 1} onClick={() => goPage(page - 1)}><ArrowLeft size={16} /> Previous</button><span>Page {page} of {Math.max(1, data.totalPages)}</span><button className="btn-secondary" disabled={page >= data.totalPages} onClick={() => goPage(page + 1)}>Next <ArrowRight size={16} /></button></div>
     </>}
+    {playlistTrack && <PlaylistPicker track={playlistTrack} onClose={() => setPlaylistTrack(null)} />}
   </div>;
 }

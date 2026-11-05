@@ -155,11 +155,21 @@ This document is the implementation checklist and progress record. Checked items
 - **Validation:** All 73 frontend tests pass, including 19 new queue tests covering repeated identities, manual insertion, shuffle/history, repeat boundaries, current removal, reorder/clear, limits, complete pagination, cancelled/changed collections and mixed-edit invariants. Production build, targeted lint (no errors) and whitespace checks pass. Existing player-context fast-refresh/ref-cleanup warnings and the bundle-size advisory remain. Backend source is unchanged; its previous 187 passing tests remain the latest backend verification. Real hosted audio and mobile/browser interaction remain unverified; the browser automation tool previously failed to initialize.
 - **Remaining:** Queue/current-position restoration after a new sign-in is not implemented. Context pagination detects count/duplicate/partial changes but is not a transactional snapshot during concurrent catalog edits. Music likes, playlists and listening history are the next feature batch. Offline work remains deferred.
 
+### 2026-11-05 — Change 15: Personal music collections and listening history
+
+- **Done locally:** Add owner-scoped TrackLike, SavedAlbum and FollowedArtist records with unique owner/reference indexes. Provide Liked Songs, Saved Albums and Followed Artists views and save controls in the music catalog/player. Saved rows remain removable when their original reference is unavailable.
+- **Done locally:** Add separate music playlists with names/descriptions, create/rename/soft-delete, add/remove, and touch/keyboard up/down reorder. Bounded ordered subdocuments preserve stable entry IDs and repeated songs; selecting a repeated occurrence starts that exact entry. Version-checked atomic updates return 409 on conflicts rather than overwriting another device's order. Limit playlists to 2,000 entries and each add request to 100 songs. Unavailable entries remain removable; playlist playback reports skipped entries.
+- **Done locally:** Record music listening sessions only after actual `playing`, with independent playback UUIDs, start/skip/completion outcomes, title snapshots, bounded listening seconds and 180-day TTL retention. Exclude pause/buffering time and seek jumps. Deduplicate starts/outcomes, preserve session identity on media-link renewal, and separate repeats. Show Recently Played with real session outcomes and elapsed listening. Keep music records separate from episode APIs/data.
+- **Done locally:** Keep owner authorization and current-credential sign-in intact. Validate IDs, references, pagination, bodies and metrics; hide storage locations and owner credentials in response DTOs. Abort stale UI reads/writes; offer refresh after errors/conflicts without automatically retrying playlist additions. Document API, data choices and rollout in `MUSIC_COLLECTIONS.md`.
+- **Validation:** All 220 backend tests and 86 frontend tests pass. Production frontend build and targeted lint pass with no errors; existing PlayerContext fast-refresh/ref-cleanup warnings and the bundle-size advisory remain. Coverage includes owner/guest boundaries, reference validation, unavailable records, playlist version races/repeated entries, model indexes, listening identity/accounting/terminal precedence, failed writes and authenticated request boundaries. Controller database calls are mocked; hosted MongoDB/index concurrency and actual media events still require verification.
+- **Remaining setup/verification:** Deploy both applications and verify additive collections/indexes, likes across re-login/devices, conflicting playlist edits, repeated-track selection, deleted-track placeholders, real playback/history, logout and phone controls. No new environment variables are required. No deployment or authenticated live browser/device session was verified in this batch. Final history delivery is best effort under browser/network termination; no durable retry queue is included. Aggregate statistics, pinned favorites, playlist artwork/dragging/undo/multi-selection, queue restoration and grouped search remain future work. Offline/download work stays deferred.
+- **Next:** Grouped private track/artist/album/playlist search and everyday browsing, followed by lyrics and explainable recommendations. See `IMPLEMENTATION_PLAN.md`.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
 - **P1 — Core product:** Implement the music catalog, imports, library, and everyday playback.
-- **P2 — Daily-use quality:** Complete offline listening, mobile behavior, search, and accessibility.
+- **P2 — Daily-use quality:** Complete mobile streaming behavior, search, and accessibility. Offline/download work is deferred.
 - **P3 — Enhancements:** Add advanced audio features, personalization, and device handoff after the core is reliable.
 
 ## 1. Private access and authentication — P0
@@ -227,12 +237,13 @@ The current `backend/src/controllers/paymentController.js` simulates a purchase 
 - [x] Add owner scoping to personal records and enforce it in database queries.
   - Applied to new music records and references. Existing podcast schemas remain unchanged.
 - [ ] Add saved albums, followed artists, liked tracks, listening events, and user playback preferences.
-- [ ] Introduce playlist items with stable IDs and explicit positions so reordering and repeated tracks have defined behavior.
+  - Likes, saves, follows and listening sessions are implemented in Change 15; durable playback preferences remain pending.
+- [x] Introduce playlist items with stable IDs and explicit positions so reordering and repeated tracks have defined behavior.
 - [x] Keep music tracks distinct from podcast episodes; define whether mixed playlists are supported.
 - [ ] Define deletion behavior for tracks referenced by playlists, likes, downloads, and history.
-  - Track soft deletion and retention of originals are implemented; music-playlist/like/download/history reference behavior will be completed with those features.
+  - Track soft deletion, retained originals, removable unavailable playlist/saved entries and title snapshots in 180-day history are implemented. New music downloads remain deferred; restore/cleanup remains pending.
 - [ ] Add indexes for ownership, artist/album relationships, search, playlist ordering, and listening history.
-  - Catalog ownership, artist/album relationships, ordering and duplicate indexes are implemented. Music-playlist/history indexes remain pending.
+  - Catalog, playlist ordering, saved-reference uniqueness and listening-history/TTL indexes are defined. Hosted index verification and expanded search indexes remain pending.
 - [ ] Move growing listening-history collections out of the user document; avoid unbounded embedded arrays.
 - [x] Write a migration plan for existing podcast playlists, media URLs, history, and user records.
   - See `MUSIC_CATALOG.md`; use additive collections and preserve existing podcast IDs/records. No live conversion has been run.
@@ -300,14 +311,14 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 
 - [ ] Open the listening home after login; keep any public landing page separate from the private app.
 - [ ] Build a desktop sidebar for Home, Search, Your Library, and playlists.
-  - Listen/library/import, global search and secondary podcast tools are implemented. Music playlists remain pending.
+  - Listen/library/import, global search, music playlists/likes/recently played and secondary podcast tools are implemented. Remaining Home/Search polish is pending.
 - [x] Use a persistent bottom player and optional queue/Now Playing side panel on desktop.
   - Compact player plus expanded Now Playing/current-queue dialog, queue editing and shuffle/repeat are implemented.
 - [ ] Build mobile Home/Search/Library navigation, a mini-player, and a full-screen Now Playing view.
-- [ ] Add album, artist, track, liked-songs, playlist, import, and queue views.
-  - Songs, albums, artists, imports and queue management are implemented; music playlists and liked songs remain pending.
+- [x] Add album, artist, track, liked-songs, playlist, import, and queue views.
+  - Songs, albums, artists, imports, queue management, music playlists and liked songs are implemented; hosted device verification remains pending.
 - [x] Turn `/library`, currently used for history, into a unified library; give history its own view or filter.
-  - Music songs/albums/artists are available at `/library`; episode history moved to `/history`. Music history/saved collections remain future work.
+  - Music songs/albums/artists are available at `/library`; episode history moved to `/history`. Music history and saved collections are at `/music/collections`.
 - [ ] Use compact track rows with title, artist, album, duration, liked state, download state, and contextual actions.
 - [ ] Add Home sections such as Recently Played, Recently Added, Favorite Albums, and Your Playlists.
 - [ ] Keep search available throughout the app.
@@ -321,16 +332,20 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 ## 9. Library and playlists — P1
 
 - [ ] Provide views for songs, albums, artists, playlists, downloads, and optional podcasts.
-  - Music songs/albums/artists and optional podcasts are available. Existing playlists/downloads are episode-specific; music equivalents remain pending.
+  - Music songs/albums/artists/playlists and optional podcasts are available. Existing downloads remain episode-specific; new music downloads are deferred.
 - [ ] Add track likes, album saves, artist follows, and pinned favorites.
+  - Likes/saves/follows are implemented; pinned favorites remain pending.
 - [ ] Support sorting by title, artist, album, date added, duration, and play count where appropriate.
 - [ ] Support playlist creation, renaming, deletion, descriptions, cover artwork, and drag-to-reorder.
+  - Creation, renaming, soft deletion, descriptions and button-based reorder are implemented. Playlist artwork and drag gestures remain pending.
 - [ ] Support adding tracks from search, albums, the player, and multi-selection.
+  - Catalog search/album rows and the player support adding songs; multi-selection remains pending.
 - [ ] Define duplicate-track behavior and offer undo for common destructive actions.
+  - Repeated tracks have independent entries/positions. Undo remains pending.
 - [ ] Add playlist-local search and display track count and total duration.
 - [ ] Add playlist import/export in documented formats, with a clear report for unmatched tracks.
-- [ ] Keep playlists private by default; do not introduce public sharing as a requirement.
-- [ ] Handle deleted/unavailable tracks gracefully without breaking the entire playlist.
+- [x] Keep playlists private by default; do not introduce public sharing as a requirement.
+- [x] Handle deleted/unavailable tracks gracefully without breaking the entire playlist.
 
 ## 10. Search — P1/P2
 
