@@ -72,7 +72,7 @@ test('does not use expired cached keys if a refresh fails', async () => {
   const token = sign(first.privateKey, 'first');
   await verify(token);
   time = 600001;
-  await expect(verify(token)).rejects.toThrow('Unavailable');
+  await expect(verify(token)).rejects.toMatchObject({ code: 'AUTH_PROVIDER_UNAVAILABLE' });
 });
 
 test('does not share cached keys across configured Supabase projects', async () => {
@@ -116,4 +116,11 @@ test('legacy signing uses the exact configured string and never a placeholder fa
     const unconfigured = createSupabaseVerifier({ env: { SUPABASE_URL: origin, SUPABASE_JWT_SECRET: value } });
     await expect(unconfigured(token)).rejects.toThrow('not configured');
   }
+});
+
+test('classifies missing project settings and signing-key network failures without leaking their details', async () => {
+  const token = sign(first.privateKey, 'first');
+  await expect(createSupabaseVerifier({ env: {} })(token)).rejects.toMatchObject({ code: 'AUTH_CONFIGURATION' });
+  const verify = createSupabaseVerifier({ env: { SUPABASE_URL: origin }, fetchImpl: async () => { throw new Error('private network details'); } });
+  await expect(verify(token)).rejects.toMatchObject({ code: 'AUTH_PROVIDER_UNAVAILABLE', message: 'Unable to load authentication signing keys' });
 });

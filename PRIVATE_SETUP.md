@@ -90,3 +90,20 @@ Use backend Node.js 22 or newer and MongoDB Atlas or another replica set: review
 Cancelled, failed and unconfirmed originals are retained privately. Review storage capacity until retention/cleanup and storage quotas are implemented. See `MUSIC_IMPORTS.md` for limits, API, retry/cancel behavior and remaining verification. No hosted import or live database transaction has been verified from this workspace.
 
 On 2026-11-05 the owner reported completing all four hosted setup/testing steps: Node runtime, MongoDB requirements, persistent backend, and private storage/import verification. This is owner-reported completion; independent hosted verification has not been performed. Deploy and verify the subsequent music-library frontend separately.
+
+## Diagnosing owner sign-in
+
+The old `Not authorized, token failed` message covered both token verification and MongoDB profile errors. After deploying Change 10, retry sign-in and check the response plus Render's sanitized `Owner authentication failed` entry:
+
+| Stage/reason | What to check |
+| --- | --- |
+| `token_verification / server_configuration` | Backend `SUPABASE_URL` must match the frontend project. Legacy HS256 sessions also need the actual `SUPABASE_JWT_SECRET`; an API key/service-role key is not that signing secret. |
+| `token_verification / signing_keys_unavailable` | Backend outbound connectivity to the configured project's `/auth/v1/.well-known/jwks.json`; retry after transient failures. |
+| `token_verification / expired_token` | Sign out and sign in again to obtain a current session. |
+| `token_verification / invalid_token_claims_or_signature` or `unsupported_token_or_key` | Check project/signing settings and session freshness. Preserve issuer/audience/signature verification. |
+| `profile_sync / database_unavailable` | Render `MONGO_URI`, network access and database availability. |
+| `profile_sync / duplicate_profile`, `invalid_profile` or `profile_storage_error` | Inspect owner profile/index/schema compatibility in the configured database; preserve existing library IDs. |
+
+Owner mismatch/suspension continues to return 403. Missing owner configuration returns 503. Do not change the configured owner UID unless Supabase confirms the intended owner's actual UID.
+
+Public checks on 2026-11-05 confirmed the frontend's expected project, reachable ES256 public keys and a connected Render database. The authenticated failure remains unverified. Share only the stage/reason or displayed error when seeking help; passwords, bearer tokens and backend secrets are unnecessary.

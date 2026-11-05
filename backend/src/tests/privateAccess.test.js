@@ -108,6 +108,36 @@ test('uses the linked identity even if the owner email has changed', async () =>
   expect(User.findOne).toHaveBeenCalledWith({ supabaseUserId: ownerId });
 });
 
+test('reports missing signing configuration as a server setup error', async () => {
+  delete process.env.SUPABASE_JWT_SECRET;
+  const { res, next } = await authenticate();
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Server sign-in configuration') }));
+  expect(next).not.toHaveBeenCalled();
+  expect(User.findOne).not.toHaveBeenCalled();
+});
+
+test.each([
+  Object.assign(new Error('private database connection details'), { name: 'MongoServerSelectionError' }),
+  Object.assign(new Error('private duplicate profile details'), { code: 11000 }),
+])('does not misreport profile storage errors as invalid passwords or tokens', async error => {
+  User.findOne.mockRejectedValue(error);
+  const { res, next } = await authenticate();
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ success: false, message: expect.stringContaining('You signed in successfully') });
+  expect(JSON.stringify(res.json.mock.calls)).not.toContain('private');
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('reports first-login profile creation failure separately from valid token verification', async () => {
+  User.findOne.mockResolvedValue(null);
+  User.create.mockRejectedValue(Object.assign(new Error('private validation data'), { name: 'ValidationError' }));
+  const { res, next } = await authenticate();
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ success: false, message: expect.stringContaining('library profile could not be loaded') });
+  expect(next).not.toHaveBeenCalled();
+});
+
 test.each(['register', 'login', 'google', 'verify-otp', 'resend-otp', 'refresh'])(
   'closes the legacy %s account flow', async (route) => {
     const response = await request(app).post(`/api/auth/${route}`).send({ role: 'admin' });

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { supabaseOrigin, isPlaceholder } = require('../config/security');
+const verificationError = (code, message) => Object.assign(new Error(message), { code });
 
 function createSupabaseVerifier({ fetchImpl = (...args) => fetch(...args), now = Date.now, env = process.env } = {}) {
   const projects = new Map();
@@ -9,7 +10,9 @@ function createSupabaseVerifier({ fetchImpl = (...args) => fetch(...args), now =
   return async token => {
     const decoded = jwt.decode(token, { complete: true });
     if (!decoded || !['ES256', 'HS256'].includes(decoded.header.alg)) throw new Error('Unsupported or invalid token');
-    const origin = supabaseOrigin(env);
+    let origin;
+    try { origin = supabaseOrigin(env); }
+    catch { throw verificationError('AUTH_CONFIGURATION', 'Supabase project configuration is invalid'); }
     let key;
     if (decoded.header.alg === 'ES256') {
       const kid = decoded.header.kid;
@@ -22,12 +25,15 @@ function createSupabaseVerifier({ fetchImpl = (...args) => fetch(...args), now =
         if (force && now() - state.forcedAt < refreshCooldown) return state.keys || [];
         if (force) state.forcedAt = now();
         state.inflight = (async () => {
-          const response = await fetchImpl(`${origin}/auth/v1/.well-known/jwks.json`, {
-            signal: AbortSignal.timeout(10000), redirect: 'error',
-          });
-          if (!response.ok) throw new Error('Unable to load authentication signing keys');
-          const data = await response.json();
-          if (!Array.isArray(data.keys)) throw new Error('Invalid authentication signing keys');
+          let response, data;
+          try {
+            response = await fetchImpl(`${origin}/auth/v1/.well-known/jwks.json`, {
+              signal: AbortSignal.timeout(10000), redirect: 'error',
+            });
+            if (!response.ok) throw new Error();
+            data = await response.json();
+            if (!Array.isArray(data.keys)) throw new Error();
+          } catch { throw verificationError('AUTH_PROVIDER_UNAVAILABLE', 'Unable to load authentication signing keys'); }
           state.keys = data.keys;
           state.expires = now() + ttl;
           return state.keys;
@@ -50,7 +56,7 @@ function createSupabaseVerifier({ fetchImpl = (...args) => fetch(...args), now =
       // Supabase's legacy secret is the exact configured string. Its length
       // does not determine whether it should be decoded as base64.
       key = env.SUPABASE_JWT_SECRET;
-      if (!key || isPlaceholder(key)) throw new Error('Legacy signing is not configured');
+      if (!key || isPlaceholder(key)) throw verificationError('AUTH_CONFIGURATION', 'Legacy signing is not configured');
     }
     const payload = jwt.verify(token, key, {
       algorithms: [decoded.header.alg], issuer: `${origin}/auth/v1`, audience: 'authenticated',

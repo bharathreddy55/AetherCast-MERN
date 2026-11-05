@@ -110,6 +110,13 @@ This document is the implementation checklist and progress record. Checked items
 - **Limitations:** No authenticated live browser/device verification of the new library/player was performed. Queues contain at most the displayed 50 songs; whole-library queues, add/reorder/remove, repeated queue items, shuffle/repeat, music likes/playlists/history and music downloads remain pending. Unsupported-codec conversion and seamless streaming-link renewal are still pending.
 - **Next:** Add personal music likes/playlists and fuller queue controls. Deploy the latest frontend and verify imported-song playback on desktop/phone. See `MUSIC_LIBRARY.md`.
 
+### 2026-11-05 — Change 10: Distinguish sign-in verification from profile failures
+
+- **Observed live:** The deployed frontend references the expected Supabase project. Its public ES256/P-256 signing-key endpoint returns 200. The Render backend `/health` returns 200 with `database: connected`; unauthenticated profile access correctly returns 401. These checks do not verify the backend's private environment values or an authenticated owner session.
+- **Done locally:** Stop reporting every profile/database failure as a failed token. Return separate safe errors for invalid sessions (401), missing server signing/project configuration (503), unavailable signing keys (503), and library profile synchronization failures after successful verification (503). Add server log stage/reason categories without credentials, tokens, account details, or raw exception messages.
+- **Verified:** All 170 backend tests pass. New cases cover missing signing configuration, unavailable key discovery, database/duplicate/validation failures and safe error responses. Syntax and whitespace checks pass. Frontend source is unchanged; its previous 39 passing tests and production build remain the latest frontend verification.
+- **Still unresolved:** The exact cause of the screenshot's sign-in failure cannot be established from its generic error. No authenticated owner login or Render runtime log inspection was performed, and no owner credentials were changed. Deploy this diagnostic batch to the backend, retry sign-in, then use the new response and sanitized stage/reason log to identify the failing setting or profile operation. See `PRIVATE_SETUP.md`.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
