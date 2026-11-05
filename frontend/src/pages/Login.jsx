@@ -69,6 +69,7 @@ export default function Login() {
     setSubmitting(true);
 
     const result = await login(email, password);
+    setPassword('');
     setSubmitting(false);
 
     if (!result.success) {

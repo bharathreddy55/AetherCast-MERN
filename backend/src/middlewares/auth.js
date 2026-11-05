@@ -44,7 +44,7 @@ const authenticateOwnerToken = async token => {
 
 const requestToken = req => {
   const match = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization || '');
-  return match?.[1] || req.cookies?.accessToken;
+  return match?.[1];
 };
 
 const protect = async (req, res, next) => {

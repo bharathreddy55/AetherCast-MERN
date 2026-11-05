@@ -8,7 +8,7 @@
 4. In Supabase Authentication settings, disable **Allow new users to sign up**. Review enabled providers and disable automatic account creation where applicable. The application closes its own registration routes, but cannot change hosted Supabase settings by changing source code.
 5. Restart/redeploy the backend after configuration. With no owner configured, authenticated app requests return a configuration error rather than granting access.
 
-The owner continues to sign in through Supabase. Legacy application registration, password login, Google-token exchange, OTP, and refresh endpoints are closed; the frontend already uses Supabase for sign-in and session refresh.
+The owner signs in through Supabase by explicitly entering email and password. Sessions are held in memory for the current running page; a new page load/tab/device requires fresh sign-in. After password verification, the backend must approve the configured owner before the library opens. Legacy application registration, password login, Google-token exchange, OTP, and refresh endpoints remain closed.
 
 Existing MongoDB profiles keep their current roles. New profiles receive `listener`; administrator roles must be assigned through a trusted operation. User metadata cannot grant administrator privileges.
 
@@ -113,3 +113,13 @@ Public checks on 2026-11-05 confirmed the frontend's expected project, reachable
 The owner's subsequent live logs confirmed successful token verification followed by `profile_sync / duplicate_profile`. Change 11 generates new internal usernames on the server, handles simultaneous profile creation by verified identity, and preserves existing library IDs during legacy email linking. Deploy the latest backend and retry sign-in. Do not delete existing user records or remove unique indexes to work around this error. If a duplicate remains, the safe log now includes recognized conflicting field names (without their values) to identify the specific constraint.
 
 Express now detects Render through its built-in `RENDER=true` environment setting and trusts one nearest proxy hop before applying rate limits. Other environments trust none by default. Optional `TRUST_PROXY_HOPS` accepts an integer 0–5; use a value matching the verified hosting path if additional proxies require it. Do not use unrestricted `trust proxy=true` or disable rate-limit validation to suppress the error. Client-IP behavior with the actual deployed forwarding chain still needs verification.
+
+## Explicit credential policy
+
+Change 12 disables Supabase browser session persistence and automatic library-session restoration. The frontend removes its project's old stored Supabase login entries plus the obsolete `token` key from local/session storage, without touching other projects or settings. No access token is written back to persistent storage. Blocked browser storage cannot restore a session because the SDK now uses memory only.
+
+Only a successful email/password sign-in followed by backend owner-profile approval unlocks the running app. API/socket clients enforce the same in-memory approval; the backend verifies owner bearer tokens and no longer accepts the old access-token cookie fallback. Google OAuth is disabled under this password-entry policy. Recovery links may authorize password updates but cannot open the library; updating the password signs out and requires fresh credentials.
+
+Deploy frontend and backend together. Check a normal window, incognito window and another device: `/music` must show login; wrong credentials must not open private pages; correct current owner credentials must pass both Supabase and backend checks. Reload/new tab, logout and browser Back after leaving must require sign-in. Within the same running page, internal navigation and approved token refresh continue to work. Passwords are verified by Supabase and are never hardcoded or stored by this app.
+
+This policy does not globally revoke earlier Supabase JWTs or already issued 15-minute media capabilities. Those retain their existing expiry/verification rules. Browser automation could not initialize for this batch, so real-device/hosted verification remains required. Offline launch without a new credential check is unavailable under the requested policy.

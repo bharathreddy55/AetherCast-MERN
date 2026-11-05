@@ -38,6 +38,14 @@ test('allows the explicitly configured owner', async () => {
   expect(req.user._id).toBe('existing');
 });
 
+test('legacy access-token cookies do not silently authorize a device', async () => {
+  const token = jwt.sign({ sub: ownerId, email: 'owner@example.com' }, secret,
+    { algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m' });
+  const response = await request(app).get('/api/auth/profile').set('Cookie', `accessToken=${token}`);
+  expect(response.status).toBe(401);
+  expect(User.findOne).not.toHaveBeenCalled();
+});
+
 test('denies another authenticated user before looking up a profile', async () => {
   const { res, next } = await authenticate({ sub: 'other-user' });
   expect(res.status).toHaveBeenCalledWith(403);

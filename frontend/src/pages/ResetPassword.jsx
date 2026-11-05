@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { Eye, EyeOff, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import './Pages.css';
+import { useAuth } from '../context/AuthContext';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +27,7 @@ export default function ResetPassword() {
     if (error) {
       setError(error.message);
     } else {
+      await logout();
       setSuccess('Password updated successfully! Redirecting to login page...');
       setTimeout(() => navigate('/login'), 2500);
     }

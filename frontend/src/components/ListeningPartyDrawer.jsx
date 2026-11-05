@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { supabase } from '../supabase';
 import { BACKEND_URL } from '../lib/config';
 import { createListeningPartyClient } from '../lib/listeningPartyClient';
+import { credentialGate } from '../lib/credentialSession';
 
 export default function ListeningPartyDrawer({ episodeId, user, isPlaying, togglePlay, seek, onClose, isSyncingRef }) {
   const [messages, setMessages] = useState([]);
@@ -24,11 +25,7 @@ export default function ListeningPartyDrawer({ episodeId, user, isPlaying, toggl
     setMessages([]);
     const client = createListeningPartyClient({
       makeSocket: io, backendUrl: BACKEND_URL, episodeId,
-      getAccessToken: async () => {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        return data.session?.access_token;
-      },
+      getAccessToken: () => credentialGate.accessToken(supabase.auth),
       onStatus: setStatus,
       onRoomState: setRoom,
       onMessage: message => setMessages(previous => [...previous.slice(-199), message]),
