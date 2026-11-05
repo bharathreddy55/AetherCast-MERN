@@ -2,7 +2,7 @@
 
 Open **Import Music** in the signed-in navigation, or visit `/music/import`. Choose individual files, multiple files, or a folder. Uploads run sequentially and each file shows its own status. After background analysis, edit the extracted metadata and choose the form's confirmation action to add the track, artists and album to the catalog.
 
-The original is stored privately before review. Confirmation creates catalog records; it does not upload the file again. Music browsing and integration with the global player are the next implementation step, so importing does not yet provide a complete listening workflow.
+The original is stored privately before review. Confirmation creates catalog records; it does not upload the file again. Open **My Music** at `/music` to browse and play confirmed tracks; see [MUSIC_LIBRARY.md](MUSIC_LIBRARY.md) for queue scope and playback limitations.
 
 ## Deployment requirements
 
@@ -51,4 +51,4 @@ Backend tests include real WAV parsing, invalid/truncated audio, owner denial, m
 
 The backend dependency audit currently reports 14 advisories, including one critical advisory in existing framework dependencies. The added metadata parser is not listed in that report. Dependency upgrades and regression verification remain a separate maintenance task; no forced bulk upgrades were applied.
 
-Next: music-library screens and global track playback, then music playlists/queue, thumbnails, conversion, direct/resumable transfer, bulk editing and safe retained-file cleanup. See [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for the complete checklist.
+Next: music playlists and fuller queue controls, thumbnails, conversion, direct/resumable transfer, bulk editing and safe retained-file cleanup. See [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for the complete checklist.

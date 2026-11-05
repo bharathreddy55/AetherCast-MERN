@@ -2,7 +2,7 @@ import { apiFetch } from '../lib/apiClient';
 import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { useAuth, API_BASE_URL } from './AuthContext';
 import { readDownload } from '../lib/downloads';
-import { resolveEpisodeMedia } from '../lib/resolveEpisodeMedia';
+import { resolvePlayerMedia, isMusic, sameMedia, adjacentMedia, episodeProgressSnapshot, initialPlaybackPosition } from '../lib/musicPlayback';
 import { createProgressTracker, createProgressSender } from '../lib/playbackProgress';
 
 const PlayerContext = createContext(null);
@@ -39,8 +39,7 @@ export const PlayerProvider = ({ children }) => {
     getSnapshot: () => {
       const media = activeMediaRef.current;
       const auth = authRef.current;
-      if (!media?.ready || media.ownerId !== auth?.ownerId) return null;
-      return { ...auth, episodeId: media.episode._id, position: audioRef.current.currentTime, duration: audioRef.current.duration };
+      return episodeProgressSnapshot(media, auth, audioRef.current);
     },
     send: createProgressSender(API_BASE_URL),
     onError: () => console.warn('Playback progress could not be saved. Listening can continue.'),
@@ -300,11 +299,11 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [isPlaying, savePlaybackProgress]);
 
-  const playEpisode = async (episode, newPlaylist = []) => {
+  const playEpisode = async (episode, newPlaylist = null) => {
     if (!episode || !user) return;
     const requestId = ++playRequestRef.current;
-    const isSameEpisode = activeMediaRef.current?.episode._id === episode._id;
-    const resumePosition = isSameEpisode && !audioRef.current.ended ? audioRef.current.currentTime : 0;
+    const isSameEpisode = sameMedia(activeMediaRef.current?.episode, episode);
+    const resumePosition = initialPlaybackPosition(episode, activeMediaRef.current?.episode, audioRef.current);
     void progressTracker.stop(); // Capture the outgoing media before any source change.
     audioRef.current.pause();
     setIsPlaying(false);
@@ -316,9 +315,10 @@ export const PlayerProvider = ({ children }) => {
     // Cached audio belongs to the signed-in owner. Streaming always resolves a
     // fresh authorized media link and never falls back to an old public URL.
     try {
-      const resolved = await resolveEpisodeMedia(episode, {
+      const resolved = await resolvePlayerMedia(episode, {
         readDownload: id => readDownload(user.id || user._id, id),
         fetchEpisode: id => apiFetch(`${API_BASE_URL}/episodes/${id}`),
+        fetchTrack: id => apiFetch(`${API_BASE_URL}/music/tracks/${id}/playback`),
       });
       finalEpisode = resolved.episode;
       downloadedResponse = resolved.downloadedResponse;
@@ -336,12 +336,12 @@ export const PlayerProvider = ({ children }) => {
     }
     
     // Increment playCount on the backend asynchronously
-    apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/play`, {
+    if (!isMusic(finalEpisode)) apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/play`, {
       method: 'POST',
     }).catch(err => console.error('Failed to increment play count', err));
 
     // Track in listen history
-    if (token) {
+    if (token && !isMusic(finalEpisode)) {
       apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/history`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -350,9 +350,9 @@ export const PlayerProvider = ({ children }) => {
 
     {
       let startPosition = resumePosition;
-      const localProgress = progressTracker.latest(user.id || user._id, finalEpisode._id);
+      const localProgress = !isMusic(finalEpisode) && progressTracker.latest(user.id || user._id, finalEpisode._id);
       if (!isSameEpisode && localProgress) startPosition = localProgress.completed ? 0 : localProgress.position;
-      if (token && !isSameEpisode && !localProgress && !downloadedResponse) {
+      if (!isMusic(finalEpisode) && token && !isSameEpisode && !localProgress && !downloadedResponse) {
         try {
           const res = await apiFetch(`${API_BASE_URL}/episodes/${finalEpisode._id}/progress`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -385,12 +385,14 @@ export const PlayerProvider = ({ children }) => {
       activeMediaRef.current = { episode: finalEpisode, ownerId: user.id || user._id, ready: false, requestId,
         source: new URL(mediaUrl, window.location.href).href };
       pendingSeekRef.current = { requestId, position: startPosition };
-      if (newPlaylist?.length) setPlaylist(newPlaylist);
+      if (Array.isArray(newPlaylist)) setPlaylist(newPlaylist);
+      else if (!isSameEpisode && !playlist.some(item => sameMedia(item, episode))) setPlaylist([episode]);
+      if (isMusic(finalEpisode)) { setPlaybackSpeed(1); audioRef.current.playbackRate = 1; }
       setCurrentEpisode(finalEpisode);
       setDuration(0);
       audioRef.current.src = mediaUrl;
       mediaLoadedAtRef.current = Date.now();
-      audioRef.current.playbackRate = playbackSpeed;
+      audioRef.current.playbackRate = isMusic(finalEpisode) ? 1 : playbackSpeed;
       audioRef.current.load();
       setCurrentTime(startPosition);
     }
@@ -448,18 +450,14 @@ export const PlayerProvider = ({ children }) => {
 
   const playNext = () => {
     if (playlist.length === 0 || !currentEpisode) return;
-    const currentIndex = playlist.findIndex((ep) => ep._id === currentEpisode._id);
-    if (currentIndex !== -1 && currentIndex < playlist.length - 1) {
-      playEpisode(playlist[currentIndex + 1]);
-    }
+    const next = adjacentMedia(playlist, currentEpisode, 1);
+    if (next) playEpisode(next);
   };
 
   const playPrevious = () => {
     if (playlist.length === 0 || !currentEpisode) return;
-    const currentIndex = playlist.findIndex((ep) => ep._id === currentEpisode._id);
-    if (currentIndex > 0) {
-      playEpisode(playlist[currentIndex - 1]);
-    }
+    const previous = adjacentMedia(playlist, currentEpisode, -1);
+    if (previous) playEpisode(previous);
   };
 
   const closePlayer = () => {
@@ -496,6 +494,7 @@ export const PlayerProvider = ({ children }) => {
         currentSubtitle,
         analyser,
         playEpisode,
+        playTrack: (track, queue = [track]) => playEpisode({ ...track, kind: 'track' }, queue.map(item => ({ ...item, kind: 'track' }))),
         togglePlay,
         seek,
         changeSpeed,

@@ -4,6 +4,7 @@ import { apiFetch } from '../lib/apiClient';
 import { API_BASE_URL } from '../lib/config';
 import { DEFAULT_IMPORT_FORMATS, selectMusicFiles, uploadMusicFiles, reviewPayload } from '../lib/musicImportClient';
 import './MusicImports.css';
+import { Link } from 'react-router-dom';
 
 const base = `${API_BASE_URL}/music/imports`;
 async function request(url, options = {}) {
@@ -116,7 +117,7 @@ export default function MusicImports() {
     catch (failure) { setError(failure.message); }
   };
   return <div className="music-import-page">
-    <header><span className="badge-mono">YOUR MUSIC</span><h1>Import your music</h1><p>Choose songs or an album folder. Review the details before adding them to your private library.</p></header>
+    <header><span className="badge-mono">YOUR MUSIC</span><h1>Import your music</h1><p>Choose songs or an album folder. Review the details before adding them to your private library.</p><Link to="/music">Open My Music</Link></header>
     {error && <p className="music-import-alert" role="alert">{error}</p>}
     {notice && <p className="music-import-alert" role="status">{notice}</p>}
     <section className="glass-panel music-import-panel" aria-label="Select music files">

@@ -1,6 +1,6 @@
 # AetherCast — A Production-Style MERN Podcast Streaming Platform
 
-AetherCast is being adapted into a private, ad-free music app for the owner's library, with optional podcasts. Follow [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for progress, [PRIVATE_SETUP.md](PRIVATE_SETUP.md) for required deployment settings, and [MUSIC_IMPORTS.md](MUSIC_IMPORTS.md) for music imports. Music browsing/player integration and hosted verification remain pending. The podcast platform documentation below describes the original app and may differ from current owner-only behavior.
+AetherCast is being adapted into a private, ad-free music app for the owner's library, with optional podcasts. Follow [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for progress, [PRIVATE_SETUP.md](PRIVATE_SETUP.md) for required deployment settings, [MUSIC_IMPORTS.md](MUSIC_IMPORTS.md) for imports and [MUSIC_LIBRARY.md](MUSIC_LIBRARY.md) for music browsing/playback. The owner reports completing the initial hosted setup; the latest library/player changes still need live verification. The podcast platform documentation below describes the original app and may differ from current owner-only behavior.
 
 ### 🌐 Live Deployments
 - **Frontend App**: [aether-cast-mern.vercel.app](https://aether-cast-mern.vercel.app/)

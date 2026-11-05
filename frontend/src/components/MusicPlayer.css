@@ -1,0 +1,17 @@
+.music-player { position: fixed; z-index: 200; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 24px; padding: 16px 24px; background: var(--bg-card, #141919); border-top: 1px solid var(--border-color); box-shadow: 0 -8px 30px #0003; }
+.music-player button { display: inline-flex; align-items: center; justify-content: center; padding: 8px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; }
+.music-player button:disabled { opacity: .3; cursor: default; }
+.music-player-info { display: flex; gap: 12px; align-items: center; width: 30%; min-width: 0; }
+.music-player-info img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; }
+.music-player-info div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.music-player-info strong, .music-player-info span, .music-player-info a { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.music-player-info span, .music-player-info a, .music-queue-count { font-size: .75rem; color: var(--text-secondary); }
+.music-player-transport { flex: 1; min-width: 0; }
+.music-player-buttons { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.music-player button.music-play-toggle { background: var(--color-primary); color: #08140d; border-radius: 50%; }
+.music-player-seek { display: flex; gap: 10px; align-items: center; font-size: .72rem; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.music-player input { accent-color: var(--color-primary); min-width: 0; }
+.music-player-seek input { flex: 1; }
+.music-player-volume { display: flex; flex-direction: column; gap: 6px; font-size: .72rem; max-width: 110px; }
+.music-player-error { position: absolute; bottom: 100%; left: 0; right: 0; padding: 12px 24px; margin: 0; background: var(--bg-card); border-top: 1px solid var(--border-color); }
+@media(max-width: 640px) { .music-player { flex-wrap: wrap; gap: 10px; padding: 12px 16px; } .music-player-info { flex: 1; width: auto; } .music-player-volume { display: none; } .music-player-transport { order: 3; flex-basis: 100%; } .music-player-info img { width: 38px; height: 38px; } }

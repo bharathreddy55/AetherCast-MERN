@@ -73,9 +73,9 @@ export default function Navbar() {
 
         <div className="navbar-links">
           {[
-            { to: '/', label: 'Explore', icon: <Compass size={16} /> },
+            { to: '/explore', label: 'Podcasts', icon: <Compass size={16} /> },
             ...(user ? [
-              { to: '/home', label: 'Home', icon: <Music size={16} /> },
+              { to: '/music', label: 'My Music', icon: <Music size={16} /> },
               { to: '/music/import', label: 'Import Music', icon: <Music size={16} /> },
               { to: '/playlists', label: 'Playlists', icon: <ListMusic size={16} /> },
               { to: '/library', label: 'Library', icon: <Clock size={16} /> },
@@ -287,15 +287,15 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="mobile-menu-links">
-            <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`}>
+            <Link to="/explore" className={`mobile-nav-link ${isActive('/explore') ? 'active' : ''}`}>
               <Compass size={18} />
-              <span>Explore</span>
+              <span>Podcasts</span>
             </Link>
             {user && (
               <>
-                <Link to="/home" className={`mobile-nav-link ${isActive('/home') ? 'active' : ''}`}>
+                <Link to="/music" className={`mobile-nav-link ${isActive('/music') ? 'active' : ''}`}>
                   <Music size={18} />
-                  <span>Home</span>
+                  <span>My Music</span>
                 </Link>
                 <Link to="/playlists" className={`mobile-nav-link ${isActive('/playlists') ? 'active' : ''}`}>
                   <ListMusic size={18} />

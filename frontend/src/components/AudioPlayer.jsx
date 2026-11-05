@@ -12,8 +12,15 @@ import './AudioPlayer.css';
 import AudioVisualizer from './AudioVisualizer';
 import ListeningPartyDrawer from './ListeningPartyDrawer';
 import { readDownload, downloadEpisode, removeDownload } from '../lib/downloads';
+import MusicPlayer from './MusicPlayer';
+import { isMusic } from '../lib/musicPlayback';
 
 export default function AudioPlayer() {
+  const { currentEpisode } = usePlayer();
+  return isMusic(currentEpisode) ? <MusicPlayer /> : <EpisodeAudioPlayer />;
+}
+
+function EpisodeAudioPlayer() {
   const {
     currentEpisode,
     isPlaying,

@@ -100,6 +100,16 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining:** Music-library/player integration, conversion, thumbnails, likely-metadata duplicate review, bulk management, direct/resumable transfer and safe retained-original cleanup. Failed/cancelled originals remain stored; storage quota enforcement is pending. Dependency audit reports 14 advisories, including one critical advisory in existing framework dependencies; the new metadata parser is not listed. Dependency maintenance remains separate work.
 - **Next:** Add music browsing and connect tracks to the global player.
 
+### 2026-11-05 — Change 9: My Music browsing and track playback
+
+- **Hosted setup reported complete by owner:** The owner reports completing the previous four steps covering Node runtime, MongoDB transaction support, persistent backend, and private storage/import testing. This is recorded as owner-reported completion; no independent hosted session was performed for this batch.
+- **Done locally:** Make My Music the default landing page; provide Songs, Albums and Artists with title/name search, pagination, refresh/retry/loading/empty states and URL-based album/artist filters. Keep optional podcasts accessible and link imports back to the collection.
+- **Done locally:** Play tracks using fresh owner-authorized music playback URLs through the shared engine. Render a dedicated responsive music player with artwork, credits, album navigation, play/pause, previous/next, seek, volume and close. Songs start from zero at normal speed; refreshing the same song retains its position where available.
+- **Done locally:** Queue the displayed page of songs, automatically advance at completion and stop at the end. Album pages follow disc/track order. Distinguish track/podcast identity and prevent music from calling episode progress/history/play-count APIs or using episode downloads/feature controls. Preserve the existing podcast progress/download behavior and stale-selection protection.
+- **Verified:** All 39 frontend tests pass, including seven new music playback tests. Frontend production build and whitespace checks pass; targeted lint has no errors. Existing podcast-player/context lint warnings and the bundle-size advisory remain. Backend source is unchanged; its previous 165 passing tests remain the latest backend verification.
+- **Limitations:** No authenticated live browser/device verification of the new library/player was performed. Queues contain at most the displayed 50 songs; whole-library queues, add/reorder/remove, repeated queue items, shuffle/repeat, music likes/playlists/history and music downloads remain pending. Unsupported-codec conversion and seamless streaming-link renewal are still pending.
+- **Next:** Add personal music likes/playlists and fuller queue controls. Deploy the latest frontend and verify imported-song playback on desktop/phone. See `MUSIC_LIBRARY.md`.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -219,7 +229,7 @@ Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/s
 - [ ] Model loading, buffering, playing, paused, ended, unavailable, and error states explicitly.
 - [ ] Handle media errors, interrupted playback, autoplay restrictions, and retry with useful feedback.
 - [x] Apply saved seek positions at an appropriate media lifecycle stage and clamp invalid positions.
-- [ ] Default songs to starting from the beginning; resume podcasts according to saved episode progress.
+- [x] Default songs to starting from the beginning; resume podcasts according to saved episode progress.
 - [ ] Separate play-start events from meaningful listening events so retries and failed starts do not inflate history or counts.
 - [ ] Persist volume, mute, equalizer, playback speed, and other relevant preferences.
 - [ ] Test Bluetooth/headphone and audio-device changes; avoid pausing for unrelated device changes.
@@ -236,6 +246,7 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 - [ ] Define previous-button behavior: restart the current song after a short playback threshold, otherwise go to the previous item.
 - [ ] Restore the queue, current item, position, and preferences after reload without unexpected autoplay.
 - [ ] Make album playback follow disc/track order by default.
+  - Album song pages and their playback queue follow disc/track order. Whole-album queues spanning more than 50 songs remain pending.
 - [ ] Provide seek, elapsed/remaining time, volume, mute, like, and playlist actions consistently.
 - [ ] Add keyboard shortcuts that respect text fields and accessible focus behavior.
 - [ ] Keep podcast speed and sleep-timer controls available without crowding the primary music controls.
@@ -247,6 +258,7 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 - [ ] Use a persistent bottom player and optional queue/Now Playing side panel on desktop.
 - [ ] Build mobile Home/Search/Library navigation, a mini-player, and a full-screen Now Playing view.
 - [ ] Add album, artist, track, liked-songs, playlist, import, and queue views.
+  - Songs, albums, artists and imports are implemented; dedicated queue management, music playlists and liked songs remain pending.
 - [ ] Turn `/library`, currently used for history, into a unified library; give history its own view or filter.
 - [ ] Use compact track rows with title, artist, album, duration, liked state, download state, and contextual actions.
 - [ ] Add Home sections such as Recently Played, Recently Added, Favorite Albums, and Your Playlists.
@@ -261,6 +273,7 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 ## 9. Library and playlists — P1
 
 - [ ] Provide views for songs, albums, artists, playlists, downloads, and optional podcasts.
+  - Music songs/albums/artists and optional podcasts are available. Existing playlists/downloads are episode-specific; music equivalents remain pending.
 - [ ] Add track likes, album saves, artist follows, and pinned favorites.
 - [ ] Support sorting by title, artist, album, date added, duration, and play count where appropriate.
 - [ ] Support playlist creation, renaming, deletion, descriptions, cover artwork, and drag-to-reorder.
