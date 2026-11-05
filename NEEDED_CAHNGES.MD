@@ -438,3 +438,11 @@ Add normalization, advanced transitions, lyrics, local recommendations, and opti
 9. Verify the same core experience on a phone, including lock-screen controls.
 
 The initial release is complete when this scenario works reliably and the owner's media can be backed up and restored.
+
+## Reference research and implementation planning — 2026-11-05
+
+- **Completed:** Inspect Echo Music, LastWave Native and Velune at pinned main-branch commits, using their READMEs, recursive trees and selected database/network/playback/download/lyrics/recommendation/AI implementations. Record verified source findings and unconfirmed claims in `REFERENCE_RESEARCH.md`.
+- **Findings:** Distinguish remote YouTube Music catalogs from local Room metadata, preferences, playback caches and audio downloads. Echo has optional personal-server connectors and real remote AI calls; inspected LastWave mix generation is rules-based. Velune encryption/translation claims are qualified where inspected implementations do not establish them.
+- **Plan:** Add `IMPLEMENTATION_PLAN.md` with architecture, phased work, proposed data records, open source/AI/native/offline decisions and acceptance checks. References remain advisory; the owner and implementer retain final decisions. Preserve the existing fresh-credential policy.
+- **Validation:** Check local Markdown links, pinned source references and whitespace. No external app was executed, no provider/model account was tested, and no runtime behavior changed in this research batch. Existing interface work in progress is preserved and excluded from this research commit.
+- **Recommended next:** Verify the foundation/interface draft, then implement queue occurrence identity, full-album context, editing, shuffle and repeat. Feature checklist items remain pending until implemented and verified.
