@@ -15,6 +15,7 @@ const schema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 schema.index({ ownerId: 1, deletedAt: 1, title: 1 });
+schema.index({ ownerId: 1, deletedAt: 1, createdAt: -1, _id: -1 });
 schema.index({ ownerId: 1, artistIds: 1, deletedAt: 1 });
 schema.index({ ownerId: 1, importKey: 1 }, { unique: true, partialFilterExpression: { importKey: { $type: 'string' }, deletedAt: null } });
 module.exports = mongoose.model('Album', schema);

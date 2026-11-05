@@ -2,6 +2,7 @@ const express = require('express');
 const { id } = require('../utils/musicCatalog');
 const controller = require('../controllers/musicController');
 const router = express.Router();
+router.get('/search', require('../controllers/musicSearchController').search);
 router.param('id', (_req, res, next, value) => {
   try { id(value); next(); }
   catch { res.status(400).json({ success: false, message: 'Invalid music record ID' }); }

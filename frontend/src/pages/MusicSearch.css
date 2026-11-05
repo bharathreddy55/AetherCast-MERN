@@ -1,0 +1,26 @@
+.music-search-page { max-width: 1160px; margin: 30px auto; padding: 0 24px 100px; }
+.music-search-page h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 12px 0; }
+.music-search-page p, .music-search-page small { color: var(--text-secondary); }
+.music-search-form { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.music-search-form > label:first-child { width: 100%; }
+.music-search-form input { flex: 1; min-width: 180px; }
+.music-search-form select { margin-left: 8px; background: var(--bg-card); color: var(--text-primary); padding: 12px; border-radius: 12px; }
+.music-search-tabs { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+.music-search-tabs a { padding: 12px 18px; border-radius: 24px; background: var(--bg-card); }
+.music-search-tabs a[aria-current=page], .music-search-actions button[aria-pressed=true] { color: var(--color-primary); }
+.music-search-page section { margin: 28px 0; }
+.music-search-heading, .music-search-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.music-search-heading h2 { font-size: 1.2rem; }
+.music-search-songs, .music-search-cards { list-style: none; padding: 0; }
+.music-search-songs li { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); padding: 12px 0; }
+.music-search-songs .music-artwork { width: 48px; height: 48px; flex-shrink: 0; }
+.music-search-result-label { display: grid; gap: 6px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.music-search-actions { display: flex; flex-shrink: 0; }
+.music-search-songs button { min-width: 44px; min-height: 44px; display: grid; place-items: center; background: var(--bg-card); color: var(--text-primary); border: 0; border-radius: 12px; }
+.music-search-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.music-search-cards li { padding: 16px; border-radius: 20px; min-width: 0; overflow-wrap: anywhere; }
+.music-search-cards a { display: grid; gap: 12px; }
+.music-search-cards .music-artwork { width: 100%; aspect-ratio: 1; }
+.music-search-cards button { margin-top: 14px; }
+.music-search-page button:disabled { opacity: .45; cursor: default; }
+@media(max-width: 640px) { .music-search-page { padding: 0 16px 80px; } .music-search-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .music-search-actions { display: grid; gap: 4px; } .music-search-heading { align-items: flex-start; } }

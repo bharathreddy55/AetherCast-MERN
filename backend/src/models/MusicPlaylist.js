@@ -7,4 +7,6 @@ const schema = new mongoose.Schema({ ownerId: ownerId(), name: { type: String, r
   items: { type: [item], default: [], validate: { validator: values => values.length <= 2000, message: 'At most 2000 playlist items' } },
   deletedAt: { type: Date, default: null } }, { timestamps: true });
 schema.index({ ownerId: 1, deletedAt: 1, updatedAt: -1 });
+schema.index({ ownerId: 1, deletedAt: 1, name: 1, _id: 1 });
+schema.index({ ownerId: 1, deletedAt: 1, createdAt: -1, _id: -1 });
 module.exports = mongoose.model('MusicPlaylist', schema);

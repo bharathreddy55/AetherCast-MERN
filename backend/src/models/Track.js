@@ -21,6 +21,8 @@ const schema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 schema.index({ ownerId: 1, deletedAt: 1, title: 1 });
+schema.index({ ownerId: 1, deletedAt: 1, createdAt: -1, _id: -1 });
+schema.index({ ownerId: 1, deletedAt: 1, duration: 1, _id: 1 });
 schema.index({ ownerId: 1, albumId: 1, deletedAt: 1, discNumber: 1, trackNumber: 1 });
 schema.index({ ownerId: 1, 'artistCredits.artistId': 1, deletedAt: 1 });
 schema.index({ ownerId: 1, audioAssetId: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });

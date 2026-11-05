@@ -165,6 +165,15 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining setup/verification:** Deploy both applications and verify additive collections/indexes, likes across re-login/devices, conflicting playlist edits, repeated-track selection, deleted-track placeholders, real playback/history, logout and phone controls. No new environment variables are required. No deployment or authenticated live browser/device session was verified in this batch. Final history delivery is best effort under browser/network termination; no durable retry queue is included. Aggregate statistics, pinned favorites, playlist artwork/dragging/undo/multi-selection, queue restoration and grouped search remain future work. Offline/download work stays deferred.
 - **Next:** Grouped private track/artist/album/playlist search and everyday browsing, followed by lyrics and explainable recommendations. See `IMPLEMENTATION_PLAN.md`.
 
+### 2026-11-05 — Change 16: Grouped music search and browsing actions
+
+- **Done locally:** Add owner-only `/api/music/search` for grouped song titles, artist names, album titles and music-playlist names. Escape literal Unicode/punctuation queries; reject extra fields, query injection, empty/oversize terms and invalid groups/sorts/pages. Filter deleted records and owner-scope populated references; return explicit DTOs. Bound category results to 50, pages to 1,000 and each MongoDB find/count execution to two seconds; safe timeout errors never publish partial results.
+- **Done locally:** Add `/music/search` with All/category views, result totals, category pagination, A–Z/recent sorting, loading/empty/retry states and URL-based navigation. Connect desktop/global/mobile search and the My Music link. Abort stale requests and suppress late successes/errors even if cancellation is ignored. Search is submitted deliberately; it does not fetch while typing or autoplay.
+- **Done locally:** Expose song play/queue/like/playlist actions, album saves, artist follows and links to full album/artist/playlist contexts. Search plays one selected song rather than treating a partial results page as a complete collection. Add shortest-first song browsing/full-context playback and additive recent/duration/playlist-name ordering indexes. Existing credential/privacy and podcast separation rules remain intact; offline work stays deferred.
+- **Validation:** All 261 backend tests and 91 frontend tests pass. Production frontend build, targeted lint with no warnings/errors and whitespace checks pass; the existing bundle-size advisory remains. Tests cover owner/guest boundaries, safe DTOs/population, literal/Unicode matching, bounds/pagination/stable ordering, timeout/failure handling, URL navigation, cancellation and stale responses. Database queries are mocked; hosted index plans/performance and real browser/media interaction remain unverified.
+- **Remaining setup/verification:** Deploy both applications, verify new database indexes and test real names/Unicode/punctuation, paging, Back/Forward, result actions, full-context duration order, login/logout and phone/keyboard layout. No new environment variables or provider keys are required. Case-insensitive substring matching can scan owner records; execution limits and bounded responses do not establish large-library performance. Counts/results are not a transactional snapshot. Richer album/artist details, thumbnail generation, additional filters and device checks remain follow-ups. See `MUSIC_SEARCH.md`.
+- **Next:** Owner-supplied lyrics and explainable recommendations from the private library; retain hosted acceptance checks and deferred offline scope.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -350,12 +359,16 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 ## 10. Search — P1/P2
 
 - [ ] Search tracks, artists, albums, playlists, and optional podcasts with grouped results.
-- [ ] Search relevant metadata rather than only podcast titles/descriptions.
+  - Private tracks/artists/albums/music playlists are grouped in Change 16. Optional podcasts retain separate search.
+- [x] Search relevant metadata rather than only podcast titles/descriptions.
+  - Song/album titles and artist/playlist names are supported; lyrics, relational song matching and richer metadata matching remain follow-ups.
 - [ ] Add recent searches, suggestions, useful filters, and a clear-search action.
-- [ ] Preserve search/filter state in the URL where useful.
-- [ ] Cancel or ignore stale responses so earlier queries cannot replace newer results.
-- [ ] Add pagination or incremental loading for large libraries.
-- [ ] Start with indexed database search; add a dedicated search service only if library size or matching requirements justify it.
+  - Categories, A–Z/recent sorting, clear and refresh actions are implemented; recent-search storage, suggestions and more filters remain pending.
+- [x] Preserve search/filter state in the URL where useful.
+- [x] Cancel or ignore stale responses so earlier queries cannot replace newer results.
+- [x] Add pagination or incremental loading for large libraries.
+- [x] Start with indexed database search; add a dedicated search service only if library size or matching requirements justify it.
+  - Owner/name/title/recent ordering indexes and execution bounds are defined. Substring matching may scan owner records; hosted index/query-plan/scale verification remains pending.
 
 ## 11. Offline downloads — deferred by owner
 

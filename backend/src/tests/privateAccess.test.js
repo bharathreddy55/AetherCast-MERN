@@ -253,6 +253,7 @@ test.each([
   ['post', '/api/episodes/example/play'],
   ['post', '/api/episodes/example/chat'],
   ['get', '/api/music/artists'],
+  ['get', '/api/music/search?q=song'],
   ['get', '/api/music/albums'],
   ['get', '/api/music/tracks'],
   ['get', '/api/music/tracks/507f1f77bcf86cd799439011/playback'],
@@ -283,13 +284,22 @@ test.each([
   expect(User.findOne).not.toHaveBeenCalled();
 });
 
-test('blocks a signed-in non-owner from browsing the catalog', async () => {
+test.each(['/api/podcasts', '/api/music/search?q=song'])('blocks a signed-in non-owner from browsing %s', async route => {
   const token = jwt.sign({ sub: 'another-user', email: 'another@example.com' }, secret, {
     algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m',
   });
-  const response = await request(app).get('/api/podcasts').set('Authorization', `Bearer ${token}`);
+  const response = await request(app).get(route).set('Authorization', `Bearer ${token}`);
   expect(response.status).toBe(403);
   expect(User.findOne).not.toHaveBeenCalled();
+});
+
+test('owner search requests reach strict query validation', async () => {
+  const token = jwt.sign({ sub: ownerId, email: 'owner@example.com' }, secret, {
+    algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m',
+  });
+  const result = await request(app).get('/api/music/search?q=song&ownerId=another').set('Authorization', `Bearer ${token}`);
+  expect(result.status).toBe(400);
+  expect(result.body.message).toBe('Unsupported music search filter');
 });
 
 test('owner requests with malformed music identifiers are rejected before database lookup', async () => {

@@ -86,7 +86,9 @@ Rough capacity examples, not hosting prices: 1,000 four-minute songs at 128 kbps
 
 **Acceptance:** a liked song and playlist survive re-login and appear on another authorized device; repeated songs keep distinct positions; concurrent edits report/recover conflicts; non-owner requests are rejected; deleting a track retains recoverable references.
 
-## Phase 3 — Search and finish everyday browsing
+## Phase 3 — Search and finish everyday browsing (grouped search core implemented; hosted acceptance pending)
+
+Change 16 adds grouped owner-only title/name search, category pagination, query/sort/navigation state, contextual library/queue actions and shortest-first song browsing. See [MUSIC_SEARCH.md](MUSIC_SEARCH.md) for matching semantics, execution bounds and verification. Existing album/artist song filters remain; richer detail headers, generated artwork sizes and real-device/large-library verification remain follow-ups.
 
 - Expand song-title search into grouped track/artist/album/playlist results, with appropriate owner-scoped indexes and bounded pagination.
 - Offer useful sorts/filters such as artist, album, date added, duration and downloaded state as those fields become available. Cancel stale searches and preserve browser navigation.
@@ -139,4 +141,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Change 15 implements **owner-scoped likes, saved albums, artist follows, music playlists and listening history**. Local tests/build pass; hosted acceptance remains pending. Recommended next: **grouped private-library search and everyday browsing**, followed by lyrics and explainable recommendations. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.
+Change 16 implements **grouped private-library search, category pagination and everyday result actions**, following Change 15's personal collections. Local tests/build pass; hosted acceptance remains pending. Recommended next: **owner-supplied lyrics and explainable library recommendations**, while retaining the outstanding hosted/device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.

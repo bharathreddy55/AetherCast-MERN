@@ -80,7 +80,10 @@ function catalogQuery(resource, query, ownerId) {
   const sortName = query.sort || 'title';
   if (typeof sortName !== 'string') throw badRequest('Invalid catalog sort');
   const sorts = { title: { [resource === 'artists' ? 'name' : 'title']: 1, _id: 1 }, recent: { createdAt: -1, _id: -1 } };
-  if (resource === 'tracks') sorts.album = { discNumber: 1, trackNumber: 1, _id: 1 };
+  if (resource === 'tracks') {
+    sorts.album = { discNumber: 1, trackNumber: 1, _id: 1 };
+    sorts.duration = { duration: 1, _id: 1 };
+  }
   if (!Object.hasOwn(sorts, sortName)) throw badRequest('Invalid catalog sort');
   return { filter, sort: sorts[sortName], page, limit, skip: (page - 1) * limit };
 }

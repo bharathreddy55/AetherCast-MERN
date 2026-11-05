@@ -5,7 +5,9 @@ The app now opens **My Music** at `/music`. `/home` redirects there too. Use Son
 ## Browse and listen
 
 - Songs show title, artist credits, album, explicit flag, artwork and duration. Search matches song titles; Albums and Artists search their respective names.
+- Global/sidebar/mobile Search now opens grouped song, artist, album and private-playlist results. The My Music search field retains its current-category filtering behavior. See [MUSIC_SEARCH.md](MUSIC_SEARCH.md) for matching and pagination.
 - Select an album or artist to filter its songs. Albums default to disc/track order; other lists use title order. Filters/search/page are stored in the URL and support browser Back/Forward.
+- Songs can also sort by Recently added or Shortest first; a full filtered playback context preserves the selected server order.
 - Lists show 50 records per page. Loading, request failure, retry, refresh and empty-library states are provided; outdated navigation responses are ignored.
 - Play a song or choose **Play album / Play collection** to load the complete filtered context across pages. Albums follow disc/track order. The queue is bounded at 2,000 songs; larger, denied or changed/partial results show an error rather than silently truncating. Loading a new context is cancellable, and a newer selection/navigation cancels the earlier one.
 - The fixed music player provides artwork/credits, play/pause, previous/next, seeking, volume, queue position, album navigation and close controls. Mobile layout keeps transport controls visible.
