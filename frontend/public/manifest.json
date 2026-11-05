@@ -1,7 +1,13 @@
 {
-  "short_name": "VOX",
-  "name": "VOX - Podcast Streaming",
+  "short_name": "AetherCast",
+  "name": "AetherCast - Private Music Library",
   "icons": [
+    {
+      "src": "aether-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
     {
       "src": "icon-192.png",
       "type": "image/png",

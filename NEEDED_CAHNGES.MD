@@ -4,7 +4,7 @@
 
 Build **a private, ad-free music app for your own library, with podcasts as an optional section**.
 
-The app should let its owner import music, organize a library, create playlists, stream across personal devices, and download music for offline listening. It should provide a polished Spotify-style listening experience using the owner's own media. Spotify integration and a public commercial streaming catalog are outside the initial scope.
+The app should let its owner import music, organize a library, create playlists and stream across personal devices. It should provide a polished Spotify-style listening experience using the owner's own media. Offline/download development is deferred by the owner as of 2026-11-05 and is excluded from the active plan and release requirements. Existing episode-download behavior is retained. Spotify integration and a public commercial streaming catalog are outside the initial scope.
 
 This document is the implementation checklist and progress record. Checked items have been implemented locally; deployment and external setup are recorded separately. Findings are based on inspection of the current local source. The live deployment could not be inspected successfully, so deployed behavior still needs verification.
 
@@ -136,6 +136,25 @@ This document is the implementation checklist and progress record. Checked items
 - **Verification limit:** An attempted fresh-browser check could not start because the browser tool failed to initialize its local assets. No real authenticated multi-device session was exercised in this batch. Deploy frontend and backend together, then verify a normal/incognito/new-device visit, wrong-password denial, successful owner sign-in, reload requiring credentials, logout, password recovery and phone playback.
 - **Scope:** Supabase continues to verify passwords; no password is embedded in application code or checked against values from chat. Existing signed media links retain their documented 15-minute lifetime, and previously issued provider tokens are not globally revoked by this frontend policy. Complete offline launch without credentials is intentionally unavailable under the requested fresh-sign-in policy.
 
+### 2026-11-05 — Change 13: Adapt the listening interface using Echo Music as a reference
+
+- **Decision policy:** Echo Music is inspiration; the owner and implementer retain final decisions. Reviewed its README/design notes and home/player screenshots. Record applied and proposed choices in `REFERENCE_DIRECTION.md`. Use original React/CSS without copying Echo source, branding or media.
+- **Done locally:** Replace the old platform navbar with an AetherCast desktop sidebar, global song-title search, compact owner controls and mobile Listen/Search/Library/Import tabs. Keep podcasts/tools in secondary navigation; move podcast history to `/history` and make `/library` show music. Remove the custom cursor from the running app.
+- **Done locally:** Add rounded artwork cards/grouped song rows, segmented collection views, recent/A–Z ordering and a recently added section based only on real imported records. Provide color-based missing/broken-artwork placeholders. Set browser/manifest naming to AetherCast and add an original SVG app mark; existing raster icon compatibility assets remain.
+- **Done locally:** A compact player opens a native Now Playing dialog with large artwork, restrained backdrop, credits/album navigation, touch-sized controls, mute/volume, elapsed/remaining time and a visible current queue with song selection. Support native Escape/focus behavior, standard keyboard playback/seeking/mute shortcuts that ignore text/native controls, focus indicators and reduced-motion preferences.
+- **Verified:** All 54 frontend tests pass, production build and whitespace checks pass, and changed UI modules pass targeted lint without warnings. New tests exercise safe keyboard shortcuts. Existing authentication/playback regression suites remain passing. Backend is unchanged; its previous 187 passing tests remain the latest backend verification.
+- **Limitations:** No actual logged-in browser/mobile layout session was verified in this batch; the browser tool previously failed to initialize local assets. Queue visibility is implemented, but queue editing, repeated queue-item identity, shuffle/repeat, full-album playback beyond a page, music likes/playlists/history, lyrics and music downloads remain pending. No Echo Android/YouTube provider features are added automatically.
+- **Next:** Complete the queue model and controls, then owner-scoped likes and music playlists. Deploy the latest frontend and verify desktop/mobile navigation, Now Playing, focus/Escape, search and logout without changing the fresh-credentials policy.
+
+### 2026-11-05 — Change 14: Complete the music queue and defer offline work
+
+- **Owner direction applied:** Proceed with the reference-based recommendation while removing offline/download development from the active plan. Update `IMPLEMENTATION_PLAN.md` and this checklist; retain existing episode downloads without adding a new offline subsystem.
+- **Done locally:** Integrate the existing Change 13 interface draft with a separate bounded music-queue reducer. Give every occurrence a unique ID, including repeated songs; keep manual next-up items distinguishable from collection context. Add Play Next/Add to Queue, queue selection/removal, upcoming-item up/down reordering and keep-current-only clearing.
+- **Done locally:** Add stable shuffle, actual previous/forward listening history, repeat off/all/one, natural completion advancement, and a three-second previous-button restart threshold. Removing the current occurrence loads the next or previous item while preserving paused/playing intent; removing the last closes the player. Adding to an empty queue loads a paused item instead of autoplaying.
+- **Done locally:** Load complete album/filtered contexts across 100-record API pages, preserving server order, with a 2,000-song bound and visible errors for oversize/changed/partial/denied results. Cancel earlier selections on a newer selection, navigation, explicit cancellation or logout. Paginate the queue display in groups of 100. Keep podcast APIs, source privacy and fresh credential requirements intact; clear playback whenever authorization disappears.
+- **Validation:** All 73 frontend tests pass, including 19 new queue tests covering repeated identities, manual insertion, shuffle/history, repeat boundaries, current removal, reorder/clear, limits, complete pagination, cancelled/changed collections and mixed-edit invariants. Production build, targeted lint (no errors) and whitespace checks pass. Existing player-context fast-refresh/ref-cleanup warnings and the bundle-size advisory remain. Backend source is unchanged; its previous 187 passing tests remain the latest backend verification. Real hosted audio and mobile/browser interaction remain unverified; the browser automation tool previously failed to initialize.
+- **Remaining:** Queue/current-position restoration after a new sign-in is not implemented. Context pagination detects count/duplicate/partial changes but is not a transactional snapshot during concurrent catalog edits. Music likes, playlists and listening history are the next feature batch. Offline work remains deferred.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -250,7 +269,7 @@ Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/s
 - [x] Save the outgoing track's position before replacing it and avoid associating old progress with a newly selected track.
 - [x] Cancel or ignore stale asynchronous requests when the user rapidly selects different tracks.
 - [x] Handle authorization/detail request failures explicitly; playback should not accidentally proceed because authorization defaulted to allowed.
-- [ ] Provide a separate verified offline playback path that does not depend on successful online API requests.
+- Deferred: a new verified offline music playback path is outside the current plan.
 - [ ] Initialize one stable media element and audio graph; clean up listeners and resources correctly.
 - [ ] Model loading, buffering, playing, paused, ended, unavailable, and error states explicitly.
 - [ ] Handle media errors, interrupted playback, autoplay restrictions, and retry with useful feedback.
@@ -264,15 +283,15 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 
 ## 7. Queue and music controls — P1
 
-- [ ] Add a visible queue with **Play Next**, **Add to Queue**, remove, reorder, and clear actions.
-- [ ] Distinguish the manually added queue from the remaining album/playlist playback context.
-- [ ] Support repeated occurrences of a track using queue-item identity rather than track ID alone.
-- [ ] Add shuffle with a stable order and usable previous-track history.
-- [ ] Add repeat off, repeat all, and repeat one.
-- [ ] Define previous-button behavior: restart the current song after a short playback threshold, otherwise go to the previous item.
+- [x] Add a visible queue with **Play Next**, **Add to Queue**, remove, reorder, and clear actions.
+- [x] Distinguish the manually added queue from the remaining album/playlist playback context.
+- [x] Support repeated occurrences of a track using queue-item identity rather than track ID alone.
+- [x] Add shuffle with a stable order and usable previous-track history.
+- [x] Add repeat off, repeat all, and repeat one.
+- [x] Define previous-button behavior: restart the current song after a short playback threshold, otherwise go to the previous item.
 - [ ] Restore the queue, current item, position, and preferences after reload without unexpected autoplay.
-- [ ] Make album playback follow disc/track order by default.
-  - Album song pages and their playback queue follow disc/track order. Whole-album queues spanning more than 50 songs remain pending.
+- [x] Make album playback follow disc/track order by default.
+  - Complete contexts load across pages, up to 2,000 songs; oversize/changed results fail visibly instead of silently truncating.
 - [ ] Provide seek, elapsed/remaining time, volume, mute, like, and playlist actions consistently.
 - [ ] Add keyboard shortcuts that respect text fields and accessible focus behavior.
 - [ ] Keep podcast speed and sleep-timer controls available without crowding the primary music controls.
@@ -281,15 +300,18 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 
 - [ ] Open the listening home after login; keep any public landing page separate from the private app.
 - [ ] Build a desktop sidebar for Home, Search, Your Library, and playlists.
-- [ ] Use a persistent bottom player and optional queue/Now Playing side panel on desktop.
+  - Listen/library/import, global search and secondary podcast tools are implemented. Music playlists remain pending.
+- [x] Use a persistent bottom player and optional queue/Now Playing side panel on desktop.
+  - Compact player plus expanded Now Playing/current-queue dialog, queue editing and shuffle/repeat are implemented.
 - [ ] Build mobile Home/Search/Library navigation, a mini-player, and a full-screen Now Playing view.
 - [ ] Add album, artist, track, liked-songs, playlist, import, and queue views.
-  - Songs, albums, artists and imports are implemented; dedicated queue management, music playlists and liked songs remain pending.
-- [ ] Turn `/library`, currently used for history, into a unified library; give history its own view or filter.
+  - Songs, albums, artists, imports and queue management are implemented; music playlists and liked songs remain pending.
+- [x] Turn `/library`, currently used for history, into a unified library; give history its own view or filter.
+  - Music songs/albums/artists are available at `/library`; episode history moved to `/history`. Music history/saved collections remain future work.
 - [ ] Use compact track rows with title, artist, album, duration, liked state, download state, and contextual actions.
 - [ ] Add Home sections such as Recently Played, Recently Added, Favorite Albums, and Your Playlists.
 - [ ] Keep search available throughout the app.
-- [ ] Replace the custom cursor with standard pointer behavior.
+- [x] Replace the custom cursor with standard pointer behavior.
 - [ ] Reduce decorative effects that make browsing and playback slower or harder to read.
 - [ ] Standardize spacing, typography, colors, artwork proportions, menus, dialogs, and loading states.
 - [ ] Unify AetherCast/VOX names, page titles, manifest metadata, icons, and theme colors.
@@ -320,7 +342,9 @@ Primary source: `frontend/src/context/PlayerContext.jsx`.
 - [ ] Add pagination or incremental loading for large libraries.
 - [ ] Start with indexed database search; add a dedicated search service only if library size or matching requirements justify it.
 
-## 11. Offline downloads and installed app — P2
+## 11. Offline downloads — deferred by owner
+
+Offline/download development is excluded from the active plan and current acceptance criteria as of 2026-11-05. The list below is an archived backlog, not an implementation commitment. Existing episode downloads and private-cache safeguards remain in place. Installed-app/device polish can be considered separately from offline features.
 
 - [ ] Store download metadata in an account-scoped structured store such as IndexedDB.
 - [ ] Cache artwork, required catalog metadata, playlists, and built application assets alongside downloaded audio.
@@ -401,7 +425,7 @@ The current backend tests cover a small set of mocked API responses. Add focused
 - [ ] Verify progress saves during continuous playback and does not attach to the wrong track.
 - [ ] Verify session restoration and distinct song/podcast resume rules.
 - [ ] Test importing a full album, duplicate detection, metadata correction, deletion, and cleanup.
-- [ ] Test offline reload, offline seeking, expired sessions, storage exhaustion, and missing cached files.
+- Deferred: new offline-music reload/seeking/quota tests. Continue checking existing session and cache protections when those modules change.
 - [ ] Test search ordering, stale responses, large libraries, and unavailable tracks.
 - [ ] Run frontend build/lint and relevant backend checks in continuous integration.
 - [ ] Verify key listening flows on desktop, Android, and iOS, including accessibility checks.
@@ -419,7 +443,7 @@ Import an album, inspect/edit its metadata, browse artists/albums/tracks, search
 
 ### Milestone 3 — Everyday listening
 
-Deliver the listening-first desktop/mobile interface, session restoration, verified offline downloads, lock-screen controls, and appropriate device testing. Keep podcasts optional.
+Deliver the listening-first desktop/mobile interface, fresh-credential sign-in, online lock-screen controls where supported, and appropriate device testing. Keep podcasts optional. Offline/download development is deferred.
 
 ### Milestone 4 — Premium polish
 
@@ -433,8 +457,8 @@ Add normalization, advanced transitions, lyrics, local recommendations, and opti
 4. Add and reorder songs in the queue; verify shuffle and repeat.
 5. Like a song and add tracks to a private playlist.
 6. Close and reopen the app; restore the listening session without unexpected autoplay.
-7. Download the album, reload offline, and play/seek through it.
-8. Reconnect and confirm listening history/progress synchronize correctly.
+7. Seek and switch songs during online playback, then test interrupted playback and authorized retry.
+8. Confirm real listening history/progress records match the selected media as those features are implemented.
 9. Verify the same core experience on a phone, including lock-screen controls.
 
 The initial release is complete when this scenario works reliably and the owner's media can be backed up and restored.

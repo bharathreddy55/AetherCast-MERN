@@ -5,9 +5,8 @@ import { PlayerProvider } from './context/PlayerContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-import Navbar from './components/Navbar';
+import AppNavigation from './components/AppNavigation';
 import AudioPlayer from './components/AudioPlayer';
-import CustomCursor from './components/CustomCursor';
 
 import Explore from './pages/Explore';
 import PodcastDetails from './pages/PodcastDetails';
@@ -70,11 +69,11 @@ function AdminRoute({ children }) {
 }
 
 function MainLayout() {
+  const { user } = useAuth();
   return (
-    <>
-      <CustomCursor />
-      <Navbar />
-      <main>
+    <div className={`aether-shell ${user ? 'is-private' : ''}`}>
+      <AppNavigation />
+      <main id="main-content">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/music" replace />} />
@@ -145,19 +144,20 @@ function MainLayout() {
             } 
           />
           <Route 
-            path="/library" 
+            path="/history"
             element={
               <ProtectedRoute>
                 <ListenHistory />
               </ProtectedRoute>
             } 
           />
+          <Route path="/library" element={<ProtectedRoute><MusicLibrary /></ProtectedRoute>} />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
       <AudioPlayer />
-    </>
+    </div>
   );
 }
 

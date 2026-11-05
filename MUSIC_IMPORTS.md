@@ -51,4 +51,4 @@ Backend tests include real WAV parsing, invalid/truncated audio, owner denial, m
 
 The backend dependency audit currently reports 14 advisories, including one critical advisory in existing framework dependencies. The added metadata parser is not listed in that report. Dependency upgrades and regression verification remain a separate maintenance task; no forced bulk upgrades were applied.
 
-Next: music playlists and fuller queue controls, thumbnails, conversion, direct/resumable transfer, bulk editing and safe retained-file cleanup. See [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for the complete checklist.
+The player now supports complete bounded contexts, editable queue occurrences, shuffle and repeat. Next: music likes/playlists/history, thumbnails, conversion, direct/resumable transfer, bulk editing and safe retained-file cleanup. Offline/download development is deferred. See [NEEDED_CAHNGES.MD](NEEDED_CAHNGES.MD) for the complete checklist.

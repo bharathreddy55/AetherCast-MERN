@@ -1,0 +1,3 @@
+.music-artwork { display: grid; place-items: center; overflow: hidden; aspect-ratio: 1; flex-shrink: 0; border-radius: 18px; background: linear-gradient(140deg, hsl(var(--art-hue) 42% 34%), hsl(calc(var(--art-hue) + 45) 35% 16%)); color: #fff9; }
+.music-artwork img { width: 100%; height: 100%; object-fit: cover; }
+.music-artwork > svg { width: 34%; height: 34%; stroke-width: 1.3; }

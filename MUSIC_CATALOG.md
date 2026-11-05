@@ -91,7 +91,7 @@ MediaAsset stores object references, not permanent public URLs. Existing podcast
 2. Deploy the additive catalog models/routes. MongoDB creates the new collections/indexes through the configured Mongoose connection; verify the indexes in the target database before importing real music.
 3. Keep existing Podcast/Episode/Playlist/User records and IDs intact. No podcast-to-track conversion or live database migration has been performed from this workspace.
 4. Enable the implemented server import workflow using the runtime, private storage, persistent worker and MongoDB replica-set requirements in `MUSIC_IMPORTS.md`. Imports register tracks only after processing and metadata confirmation succeed.
-5. Deploy the implemented music-library views and track playback integration. The current queue contains the displayed page of songs. Define track-specific history and separate music playlists before adding fuller queue management.
+5. Deploy the implemented music-library/player/queue integration. Complete album/filtered contexts load across pages up to 2,000 songs, with distinct queue occurrences, editing, shuffle and repeat. Define track-specific history and separate music playlists next; offline development is deferred.
 6. Test real MongoDB CRUD/index behavior, private storage playback, large albums, duplicate imports, deletion, and backup restoration in the hosted environment.
 
 Current verification uses schema validation and owner/query/API tests with mocked database operations; a live MongoDB/storage/browser music session has not been run. Import jobs and any eventual migration must remain retry-safe and preserve existing podcast data.

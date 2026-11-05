@@ -2,6 +2,8 @@
 
 Drafted 2026-11-05 from [REFERENCE_RESEARCH.md](REFERENCE_RESEARCH.md) and the current workspace. This is a proposal, not automatic adoption of Echo, LastWave or Velune. The owner and implementer retain final decisions and can change priorities. External code, README promises and design choices do not override our requirements.
 
+Owner update on 2026-11-05: proceed with the recommended sequence, excluding offline/download development for now. Offline work is deferred and is not an active phase or release requirement. Existing episode-download behavior is retained.
+
 ## Product direction and decisions
 
 Build a private, ad-free music app for the owner's library, with optional podcasts. Keep React/Vite, Express, MongoDB and Supabase unless a demonstrated requirement justifies replacing a component. Maintain explicit current-credential sign-in on every new page session; internal navigation can continue within an authorized session. Do not reintroduce automatic owner login to mimic a reference app.
@@ -12,14 +14,13 @@ Build a private, ad-free music app for the owner's library, with optional podcas
 | Global online catalog | Separate supported-source investigation, isolated from the private library | Open; no YouTube/other provider selected or enabled by this plan |
 | Interface | Original artwork-led library/player, desktop sidebar and mobile navigation; clear source and download states | Recommended; review the current draft interface together |
 | AI | Start with local, explainable recommendation rules; optional remote-model features later | Recommended; providers, budget and data sharing remain open |
-| Offline cold launch | Continue requiring online credential verification on a fresh page | Existing owner requirement; an offline-unlock exception needs an explicit later decision |
 | Native mobile app | Complete the web/PWA experience first | Recommended; revisit if browser limitations block daily use |
 
 ## Current implementation baseline
 
-Committed foundations include owner authentication, in-memory explicit credential sessions, private media links, separate Artist/Album/Track/MediaAsset models, background imports with metadata review, music browsing and basic track playback. The queue still uses track identity and is built from the displayed page of up to 50 tracks. Music likes/playlists/history/downloads and shuffle/repeat remain unfinished. Podcast features retain their own models and APIs.
+Foundations include owner authentication, in-memory explicit credential sessions, private media links, separate Artist/Album/Track/MediaAsset models, background imports with metadata review, music browsing and track playback. Change 14 adds an occurrence-based editable queue, complete paginated contexts up to 2,000 songs, shuffle and repeat. Music likes/playlists/history remain unfinished; offline/download development is deferred. Podcast features retain their own models and APIs.
 
-The workspace also contains an uncommitted Echo-inspired interface draft recorded as Change 13 in `NEEDED_CAHNGES.MD`, including new navigation, artwork components and expanded Now Playing/queue views. Treat that as work in progress until its own review/verification/commit. This planning batch preserves those changes and does not claim they are deployed or delivered by this commit.
+The Echo-inspired interface recorded as Change 13 in `NEEDED_CAHNGES.MD` includes new navigation, artwork components and expanded Now Playing/queue views. Change 14 integrates and verifies that draft with the queue implementation. Hosted desktop/phone verification is still required; local builds/tests do not establish deployment success.
 
 Existing podcast AI endpoints contain conditional Gemini calls; no new music AI service has been implemented or validated. Existing media capabilities retain their documented expiry. Live sign-in, storage and device verification still need evidence after deployment.
 
@@ -30,8 +31,6 @@ Existing podcast AI endpoints contain conditional Gemini calls; no new music AI 
 | Owner identity and password verification | Supabase Auth | Verify current credentials; backend verifies owner tokens |
 | Tracks, artists, albums, playlists, likes, history, import jobs | MongoDB | Owner-scoped durable metadata and relationships |
 | Original audio, cover originals, future encoded versions | Private Supabase Storage | Durable media objects; playback uses short-lived links |
-| Download index, local catalog snapshots, pending sync operations | IndexedDB, when implemented | Structured device state without persisting login tokens |
-| Downloaded audio and artwork | Owner-scoped Cache Storage initially | Device copies, availability checks, quotas and cleanup |
 | Small non-sensitive display preferences | Browser localStorage if useful | Theme and interface preferences; no passwords or bearer tokens |
 | Recommendation signals | MongoDB events with optional device summaries | Reproducible mixes without compulsory external AI |
 
@@ -44,7 +43,6 @@ flowchart LR
   D --> F[Short-lived media link]
   F --> G[(Private audio storage)]
   G --> H[Browser player]
-  H --> I[Optional device downloads]
   J[Owner imports] --> K[Durable processing jobs]
   K --> E
   K --> G
@@ -63,7 +61,7 @@ Rough capacity examples, not hosting prices: 1,000 four-minute songs at 128 kbps
 
 **Acceptance:** a fresh device sees login; the owner imports one album, reviews tags and plays a track; a guest cannot retrieve catalog/audio through the ordinary app flow; no invented quality/recommendation data is shown. Record hosted evidence separately from unit tests. This phase gates later daily-use feature work.
 
-## Phase 1 — Complete playback queue behavior
+## Phase 1 — Complete playback queue behavior (implemented core; restoration remains future work)
 
 **Proposed implementation:** add a focused queue reducer/module under `frontend/src/lib/`, adapt `PlayerContext.jsx`, and extend `MusicPlayer.jsx` rather than putting queue logic inside UI event handlers.
 
@@ -72,7 +70,7 @@ Rough capacity examples, not hosting prices: 1,000 four-minute songs at 128 kbps
 - Load full album/playlist context through bounded pagination; preserve disc/track or playlist order rather than stopping at the visible 50-row page. Define behavior when the underlying catalog changes during paging.
 - Implement shuffle with a stable shuffled sequence and actual previous-play history. Implement repeat off/all/one and clear end-of-queue behavior.
 - Keep the existing stale-selection counter, fresh media resolution, error recovery and owner checks. Songs restart at zero on a new selection; a media-link retry preserves the current position where available.
-- Persist only non-secret queue state when useful. Restore it after the next successful credential sign-in, without autoplay and without restoring authentication.
+- Future follow-up: persist only non-secret queue state when useful, restoring it after the next successful credential sign-in without autoplay or authentication restoration. Current queues stay in memory and clear on logout/page locking.
 
 **Acceptance:** repeated-track queues, last-item completion, rapid selection, shuffle history, each repeat mode, removing/reordering the active item, unavailable tracks and a 100+ track album behave predictably. Logout/page locking stops playback and invalidates pending selections.
 
@@ -106,16 +104,13 @@ Rough capacity examples, not hosting prices: 1,000 four-minute songs at 128 kbps
 
 **Acceptance:** imported lyrics follow seeks correctly; excluded tracks stay excluded; recommendation order is reproducible/testable and uses available media; core listening does not require a model API key.
 
-## Phase 5 — Music downloads and mobile playback
+## Phase 5 — Mobile streaming and device controls
 
-- Extend identity-safe downloads to tracks with an IndexedDB index, owner-scoped audio/artwork caches, integrity/availability checks, progress, retries/cancel, storage budgets and eviction reporting.
-- Distinguish disposable streaming cache from user-requested downloads. Clearing streaming cache must not silently remove explicit downloads.
-- Preserve logout cleanup and define retention clearly. Queue progress/history writes for later sync only within the selected authentication policy.
-- Add Media Session metadata/actions and test Android/iOS lock screen, headphones, backgrounding, interruption, network loss and seeking. Browser restrictions require real device results, not Android feature parity claims.
+- Add Media Session metadata/actions and test Android/iOS lock screen, headphones, backgrounding, interruption and seeking. Browser restrictions require real device results, not Android feature parity claims.
+- Verify clear playback failures and authorized retry after connectivity interruptions, without adding a music download/offline subsystem.
+- Keep fresh credential verification on a new visit; do not persist authentication tokens for convenience.
 
-**Authentication constraint:** with fresh online password verification required on every new page visit, a fully cold offline launch cannot authenticate. Support network-loss playback inside an already approved running page first. Offering a device-bound offline-unlock exception is a separate owner decision; do not silently persist access/refresh tokens to get around this requirement.
-
-**Acceptance:** verified complete music downloads play/seek during network loss in an authorized running page; partial/evicted downloads show accurate state; quotas/cancellation work; logout removes access; a new offline page remains locked under the current policy.
+**Acceptance:** online music playback, supported lock-screen controls, interruption/retry, seeking and logout work on tested phones. Offline launch, new music downloads and offline synchronization are excluded from the active plan.
 
 ## Phase 6 — Media processing and audio quality
 
@@ -144,4 +139,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Recommended next feature batch after Phase 0: **queue occurrence IDs, full-album context, next-up/add/remove/reorder, shuffle and repeat**, before adding AI or more source providers. This improves every imported album and supplies the queue foundation that playlists need. The owner can choose to prioritize likes/playlists instead; this is a recommendation, not a binding final decision.
+Current feature batch implements **queue occurrence IDs, full-album context, next-up/add/remove/reorder, shuffle and repeat** alongside the existing interface draft. Recommended next: **owner-scoped likes, music playlists and listening history**, after verifying deployed queue behavior. Queue restoration is a later follow-up; offline/download work is deferred. The owner can revise these priorities.
