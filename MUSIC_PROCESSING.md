@@ -1,6 +1,6 @@
 # Private media processing
 
-Change 19 implements the conversion/thumbnail core of Phase 6. Originals remain intact. Change 23 adds bounded expiry-aware music-link recovery; see [MUSIC_STREAMING.md](MUSIC_STREAMING.md). Real long-stream/seamless behavior, normalization, gapless/crossfade, permanent retained-object cleanup and hosted/device acceptance remain unfinished.
+Change 19 implements the conversion/thumbnail core of Phase 6. Originals remain intact. Change 23 adds bounded expiry-aware music-link recovery; see [MUSIC_STREAMING.md](MUSIC_STREAMING.md). Change 24 adds optional measured Normalized MP3 copies; see [MUSIC_NORMALIZATION.md](MUSIC_NORMALIZATION.md). Real long-stream/seamless behavior, gapless/crossfade, permanent retained-object cleanup and hosted/device acceptance remain unfinished.
 
 ## Player workflow
 

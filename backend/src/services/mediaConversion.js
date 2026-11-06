@@ -32,14 +32,15 @@ function conversionArgs(source, profile, input, output) {
     ...(audio ? ['-map', '0:a:0', '-vn', '-sn', '-dn', '-c:a', 'libmp3lame', '-b:a', '192k', '-ar', '44100', '-ac', '2', '-threads', '1', '-fs', '67108864', '-f', 'mp3']
       : ['-map', '0:v:0', '-an', '-frames:v', '1', '-vf', 'scale=320:320:force_original_aspect_ratio=decrease', '-q:v', '3', '-threads', '1', '-fs', '2097152', '-f', 'image2']), output];
 }
-function runFfmpeg(args, cwd, { spawnImpl = spawn, timeoutMs = 180000 } = {}) {
+function runFfmpeg(args, cwd, { spawnImpl = spawn, timeoutMs = 180000, captureStderr = false } = {}) {
   return new Promise((resolve, reject) => {
     const env = { PATH: process.env.PATH || '', ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}), TMP: cwd, TEMP: cwd };
     const child = spawnImpl(process.env.FFMPEG_PATH || 'ffmpeg', args, { cwd, env, shell: false, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
     let settled = false, errors = 0, failure;
-    const finish = error => { if (settled) return; settled = true; clearTimeout(timer); error ? reject(error) : resolve(); };
+    const chunks = [];
+    const finish = error => { if (settled) return; settled = true; clearTimeout(timer); error ? reject(error) : resolve(captureStderr ? Buffer.concat(chunks).toString('utf8') : undefined); };
     const timer = setTimeout(() => { failure = new Error('Media conversion timed out'); child.kill('SIGKILL'); }, timeoutMs);
-    child.stderr?.on('data', bytes => { errors += bytes.length; if (errors > 65536) { failure = new Error('Media conversion failed'); child.kill('SIGKILL'); } });
+    child.stderr?.on('data', bytes => { errors += bytes.length; if (errors > 65536) { failure = new Error('Media conversion failed'); child.kill('SIGKILL'); } else if (captureStderr) chunks.push(Buffer.from(bytes)); });
     child.once('error', () => finish(new Error('FFmpeg is unavailable')));
     child.once('close', code => finish(failure || (code === 0 ? null : new Error('Media conversion failed'))));
   });

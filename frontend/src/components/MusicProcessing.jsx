@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { musicProcessingRequest } from '../lib/musicProcessing';
+import { loudnessLabel } from '../lib/musicAudioInfo';
 import './MusicProcessing.css';
 export default function MusicProcessing({ track }) {
   const [data, setData] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [revision, setRevision] = useState(0);
@@ -22,10 +23,10 @@ export default function MusicProcessing({ track }) {
     };
     void load(); return () => { controller.abort(); clearTimeout(timer); };
   }, [track._id, revision]);
-  const change = async (path, method) => {
+  const change = async (path, method, body) => {
     if (busy) return;
     const controller = new AbortController(); mutation.current = controller; setBusy(true); setActionError('');
-    try { await musicProcessingRequest(path, { method, signal: controller.signal }); if (!controller.signal.aborted && alive.current) setRevision(value => value + 1); }
+    try { await musicProcessingRequest(path, { method, signal: controller.signal, ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}) }); if (!controller.signal.aborted && alive.current) setRevision(value => value + 1); }
     catch (failure) { if (!controller.signal.aborted && alive.current) { setActionError(failure.message); setRevision(value => value + 1); } }
     finally { if (!controller.signal.aborted && alive.current) setBusy(false); }
   };
@@ -43,10 +44,12 @@ export default function MusicProcessing({ track }) {
     {(actionError || error) && <p role="alert">{actionError || error}</p>}{!data ? !error && <p role="status">Loading media status…</p> : <>
       {!data.enabled && <p>The backend needs FFmpeg processing enabled before preparing new copies.</p>}
       <button disabled={busy || !data.enabled} onClick={() => void change(`tracks/${track._id}/processing`, 'POST')}>Prepare / retry media</button>
-      <ul>{data.jobs.map(job => <li key={job._id}>{job.profile === 'mp3-192-v1' ? 'Compatible MP3' : 'Artwork thumbnail'}: {job.status}{job.error && <p>{job.error}</p>}{['queued', 'processing'].includes(job.status) && <button disabled={busy} onClick={() => void change(`processing/${job._id}`, 'DELETE')}>Cancel job</button>}</li>)}</ul>
+      <h3>Volume normalization</h3><p>Optional: prepare a leveled MP3 copy using measured loudness and peak headroom. Original stays the default. Quiet tracks may stay quieter to preserve their dynamics.</p>
+      <button disabled={busy || !data.enabled} onClick={() => void change(`tracks/${track._id}/processing`, 'POST', { profile: 'normalized' })}>Prepare / retry normalized MP3</button>
+      <ul>{data.jobs.map(job => <li key={job._id}>{({ 'mp3-192-v1': 'Compatible MP3', 'cover-320-v1': 'Artwork thumbnail', 'mp3-normalized-v1': 'Normalized MP3' })[job.profile] || 'Media job'}: {job.status}{job.loudness && loudnessLabel(job.loudness) && <p>{loudnessLabel(job.loudness)}</p>}{job.error && <p>{job.error}</p>}{['queued', 'processing'].includes(job.status) && <button disabled={busy} onClick={() => void change(`processing/${job._id}`, 'DELETE')}>Cancel job</button>}</li>)}</ul>
       {!data.jobs.length && <p>No prepared copies yet.</p>}
     </>}
-    <button disabled={busy} onClick={() => setRevision(value => value + 1)}>Refresh status</button><p>After artwork is ready, refresh your library. Choose Compatible audio in the player once its job is ready.</p>
+    <button disabled={busy} onClick={() => setRevision(value => value + 1)}>Refresh status</button><p>Choose a ready audio version above. After artwork is ready, refresh your library.</p>
     <h3>Song cover</h3>
     <p>{track.coverSource?.label || (track.coverImage ? 'Your library artwork' : 'No matching cover yet.')}{track.coverSource?.kind === 'verified-release' && <> · <a href={track.coverSource.url} target="_blank" rel="noopener noreferrer">View release on Spotify</a></>}</p>
     <p>Use the front cover embedded in this song’s original file. Existing song artwork is kept; artist photos and back covers are skipped.</p>

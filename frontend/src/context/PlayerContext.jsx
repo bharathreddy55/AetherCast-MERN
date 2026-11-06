@@ -725,7 +725,7 @@ export const PlayerProvider = ({ children }) => {
   commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek,
     renewMusic: ({ item, position, keepPaused }) => playEpisode(item, null, { position, keepPaused, linkRenewal: true }) };
   const chooseMusicQuality = value => {
-    if (!['original', 'compatible'].includes(value) || sessionBlockedRef.current) return;
+    if (!['original', 'compatible', 'normalized'].includes(value) || sessionBlockedRef.current) return;
     musicQualityRef.current = value; setMusicQuality(value);
     if (isMusic(currentEpisode)) void playEpisode(currentEpisode, null, { keepPaused: keepPlaybackPaused() });
   };

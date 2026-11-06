@@ -36,6 +36,10 @@ test('healthy playback never causes a timer or periodic source reload', () => {
   const h = setup(); h.advance(1800000);
   h.renewal.playing(); assert.equal(h.calls.length, 0); assert.equal(h.timers.size, 0);
 });
+test('normalized quality uses the same expiry recovery identity without changing the requested version', () => {
+  const h = setup(); h.state.quality = 'normalized'; h.state.media.quality = 'normalized';
+  assert.equal(h.renewal.interrupted(), true); assert.equal(h.calls[0].item, h.state.media.episode);
+});
 
 test('a media error that resets the element position retains the last known progress', () => {
   const h = setup(); h.state.audio.currentTime = 0; h.state.media.lastPosition = 42;

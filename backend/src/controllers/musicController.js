@@ -5,6 +5,7 @@ const MediaAsset = require('../models/MediaAsset');
 const MediaProcessingJob = require('../models/MediaProcessingJob');
 const { musicInput, catalogQuery, musicDto, assetReference } = require('../utils/musicCatalog');
 const { createMediaLink } = require('../utils/mediaLinks');
+const { loudnessDto } = require('../utils/musicLoudness');
 const models = { artists: Artist, albums: Album, tracks: Track };
 const singular = { artists: 'artist', albums: 'album', tracks: 'track' };
 const missing = message => Object.assign(new Error(message), { status: 404 });
@@ -87,18 +88,23 @@ exports.remove = resource => handle(async (req, res) => {
   res.json({ success: true, message: 'Music record removed from the catalog. Original media is retained.' });
 });
 exports.playback = handle(async (req, res) => {
-  if (Object.keys(req.query).some(key => key !== 'quality') || (req.query.quality !== undefined && !['original', 'compatible'].includes(req.query.quality))) throw Object.assign(new Error('Choose original or compatible audio'), { status: 400 });
+  if (Object.keys(req.query).some(key => key !== 'quality') || (req.query.quality !== undefined && !['original', 'compatible', 'normalized'].includes(req.query.quality))) throw Object.assign(new Error('Choose original, compatible or normalized audio'), { status: 400 });
   const track = await Track.findOne({ ...active(req.user._id), _id: req.params.id }).populate(populate('tracks', req.user._id)).lean();
   if (!track) throw missing('Track not found');
   let asset = await MediaAsset.findOne({ _id: track.audioAssetId, ownerId: req.user._id, kind: 'audio', status: 'ready' }).select('+objectKey').lean();
   if (!asset) throw missing('Track audio is unavailable');
   const quality = req.query.quality || 'original';
-  if (quality === 'compatible') {
-    const job = await MediaProcessingJob.findOne({ ownerId: req.user._id, sourceAssetId: asset._id, sourceChecksum: asset.checksum, profile: 'mp3-192-v1', status: 'ready' }).lean();
+  let loudness = null;
+  if (quality !== 'original') {
+    const job = await MediaProcessingJob.findOne({ ownerId: req.user._id, sourceAssetId: asset._id, sourceChecksum: asset.checksum, profile: quality === 'normalized' ? 'mp3-normalized-v1' : 'mp3-192-v1', status: 'ready' }).lean();
+    if (quality === 'normalized') {
+      loudness = loudnessDto(job?.loudness);
+      if (!loudness) throw Object.assign(new Error('Normalized audio is not ready. Prepare it in the player, or choose Original.'), { status: 409 });
+    }
     asset = job?.outputAssetId ? await MediaAsset.findOne({ _id: job.outputAssetId, ownerId: req.user._id, kind: 'audio', status: 'ready', format: 'mp3' }).select('+objectKey').lean() : null;
-    if (!asset) throw Object.assign(new Error('Compatible audio is not ready. Prepare it in the player, or choose Original.'), { status: 409 });
+    if (!asset) throw Object.assign(new Error('This audio version is not ready. Prepare it in the player, or choose Original.'), { status: 409 });
   }
-  const playback = { variant: quality, format: asset.format, codec: asset.codec || '', bitrate: asset.bitrate || null, sampleRate: asset.sampleRate || null, byteSize: asset.byteSize };
+  const playback = { variant: quality, format: asset.format, codec: asset.codec || '', bitrate: asset.bitrate || null, sampleRate: asset.sampleRate || null, byteSize: asset.byteSize, ...(loudness ? { loudness } : {}) };
   res.json({ success: true, track: { ...musicDto('tracks', track), audioUrl: createMediaLink(assetReference(asset)), playback }, expiresIn: 900 });
 });
 exports.getAsset = handle(async (req, res) => {

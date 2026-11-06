@@ -92,3 +92,34 @@ test('compatible playback checks matching source checksum and ready owned output
 test('cancellation cannot modify another owner or a finished job', async () => {
   await controller.cancel(request(), response()); expect(MediaProcessingJob.updateOne).toHaveBeenCalledWith({ _id: id, ownerId, status: { $in: ['queued', 'processing'] } }, expect.any(Object));
 });
+
+const loudness = () => ({ mode: 'linear', targetIntegratedLufs: -14, maxTruePeakDbtp: -1, appliedGainDb: -6,
+  inputIntegratedLufs: -8, inputTruePeakDbtp: -3, outputIntegratedLufs: -14, outputTruePeakDbtp: -9 });
+test('normalization requires an explicit fixed-profile request and queues only owned audio', async () => {
+  await controller.processing(request({ body: { profile: 'normalized' } }), response());
+  expect(MediaProcessingJob.updateOne).toHaveBeenCalledWith({ ownerId, sourceAssetId: id, profile: 'mp3-normalized-v1' }, expect.any(Object), { upsert: true, runValidators: true });
+  for (const body of [{ profile: 'custom' }, { profile: 'normalized', target: 0 }, { profile: { $ne: null } }]) {
+    const res = response(); await controller.processing(request({ body }), res); expect(res.status).toHaveBeenCalledWith(400);
+  }
+});
+test('normalized readiness and measured metadata publish together under the current lease', async () => {
+  MediaProcessingJob.exists.mockResolvedValue(true);
+  const store = jest.fn(async () => ({ _id: outputId, kind: 'audio', status: 'ready', format: 'mp3' }));
+  const normalize = async () => ({ bytes: Buffer.from('normalized'), name: 'normalized.mp3', loudness: loudness(), details: { kind: 'audio', format: 'mp3', status: 'ready', duration: 1 } });
+  await processMedia({ ...job(), profile: 'mp3-normalized-v1' }, { read: async () => bytes, store, normalize });
+  expect(MediaProcessingJob.updateOne).toHaveBeenCalledWith(expect.objectContaining({ leaseToken: 'test-lease' }), expect.objectContaining({ $set: expect.objectContaining({ status: 'ready', outputAssetId: outputId, loudness: loudness() }) }), { session });
+  expect(MediaAsset.updateOne).not.toHaveBeenCalled();
+  store.mockClear(); await processMedia({ ...job(), profile: 'mp3-normalized-v1' }, { read: async () => bytes, store, normalize: async () => ({ loudness: null }) });
+  expect(store).not.toHaveBeenCalled();
+});
+test('normalized playback requires verified measurements, matching source and owned ready MP3; no fallback', async () => {
+  MediaProcessingJob.findOne.mockReturnValue(query({ outputAssetId: outputId, loudness: loudness() }));
+  MediaAsset.findOne.mockReturnValueOnce(query(source())).mockReturnValueOnce(query({ ...source(), _id: outputId, format: 'mp3', objectKey: 'normalized.mp3' }));
+  const res = response(); await playback(request({ query: { quality: 'normalized' } }), res);
+  expect(MediaProcessingJob.findOne).toHaveBeenCalledWith({ ownerId, sourceAssetId: id, sourceChecksum: checksum, profile: 'mp3-normalized-v1', status: 'ready' });
+  expect(res.json.mock.calls[0][0].track.playback).toMatchObject({ variant: 'normalized', loudness: loudness() });
+  for (const value of [null, { outputAssetId: outputId }, { outputAssetId: outputId, loudness: { ...loudness(), outputTruePeakDbtp: 0 } }]) {
+    MediaAsset.findOne.mockReturnValue(query(source())); MediaProcessingJob.findOne.mockReturnValue(query(value));
+    const denied = response(); await playback(request({ query: { quality: 'normalized' } }), denied); expect(denied.status).toHaveBeenCalledWith(409);
+  }
+});

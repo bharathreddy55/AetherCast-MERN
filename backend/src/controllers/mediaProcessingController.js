@@ -4,18 +4,22 @@ const MediaAsset = require('../models/MediaAsset');
 const MediaProcessingJob = require('../models/MediaProcessingJob');
 const { active, exactBody, failure } = require('../utils/musicLibrary');
 const { processingEnabled } = require('../services/mediaConversion');
-const dto = job => ({ _id: job._id, profile: job.profile, status: job.status, error: job.error || '', attempts: job.attempts, updatedAt: job.updatedAt });
+const { loudnessDto } = require('../utils/musicLoudness');
+const dto = job => ({ _id: job._id, profile: job.profile, status: job.status, error: job.error || '', attempts: job.attempts, updatedAt: job.updatedAt,
+  ...(job.status === 'ready' && job.profile === 'mp3-normalized-v1' ? { loudness: loudnessDto(job.loudness) } : {}) });
 exports.processing = async (req, res) => {
   try {
     const track = await Track.findOne({ ...active(req.user._id), _id: req.params.id }).select('audioAssetId coverAssetId albumId').lean();
     if (!track) throw failure(404, 'This song is unavailable');
-    const sources = [{ _id: track.audioAssetId, profile: 'mp3-192-v1', kind: 'audio' }];
+    const normalized = req.method === 'POST' && req.body?.profile === 'normalized';
+    const sources = [{ _id: track.audioAssetId, profile: normalized ? 'mp3-normalized-v1' : 'mp3-192-v1', kind: 'audio' }];
     let cover = track.coverAssetId;
-    if (!cover && track.albumId) cover = (await Album.findOne({ ...active(req.user._id), _id: track.albumId }).select('coverAssetId').lean())?.coverAssetId;
-    if (cover) sources.push({ _id: cover, profile: 'cover-320-v1', kind: 'image' });
+    if (!normalized && !cover && track.albumId) cover = (await Album.findOne({ ...active(req.user._id), _id: track.albumId }).select('coverAssetId').lean())?.coverAssetId;
+    if (cover && !normalized) sources.push({ _id: cover, profile: 'cover-320-v1', kind: 'image' });
     if (Object.keys(req.query).length) throw failure(400, 'Unsupported processing filter');
     if (req.method === 'POST') {
-      exactBody(req.body || {}, []);
+      exactBody(req.body || {}, ['profile']);
+      if (req.body?.profile !== undefined && !normalized) throw failure(400, 'Choose the normalized profile or omit the profile field');
       if (!processingEnabled()) throw failure(503, 'Media processing needs an FFmpeg-enabled backend. See the media processing setup guide.');
       for (const source of sources) {
         const asset = await MediaAsset.findOne({ _id: source._id, ownerId: req.user._id, kind: source.kind, status: 'ready' }).select('checksum').lean();
