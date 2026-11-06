@@ -1,0 +1,10 @@
+.music-lyrics { min-width: 0; max-height: 60vh; overflow: auto; padding: 8px; }
+.music-lyrics form, .music-lyrics label { display: grid; gap: 8px; margin: 14px 0; }
+.music-lyrics input, .music-lyrics textarea, .music-lyrics select { width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
+.music-lyrics input[type=checkbox] { width: auto; }
+.music-lyrics pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; }
+.music-lyrics ol { list-style: none; padding: 0; }
+.music-lyrics li button { text-align: left; width: 100%; display: block; padding: 14px 8px; overflow-wrap: anywhere; }
+.music-lyrics li button[aria-current=true] { color: var(--color-primary); background: var(--bg-card); font-weight: 700; }
+.music-lyrics p { font-size: .85rem; color: var(--text-secondary); }
+.music-now-playing .music-lyrics button { border-radius: 10px; padding: 8px 12px; }

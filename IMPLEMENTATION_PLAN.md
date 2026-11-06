@@ -97,7 +97,9 @@ Change 16 adds grouped owner-only title/name search, category pagination, query/
 
 **Acceptance:** realistic large-library queries stay bounded, late results never replace a newer query, title/artist/album cases are covered, and keyboard/phone workflows can perform common queue/library actions.
 
-## Phase 4 — Lyrics and explainable recommendations
+## Phase 4 — Lyrics and explainable recommendations (owner-supplied/local core implemented; hosted acceptance pending)
+
+Change 17 implements versioned owner-supplied plain/LRC lyrics with offsets and synchronized seeking, plus deterministic library mixes with reasons and song/artist exclusions. No external provider is enabled. See [MUSIC_PERSONALIZATION.md](MUSIC_PERSONALIZATION.md) for API, scoring, bounds and rollout. Browser/device and hosted database acceptance remain pending; advanced lyrics, scoring settings and larger-library support are follow-ups.
 
 - First accept owner-supplied LRC/plain-text lyrics, associated with the correct track and optional offsets. Synchronized lyric display must handle seeking, instrumental tracks, missing lyrics and reduced motion.
 - Add a provider interface only if external lyrics lookup is chosen; report source/availability and cache appropriately. Do not confuse lyrics retrieval with audio retrieval.
@@ -141,4 +143,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Change 16 implements **grouped private-library search, category pagination and everyday result actions**, following Change 15's personal collections. Local tests/build pass; hosted acceptance remains pending. Recommended next: **owner-supplied lyrics and explainable library recommendations**, while retaining the outstanding hosted/device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.
+Change 17 implements **owner-supplied lyrics and explainable library recommendations**, following grouped search and personal collections. Local tests/build pass; hosted acceptance remains pending. Recommended next: **online mobile playback and Media Session controls**, while retaining the outstanding hosted/device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.

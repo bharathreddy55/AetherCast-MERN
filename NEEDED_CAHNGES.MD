@@ -174,6 +174,16 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining setup/verification:** Deploy both applications, verify new database indexes and test real names/Unicode/punctuation, paging, Back/Forward, result actions, full-context duration order, login/logout and phone/keyboard layout. No new environment variables or provider keys are required. Case-insensitive substring matching can scan owner records; execution limits and bounded responses do not establish large-library performance. Counts/results are not a transactional snapshot. Richer album/artist details, thumbnail generation, additional filters and device checks remain follow-ups. See `MUSIC_SEARCH.md`.
 - **Next:** Owner-supplied lyrics and explainable recommendations from the private library; retain hosted acceptance checks and deferred offline scope.
 
+### 2026-11-06 — Change 17: Owner lyrics and explainable library recommendations
+
+- **Done locally:** Add owner/track-scoped, uniquely indexed TrackLyrics with plain text and basic timed LRC, repeat timestamps, Unicode, stable simultaneous-line handling and a ±60-second timing offset. Accept pasted text or bounded UTF-8 `.txt`/`.lrc` drafts; require explicit Save. Validate content/line/timestamp limits and render text safely. Keep source notes as text without fetching URLs. Version checks/unique first-save conflicts prevent overwrites; clearing keeps a new empty version.
+- **Done locally:** Add Lyrics to expanded Now Playing. Highlight against the live position after seeking, seek from timed lines with the same offset, show plain/missing/instrumental-break states and make follow scrolling opt-in with reduced-motion support. Cancel stale requests/file drafts on track changes/closure; retain errors and reload controls for failed/conflicting saves.
+- **Done locally:** Add Your library mix at `/music/mix` and owner-only recommendation APIs. Rank up to 30 ready owned songs using likes, meaningful listening time, shared artists/genres, novelty within sampled history, recency and quick skips; balance artist repetition deterministically and display reasons/rule scores. Empty/cold-start libraries use real available data without invented preferences. Support full mix playback and individual play/queue actions.
+- **Done locally:** Add separately indexed MusicExclusion records with song/credited-artist controls, paginated restore (including unavailable references) and owner/reference validation. Exclusions override likes/history and never change manual library/playlist access. Exclusion management remains usable if mix generation fails. No external lyrics/catalog/model calls, new keys, auth persistence or offline subsystem are introduced.
+- **Validation:** All 292 backend tests and 94 frontend tests pass. Production frontend build, targeted lint with no warnings/errors and whitespace checks pass; the existing bundle-size advisory remains. Coverage includes schema/input bounds, LRC/Unicode/offset/seek/file handling, owner/version/first-save conflicts, safe DTOs, bounded ready-audio candidates, deterministic ranking/diversity, evidence-based listening, exclusion precedence and guest/non-owner HTTP denial. Controller database operations are mocked; actual browser timing, hosted MongoDB/index concurrency and real-device behavior remain unverified.
+- **Remaining setup/limits:** Deploy matching frontend/backend versions and verify unique lyrics/exclusion and pagination indexes. Test real lyrics saving/re-login/two-tab conflicts, track changes/offset seeking, phone/keyboard/reduced motion, actual history/mix playback, exclusions/restoration and logout. No new environment variables are required. Mixes support at most 2,000 active songs/5,000 exclusions and sample at most 1,000 sessions within 180 days; larger sets fail explicitly. Lyrics limits, scoring and detailed hosted acceptance are in `MUSIC_PERSONALIZATION.md`. Automatic lyrics/alignment, external AI, scoring preferences, aggregate statistics, larger-library support and hosted checks remain follow-ups. Offline work stays deferred.
+- **Next:** Online mobile playback and Media Session controls, retaining hosted/device acceptance and the fresh-credential policy.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -417,9 +427,12 @@ Source references: `frontend/public/sw.js`, `frontend/public/manifest.json`, `fr
 - [ ] Add loudness analysis and optional volume normalization with appropriate headroom.
 - [ ] Add gapless playback and configurable crossfade; preserve album transitions and disable crossfade where inappropriate.
 - [ ] Improve equalizer preference persistence and provide a clear reset action.
-- [ ] Add synchronized lyrics from user-supplied or otherwise authorized sources, with a plain-text fallback.
-- [ ] Generate simple mixes from local genres, artists, favorites, recency, completion, and skips.
-- [ ] Add a setting to exclude unwanted tracks/artists from recommendations.
+- [x] Add synchronized lyrics from user-supplied or otherwise authorized sources, with a plain-text fallback.
+  - Owner-supplied basic LRC/plain text, offset seeking and versioned editing are implemented; external lookup and hosted/device acceptance remain pending.
+- [x] Generate simple mixes from local genres, artists, favorites, recency, completion, and skips.
+  - Rules use actual sampled listening time rather than completion alone; candidate/sampling bounds and scoring are documented in `MUSIC_PERSONALIZATION.md`.
+- [x] Add a setting to exclude unwanted tracks/artists from recommendations.
+  - Song and credited-artist exclusions with paginated restore are implemented for local mixes; manual playback is unchanged.
 - [ ] Add optional listening statistics and yearly summaries using the owner's listening history.
 - [ ] Add synchronized library/preferences across devices, followed by optional active-device control and playback handoff.
 - [ ] Define device ownership, authentication, conflict resolution, and simultaneous playback behavior before implementing handoff.

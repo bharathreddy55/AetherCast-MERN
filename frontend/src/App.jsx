@@ -24,6 +24,7 @@ import MusicImports from './pages/MusicImports';
 import MusicLibrary from './pages/MusicLibrary';
 import MusicCollections from './pages/MusicCollections';
 import MusicSearch from './pages/MusicSearch';
+import MusicMix from './pages/MusicMix';
 
 // Helper for protecting user routes
 function ProtectedRoute({ children }) {
@@ -90,6 +91,7 @@ function MainLayout() {
           <Route path="/music" element={<ProtectedRoute><MusicLibrary /></ProtectedRoute>} />
           <Route path="/music/collections" element={<ProtectedRoute><MusicCollections /></ProtectedRoute>} />
           <Route path="/music/search" element={<ProtectedRoute><MusicSearch /></ProtectedRoute>} />
+          <Route path="/music/mix" element={<ProtectedRoute><MusicMix /></ProtectedRoute>} />
           <Route path="/music/import" element={<ProtectedRoute><MusicImports /></ProtectedRoute>} />
           <Route 
             path="/podcasts"

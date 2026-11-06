@@ -4,6 +4,11 @@ const controller = require('../controllers/musicLibraryController');
 const router = express.Router();
 router.param('id', (_req, res, next, value) => { try { id(value); next(); } catch { res.status(400).json({ success: false, message: 'Invalid music library ID' }); } });
 router.get('/state', controller.state);
+const recommendations = require('../controllers/musicRecommendationsController');
+router.get('/recommendations', recommendations.mix);
+router.get('/recommendations/exclusions', recommendations.listExclusions);
+router.put('/recommendations/exclusions/:resource/:id', recommendations.exclude);
+router.delete('/recommendations/exclusions/:id', recommendations.restore);
 for (const [path, kind] of [['likes', 'likes'], ['saved/albums', 'albums'], ['followed/artists', 'artists']]) {
   router.get(`/${path}`, controller.listSaved(kind));
   router.put(`/${path}/:id`, controller.save(kind));

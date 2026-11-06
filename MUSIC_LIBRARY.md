@@ -11,6 +11,7 @@ The app now opens **My Music** at `/music`. `/home` redirects there too. Use Son
 - Lists show 50 records per page. Loading, request failure, retry, refresh and empty-library states are provided; outdated navigation responses are ignored.
 - Play a song or choose **Play album / Play collection** to load the complete filtered context across pages. Albums follow disc/track order. The queue is bounded at 2,000 songs; larger, denied or changed/partial results show an error rather than silently truncating. Loading a new context is cancellable, and a newer selection/navigation cancels the earlier one.
 - The fixed music player provides artwork/credits, play/pause, previous/next, seeking, volume, queue position, album navigation and close controls. Mobile layout keeps transport controls visible.
+- Expanded Now Playing includes owner-supplied plain/LRC Lyrics. Your library mix provides explained local recommendations and song/artist exclusions. See [MUSIC_PERSONALIZATION.md](MUSIC_PERSONALIZATION.md) for timing, scoring and limits.
 
 ## Playback rules
 

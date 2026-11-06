@@ -12,5 +12,6 @@ for (const resource of ['artists', 'albums', 'tracks']) {
   router.route(`/${resource}/:id`).get(controller.get(resource)).patch(controller.update(resource)).delete(controller.remove(resource));
 }
 router.get('/tracks/:id/playback', controller.playback);
+router.route('/tracks/:id/lyrics').get(require('../controllers/musicLyricsController').lyrics).put(require('../controllers/musicLyricsController').lyrics).delete(require('../controllers/musicLyricsController').lyrics);
 router.get('/assets/:id', controller.getAsset);
 module.exports = router;
