@@ -18,6 +18,7 @@ const schema = new mongoose.Schema({
   checksum: { type: String, lowercase: true, match: /^[a-f0-9]{64}$/ },
   status: { type: String, enum: ['pending', 'processing', 'ready', 'failed'], default: 'pending' },
   originalAssetId: reference('MediaAsset'),
+  thumbnailAssetId: reference('MediaAsset'),
 }, { timestamps: true });
 schema.pre('validate', function () {
   if (this.storageProvider === 'supabase' && !/^[a-zA-Z0-9_-]+$/.test(this.bucket)) this.invalidate('bucket', 'A private storage bucket is required');

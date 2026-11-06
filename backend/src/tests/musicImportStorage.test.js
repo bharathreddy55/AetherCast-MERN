@@ -24,6 +24,12 @@ test('reuses existing owner/checksum media without uploading another object', as
   expect(await storeImportAsset('owner', wav(), 'Song.wav', details)).toBe(existing);
   expect(uploadToSupabase).not.toHaveBeenCalled();
 });
+test('new derivatives use their own storage folder and retain an original reference', async () => {
+  const originalAssetId = '507f191e810c19729de860ea';
+  await storeImportAsset('owner', wav(), 'compatible.mp3', { ...details, originalAssetId });
+  expect(uploadToSupabase).toHaveBeenCalledWith(expect.any(Buffer), 'compatible.mp3', details.mimeType, 'music-derived-audio');
+  expect(MediaAsset.create).toHaveBeenCalledWith(expect.objectContaining({ originalAssetId }));
+});
 
 test('rolls back only the new storage object when duplicate asset creation races', async () => {
   const existing = { _id: 'existing' };

@@ -29,7 +29,8 @@ async function storeImportAsset(ownerId, bytes, originalName, details) {
   const checksum = crypto.createHash('sha256').update(bytes).digest('hex');
   const existing = await MediaAsset.findOne({ ownerId, checksum });
   if (existing) return existing;
-  const reference = await uploadToSupabase(bytes, originalName, details.mimeType, details.kind === 'image' ? 'music-artwork' : 'music-originals')
+  const folder = details.originalAssetId ? details.kind === 'image' ? 'music-thumbnails' : 'music-derived-audio' : details.kind === 'image' ? 'music-artwork' : 'music-originals';
+  const reference = await uploadToSupabase(bytes, originalName, details.mimeType, folder)
     || saveFileLocally({ buffer: bytes, originalname: originalName });
   const parsed = parseMediaReference(reference);
   try {

@@ -254,6 +254,9 @@ test.each([
   ['post', '/api/episodes/example/chat'],
   ['get', '/api/music/artists'],
   ['get', '/api/music/search?q=song'],
+  ['get', '/api/music/tracks/507f1f77bcf86cd799439011/processing'],
+  ['post', '/api/music/tracks/507f1f77bcf86cd799439011/processing'],
+  ['delete', '/api/music/processing/507f1f77bcf86cd799439011'],
   ['get', '/api/music/tracks/507f1f77bcf86cd799439011/lyrics'],
   ['put', '/api/music/tracks/507f1f77bcf86cd799439011/lyrics'],
   ['delete', '/api/music/tracks/507f1f77bcf86cd799439011/lyrics'],
@@ -291,7 +294,7 @@ test.each([
   expect(User.findOne).not.toHaveBeenCalled();
 });
 
-test.each(['/api/podcasts', '/api/music/search?q=song', '/api/music/tracks/507f1f77bcf86cd799439011/lyrics', '/api/music/library/recommendations', '/api/music/library/recommendations/exclusions'])('blocks a signed-in non-owner from browsing %s', async route => {
+test.each(['/api/podcasts', '/api/music/search?q=song', '/api/music/tracks/507f1f77bcf86cd799439011/lyrics', '/api/music/library/recommendations', '/api/music/library/recommendations/exclusions', '/api/music/tracks/507f1f77bcf86cd799439011/processing'])('blocks a signed-in non-owner from browsing %s', async route => {
   const token = jwt.sign({ sub: 'another-user', email: 'another@example.com' }, secret, {
     algorithm: 'HS256', issuer, audience: 'authenticated', expiresIn: '5m',
   });

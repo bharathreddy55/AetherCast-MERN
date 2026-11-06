@@ -29,7 +29,8 @@ function pagination(query = {}) {
   return { page, limit, skip: (page - 1) * limit };
 }
 function population(resource, ownerId) {
-  const art = path => ({ path, match: { ownerId, kind: 'image', status: 'ready' }, select: '+objectKey' });
+  const art = path => ({ path, match: { ownerId, kind: 'image', status: 'ready' }, select: '+objectKey',
+    populate: { path: 'thumbnailAssetId', match: { ownerId, kind: 'image', status: 'ready' }, select: '+objectKey' } });
   const artists = path => ({ path, match: active(ownerId), select: 'name' });
   if (resource === 'artists') return [art('imageAssetId')];
   if (resource === 'albums') return [artists('artistIds'), art('coverAssetId')];

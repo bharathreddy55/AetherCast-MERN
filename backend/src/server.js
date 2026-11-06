@@ -19,6 +19,8 @@ const startServer = async () => {
   });
   const stopImports = require('./services/musicImportWorker').startMusicImportWorker();
   server.on('close', stopImports);
+  const stopProcessing = require('./services/mediaProcessingWorker').startMediaProcessingWorker();
+  server.on('close', stopProcessing);
 
   // Initialize Socket.io
   const { Server } = require('socket.io');

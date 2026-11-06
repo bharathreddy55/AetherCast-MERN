@@ -118,7 +118,9 @@ Change 18 adds feature-detected music Media Session labels/actions/position, imm
 
 **Acceptance:** online music playback, supported lock-screen controls, interruption/retry, seeking and logout work on tested phones. Offline launch, new music downloads and offline synchronization are excluded from the active plan.
 
-## Phase 6 — Media processing and audio quality
+## Phase 6 — Media processing and audio quality (conversion/thumbnail core implemented; quality/cleanup/hosted follow-ups remain)
+
+Change 19 adds on-demand leased conversion/thumbnail jobs, preserved originals, explicit original/compatible playback, measured technical labels, bounded FFmpeg execution and a Docker deployment option. See [MUSIC_PROCESSING.md](MUSIC_PROCESSING.md). FFmpeg provisioning and hosted/device acceptance remain pending. Normalization, advanced transitions, seamless link renewal and permanent retained-object cleanup remain follow-ups within this phase.
 
 - Add durable derivative jobs for browser-compatible formats where originals cannot play, with codec/version/checksum/technical metadata and separate original links.
 - Generate artwork thumbnails; add safe cleanup/retention for cancelled jobs, abandoned objects and deleted/replaced media without deleting referenced originals.
@@ -145,4 +147,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Change 18 implements **supported-browser music device controls and interruption/retry safeguards**, following lyrics, local mixes, search and personal collections. Local tests/build pass; hosted and physical-device acceptance remains pending. Recommended next: **media processing, artwork and browser audio-format quality**, while retaining the outstanding device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.
+Change 19 implements **private compatible-audio conversion, artwork thumbnails and measured source metadata**. Local tests/build and short real-encoder fixtures pass; hosted/physical-device acceptance and FFmpeg deployment remain pending. Next: **remaining Phase 6 retention/cleanup and streaming/audio-quality work**, before separately chosen optional integrations. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.

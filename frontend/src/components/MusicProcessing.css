@@ -1,0 +1,6 @@
+.music-processing { padding: 10px; max-height: 55vh; overflow-y: auto; }
+.music-processing p, .music-processing li { color: var(--text-secondary); line-height: 1.6; margin: 12px 0; }
+.music-now-playing .music-processing button { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-color); margin: 4px; }
+.music-audio-quality { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+.music-audio-quality select { padding: 10px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 10px; }
+.music-now-tabs { flex-wrap: wrap; }

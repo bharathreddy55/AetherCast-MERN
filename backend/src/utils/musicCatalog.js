@@ -97,18 +97,19 @@ const cover = asset => {
   if (!asset || asset.status !== 'ready' || asset.kind !== 'image') return '';
   try { return createMediaLink(assetReference(asset)); } catch { return ''; }
 };
+const thumbnail = asset => cover(asset?.thumbnailAssetId) || cover(asset);
 const artistLabel = value => ({ _id: value?._id || value, name: value?.name || '' });
 function musicDto(resource, document) {
   const value = typeof document.toObject === 'function' ? document.toObject() : document;
-  if (resource === 'artists') return { _id: value._id, name: value.name, biography: value.biography || '', imageAssetId: value.imageAssetId?._id || value.imageAssetId, coverImage: cover(value.imageAssetId) };
+  if (resource === 'artists') return { _id: value._id, name: value.name, biography: value.biography || '', imageAssetId: value.imageAssetId?._id || value.imageAssetId, coverImage: thumbnail(value.imageAssetId) };
   if (resource === 'albums') return { _id: value._id, title: value.title, artists: (value.artistIds || []).filter(Boolean).map(artistLabel),
-    isCompilation: value.isCompilation, coverAssetId: value.coverAssetId?._id || value.coverAssetId, coverImage: cover(value.coverAssetId),
+    isCompilation: value.isCompilation, coverAssetId: value.coverAssetId?._id || value.coverAssetId, coverImage: thumbnail(value.coverAssetId),
     releaseDate: value.releaseDate, genres: value.genres || [], language: value.language || '', description: value.description || '' };
   return { _id: value._id, kind: 'track', title: value.title,
     artistCredits: (value.artistCredits || []).filter(credit => credit.artistId).map(credit => ({ artist: artistLabel(credit.artistId), role: credit.role })),
     album: value.albumId ? { _id: value.albumId._id || value.albumId, title: value.albumId.title || '' } : null,
     audioAssetId: value.audioAssetId?._id || value.audioAssetId, coverAssetId: value.coverAssetId?._id || value.coverAssetId,
-    coverImage: cover(value.coverAssetId) || cover(value.albumId?.coverAssetId), duration: value.duration,
+    coverImage: thumbnail(value.coverAssetId) || thumbnail(value.albumId?.coverAssetId), coverFullImage: cover(value.coverAssetId) || cover(value.albumId?.coverAssetId), duration: value.duration,
     discNumber: value.discNumber, trackNumber: value.trackNumber, genres: value.genres || [], language: value.language || '',
     releaseDate: value.releaseDate, explicit: value.explicit || false };
 }

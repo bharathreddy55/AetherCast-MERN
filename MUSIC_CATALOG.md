@@ -92,6 +92,7 @@ MediaAsset stores object references, not permanent public URLs. Existing podcast
 3. Keep existing Podcast/Episode/Playlist/User records and IDs intact. No podcast-to-track conversion or live database migration has been performed from this workspace.
 4. Enable the implemented server import workflow using the runtime, private storage, persistent worker and MongoDB replica-set requirements in `MUSIC_IMPORTS.md`. Imports register tracks only after processing and metadata confirmation succeed.
 5. Deploy the implemented music-library/player/queue and personal collections integration. Complete album/filtered contexts load across pages up to 2,000 songs, with distinct queue occurrences, editing, shuffle and repeat. Separate music likes, saves, follows, playlists and history use additive collections; verify their indexes before relying on concurrent updates. Offline development is deferred.
+   Optional processing now adds private compatible MP3 and artwork jobs with explicit original/compatible playback; enable FFmpeg and verify processing indexes/transactions using `MUSIC_PROCESSING.md`. Original track/audio references remain intact.
 6. Test real MongoDB CRUD/index behavior, private storage playback, large albums, duplicate imports, deletion, and backup restoration in the hosted environment.
 
 Current verification uses schema validation and owner/query/API tests with mocked database operations; a live MongoDB/storage/browser music session has not been run. Import jobs and any eventual migration must remain retry-safe and preserve existing podcast data.

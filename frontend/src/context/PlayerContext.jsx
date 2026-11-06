@@ -20,6 +20,8 @@ export const PlayerProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [volume, setVolume] = useState(0.8);
+  const [musicQuality, setMusicQuality] = useState('original');
+  const musicQualityRef = useRef('original');
   const [playlist, setPlaylist] = useState([]);
   const [musicQueue, setMusicQueue] = useState(emptyMusicQueue);
   const musicQueueEntries = useMemo(() => orderedQueue(musicQueue), [musicQueue]);
@@ -133,6 +135,7 @@ export const PlayerProvider = ({ children }) => {
     audioPlayRef.current.cancel();
     mediaLoadingRef.current = false;
     retryPositionRef.current = null;
+    musicQualityRef.current = 'original'; setMusicQuality('original');
     mediaSessionRef.current?.clear();
     void progressTracker.stop({ save: false });
     progressTracker.clear();
@@ -424,7 +427,7 @@ export const PlayerProvider = ({ children }) => {
       const resolved = await resolvePlayerMedia(episode, {
         readDownload: id => readDownload(user.id || user._id, id),
         fetchEpisode: id => apiFetch(`${API_BASE_URL}/episodes/${id}`, { signal: controller.signal }),
-        fetchTrack: id => apiFetch(`${API_BASE_URL}/music/tracks/${id}/playback`, { signal: controller.signal }),
+        fetchTrack: id => apiFetch(`${API_BASE_URL}/music/tracks/${id}/playback?quality=${musicQualityRef.current}`, { signal: controller.signal }),
       });
       if (controller.signal.aborted) throw new Error('Playback request cancelled');
       finalEpisode = resolved.episode;
@@ -660,6 +663,11 @@ export const PlayerProvider = ({ children }) => {
   };
 
   commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek };
+  const chooseMusicQuality = value => {
+    if (!['original', 'compatible'].includes(value) || sessionBlockedRef.current) return;
+    musicQualityRef.current = value; setMusicQuality(value);
+    if (isMusic(currentEpisode)) void playEpisode(currentEpisode, null, { keepPaused: audioRef.current.paused });
+  };
 
   return (
     <PlayerContext.Provider
@@ -697,6 +705,8 @@ export const PlayerProvider = ({ children }) => {
         audioRef,
         isAuthorized,
         playbackError,
+        musicQuality,
+        chooseMusicQuality,
         setIsAuthorized,
         eqGains,
         eqPreset,

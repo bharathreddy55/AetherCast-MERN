@@ -9,6 +9,8 @@ import './MusicPlayer.css';
 import { useMusicLibraryState } from '../lib/useMusicLibraryState';
 import PlaylistPicker from './PlaylistPicker';
 import MusicLyrics from './MusicLyrics';
+import MusicProcessing from './MusicProcessing';
+import { audioTechnicalLabel } from '../lib/musicAudioInfo';
 
 function Transport({ compact = false }) {
   const { isPlaying, currentTime, duration, volume, togglePlay, playNext, playPrevious, seek, changeVolume,
@@ -48,7 +50,7 @@ function QueuePanel() {
 }
 
 export default function MusicPlayer() {
-  const { currentEpisode: track, currentTime, volume, playlist, musicQueue, togglePlay, seek, changeVolume, closePlayer, playbackError } = usePlayer();
+  const { currentEpisode: track, currentTime, volume, playlist, musicQueue, togglePlay, seek, changeVolume, closePlayer, playbackError, musicQuality, chooseMusicQuality } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [panel, setPanel] = useState('playing');
   const [playlistTrack, setPlaylistTrack] = useState(null);
@@ -97,9 +99,9 @@ export default function MusicPlayer() {
       {expanded && <>
         {track.coverImage && <img className="music-ambient-art" src={window.getMediaUrl(track.coverImage)} alt="" aria-hidden="true" onError={event => { event.currentTarget.style.display = 'none'; }} />}
         <header className="music-now-header"><button onClick={() => setExpanded(false)} aria-label="Minimize Now Playing"><ChevronDown size={25} /></button><h2 id="now-playing-title">Your listening space</h2><button onClick={closePlayer} aria-label="Stop and close player"><X size={21} /></button></header>
-        <div className="music-now-layout"><div className="music-now-art"><MusicArtwork src={track.coverImage} title={track.title} eager /><p>YOUR LIBRARY · PRIVATE LISTENING</p></div>
-          <div className="music-now-content"><div className="music-now-tabs" role="group" aria-label="Player view"><button aria-pressed={panel === 'playing'} onClick={() => setPanel('playing')}>Now playing</button><button aria-pressed={panel === 'lyrics'} onClick={() => setPanel('lyrics')}>Lyrics</button><button aria-pressed={panel === 'queue'} onClick={() => setPanel('queue')}>Queue · {playlist.length}</button></div>
-            {panel === 'playing' ? <><div className="music-now-metadata"><h3>{track.title}</h3><p>{artistNames(track)}</p>{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`} onClick={() => setExpanded(false)}>{track.album.title}</Link>}{track.explicit && <small>Explicit</small>}</div><div className="music-player-library-actions"><button aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} onClick={() => void library.toggle(track._id)}><Heart size={18} fill={library.saved.includes(track._id) ? "currentColor" : "none"} />{library.saved.includes(track._id) ? "Liked" : "Like song"}</button><button onClick={() => setPlaylistTrack(track)}>Add to playlist</button></div><Transport /><p className="music-now-caption">{index >= 0 ? `Song ${index + 1} of ${playlist.length}` : 'Playing from your library'} · Original audio</p></> : panel === 'lyrics' ? <><MusicLyrics key={track._id} track={track} /><Transport /></> : <QueuePanel />}
+        <div className="music-now-layout"><div className="music-now-art"><MusicArtwork src={track.coverFullImage || track.coverImage} title={track.title} eager /><p>YOUR LIBRARY · PRIVATE LISTENING</p></div>
+          <div className="music-now-content"><div className="music-now-tabs" role="group" aria-label="Player view"><button aria-pressed={panel === 'playing'} onClick={() => setPanel('playing')}>Now playing</button><button aria-pressed={panel === 'media'} onClick={() => setPanel('media')}>Audio</button><button aria-pressed={panel === 'lyrics'} onClick={() => setPanel('lyrics')}>Lyrics</button><button aria-pressed={panel === 'queue'} onClick={() => setPanel('queue')}>Queue · {playlist.length}</button></div>
+            {panel === 'playing' ? <><div className="music-now-metadata"><h3>{track.title}</h3><p>{artistNames(track)}</p>{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`} onClick={() => setExpanded(false)}>{track.album.title}</Link>}{track.explicit && <small>Explicit</small>}</div><div className="music-player-library-actions"><button aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} onClick={() => void library.toggle(track._id)}><Heart size={18} fill={library.saved.includes(track._id) ? "currentColor" : "none"} />{library.saved.includes(track._id) ? "Liked" : "Like song"}</button><button onClick={() => setPlaylistTrack(track)}>Add to playlist</button></div><label className="music-audio-quality">Audio version<select value={musicQuality} onChange={event => chooseMusicQuality(event.target.value)}><option value="original">Original</option><option value="compatible">Compatible MP3</option></select></label><Transport /><p className="music-now-caption">{index >= 0 ? `Song ${index + 1} of ${playlist.length}` : 'Playing from your library'} · {audioTechnicalLabel(track.playback)}</p></> : panel === 'media' ? <><MusicProcessing key={track._id} track={track} /><Transport /></> : panel === 'lyrics' ? <><MusicLyrics key={track._id} track={track} /><Transport /></> : <QueuePanel />}
             {playbackError && <p className="music-now-error" role="alert">{playbackError}</p>}
           </div></div>
       </>}

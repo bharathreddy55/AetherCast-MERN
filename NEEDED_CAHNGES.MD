@@ -193,6 +193,16 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining setup/verification:** Deploy the frontend and test on real desktop/Android/iOS browsers: lock-screen/headset commands, seeking, backgrounding, interruption, Bluetooth/device changes, slow/failed/expired media lookup, retry position, logout and back-cache locking. No new environment variables or database setup are required. Browser support and background policy vary; no authenticated live/device playback or deployment was verified in this batch. Detailed acceptance and limits are in `MUSIC_DEVICE_CONTROLS.md`. Seamless link renewal, reliable device-specific interruption policies and physical-device acceptance remain open. Offline/download work stays deferred.
 - **Next:** Media processing/artwork and browser audio-format quality, retaining outstanding hosted/device checks.
 
+### 2026-11-06 — Change 19: Compatible audio and private artwork processing
+
+- **Done locally:** Add owner/source/profile-unique durable MediaProcessingJob records, fixed MP3-192/320px-cover profiles, leases, interrupted-job recovery, safe errors, explicit retry and cancellation. Validate active owned sources, pending-job admission and source checksums. Run one processing job per worker process when explicitly enabled; preserve original audio/artwork and original track references.
+- **Done locally:** Add bounded native FFmpeg conversion with fixed arguments, no shell/stdin, restricted input protocols/demuxers, disabled external MOV references, limited threads/allocations/stderr/runtime and a child environment without service credentials. Parse output technical metadata, reject size/duration mismatches and verify JPEG dimensions/end marker. Clean only verified temporary directories; retain unpublished uploaded assets for a later safe retention workflow.
+- **Done locally:** Publish derivative readiness and thumbnail links transactionally with lease checks. Store new generated objects separately; checksum reuse never modifies existing originals. Owner-scope nested thumbnail population, serve signed thumbnail/full-art links and use full artwork in expanded music views. Original media delivery and podcast data remain intact.
+- **Done locally:** Add the player's Audio preparation/status/retry/cancel panel and explicit Original/Compatible selector. Preserve seek position/paused intent, reject unavailable copies without fallback and display measured format/codec/bitrate/sample rate. Add an FFmpeg-enabled backend Dockerfile and setup/API/limits/retention guide in `MUSIC_PROCESSING.md`.
+- **Validation:** All 315 backend tests and 109 frontend tests pass; frontend build, targeted lint with no errors and whitespace checks pass. Existing player-context warnings and bundle advisory remain. Three real FFmpeg 7.1 tests cover WAV-to-MP3 technical metadata and PNG/JPEG thumbnails; the test executable is isolated under ignored node_modules. Remaining tests cover ownership/guest boundaries, profiles, queue/cancel/retry, checksum integrity, lease/transaction contracts, temp cleanup, subprocess limits, safe playback selection and private artwork/technical labels. Database/storage operations are mocked; Docker, hosted jobs and physical devices are unverified.
+- **Required hosted setup:** Provision maintained FFmpeg and enable `MUSIC_PROCESSING_ENABLED=true`, with `FFMPEG_PATH` when needed; retain Node 22+, private storage and transaction-capable MongoDB. The included Docker backend provides FFmpeg but is not deployed automatically. Deploy both apps, verify job indexes/transactions, test real input formats/worker restart/cancellation, original-vs-compatible playback and phone artwork. No local/hosted credentials or deployment settings were changed.
+- **Remaining Phase 6 work:** Automatic permanent retained-object cleanup, seamless URL renewal/long-stream tests, more artwork sizes, normalization/loudness and gapless/crossfade evaluation, resource/cost and backup/restore verification. Cancellation prevents publication but does not immediately kill an active encoder. This batch completes conversion/thumbnail foundations, not all audio-quality polish. Offline/download work stays deferred.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -282,22 +292,23 @@ Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/s
 ## 5. Music import and management — P1
 
 - [x] Support single-file, multi-file, and album/folder imports.
-- [ ] Support an explicit initial format list, such as MP3, M4A/AAC, FLAC, OGG, and WAV, with conversion for unsupported playback formats where needed.
-  - Six initial input formats are implemented. Browser compatibility/conversion remains pending.
+- [x] Support an explicit initial format list, such as MP3, M4A/AAC, FLAC, OGG, and WAV, with conversion for unsupported playback formats where needed.
+  - Six input formats and explicit compatible-MP3 processing are implemented. Hosted FFmpeg setup and real codec/browser acceptance remain pending.
 - [x] Extract embedded track titles, artists, album names, track/disc numbers, artwork, and duration automatically.
 - [x] Provide an editable preview before committing an import.
 - [ ] Detect exact duplicates using checksums and offer review for likely metadata duplicates.
   - Exact-file checksums and idempotent confirmation are implemented; likely metadata duplicates remain pending.
 - [x] Preserve original files; record any derived playback versions separately.
-  - Originals are retained; the asset schema links future derivatives to their originals. No conversion is generated yet.
-- [ ] Run metadata extraction, artwork processing, and audio conversion in background jobs rather than long API requests.
-  - Durable background metadata/artwork extraction is implemented. Audio conversion and thumbnails remain pending.
+  - Originals are retained; generated copies use separate assets/source-profile jobs and original/compatible playback choices.
+- [x] Run metadata extraction, artwork processing, and audio conversion in background jobs rather than long API requests.
+  - Import analysis and optional FFmpeg conversion/thumbnail workers are implemented. Hosted worker/resource checks remain pending.
 - [x] Show upload and processing progress, per-file failures, cancellation, and retry.
   - Per-file upload/processing states are shown; byte-percentage upload progress is not implemented.
 - [ ] Support resumable/direct uploads where file sizes justify them.
 - [ ] Allow metadata correction, album regrouping, artwork replacement, and bulk edits.
   - Metadata correction before confirmation is implemented; library management and bulk editing remain pending.
-- [ ] Generate appropriately sized artwork thumbnails and provide attractive missing-artwork placeholders.
+- [x] Generate appropriately sized artwork thumbnails and provide attractive missing-artwork placeholders.
+  - On-demand 320px private thumbnails and existing artwork placeholders are implemented. Additional sizes and hosted/device checks remain follow-ups.
 - [ ] Make import jobs retry-safe so retries do not create duplicate tracks or orphan files.
   - Checksum reuse, leases, transactionally confirmed tracks and cleanup of newly uploaded objects on failed asset registration are implemented. Retained/abandoned-file cleanup remains pending.
 
@@ -435,6 +446,7 @@ Source references: `frontend/public/sw.js`, `frontend/public/manifest.json`, `fr
 ## 14. Audio quality and personalization — P3
 
 - [ ] Add playback/download quality preferences when multiple encoded versions are available.
+  - Session-level Original/Compatible MP3 playback choice and measured metadata are implemented; more profiles and persistent preferences remain future work. New music downloads remain deferred.
 - [ ] Add loudness analysis and optional volume normalization with appropriate headroom.
 - [ ] Add gapless playback and configurable crossfade; preserve album transitions and disable crossfade where inappropriate.
 - [ ] Improve equalizer preference persistence and provide a clear reset action.
