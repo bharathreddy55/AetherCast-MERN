@@ -9,6 +9,7 @@ import { createMusicListeningTracker, createMusicListeningSender } from '../lib/
 import { createMusicMediaSession } from '../lib/musicMediaSession';
 import { recoveryPosition, createAudioPlayback, playbackPausedIntent } from '../lib/playbackRecovery';
 import { createMusicLinkRenewal, musicLinkExpiry, musicLinkNeedsRenewal } from '../lib/musicLinkRenewal';
+import { createNextMusicPreparation, shouldPrepareNext, readNextPreparation, saveNextPreparation, atMusicBoundary } from '../lib/nextMusicPreparation';
 
 const PlayerContext = createContext(null);
 
@@ -23,6 +24,14 @@ export const PlayerProvider = ({ children }) => {
   const [volume, setVolume] = useState(0.8);
   const [musicQuality, setMusicQuality] = useState('original');
   const musicQualityRef = useRef('original');
+  const [prepareNextEnabled, setPrepareNextEnabled] = useState(() => { try { return readNextPreparation(window.localStorage); } catch { return true; } });
+  const prepareNextEnabledRef = useRef(prepareNextEnabled);
+  const nextPreparationRef = useRef(null);
+  if (!nextPreparationRef.current) nextPreparationRef.current = createNextMusicPreparation({
+    load: (item, { signal, quality }) => resolvePlayerMedia(item, {
+      fetchTrack: id => apiFetch(`${API_BASE_URL}/music/tracks/${id}/playback?quality=${quality}`, { signal }),
+    }),
+  });
   const [playlist, setPlaylist] = useState([]);
   const [musicQueue, setMusicQueue] = useState(emptyMusicQueue);
   const musicQueueEntries = useMemo(() => orderedQueue(musicQueue), [musicQueue]);
@@ -136,6 +145,7 @@ export const PlayerProvider = ({ children }) => {
       ++playRequestRef.current;
       selectionAbortRef.current?.abort();
       playIntentRef.current = false; linkRenewalRef.current.reset();
+      nextPreparationRef.current.reset();
       audio.pause();
       activeMediaRef.current = null;
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
@@ -151,6 +161,7 @@ export const PlayerProvider = ({ children }) => {
     mediaLoadingRef.current = false;
     retryPositionRef.current = null;
     playIntentRef.current = false; linkRenewalRef.current.reset();
+    nextPreparationRef.current.reset();
     musicQualityRef.current = 'original'; setMusicQuality('original');
     mediaSessionRef.current?.clear();
     void progressTracker.stop({ save: false });
@@ -307,6 +318,7 @@ export const PlayerProvider = ({ children }) => {
     const onTimeUpdate = () => {
       if (activeMediaRef.current?.ready && !audio.error && Number.isFinite(audio.currentTime)) {
         activeMediaRef.current.lastPosition = audio.currentTime; setCurrentTime(audio.currentTime);
+        commandsRef.current.prepareNext?.();
       }
     };
     const onLoadedMetadata = () => {
@@ -341,6 +353,7 @@ export const PlayerProvider = ({ children }) => {
     const onPause = () => {
       if (!audio.paused) return;
       if (!mediaLoadingRef.current && !audio.error) playIntentRef.current = false;
+      if (!mediaLoadingRef.current && !atMusicBoundary(audio)) nextPreparationRef.current.cancel();
       linkRenewalRef.current.cancel();
       setIsPlaying(false);
       musicListening.pause();
@@ -359,6 +372,7 @@ export const PlayerProvider = ({ children }) => {
     const onError = () => {
       if (!activeMediaRef.current || !audio.error || mediaLoadingRef.current) return;
       if (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source) return;
+      nextPreparationRef.current.cancel();
       setIsPlaying(false);
       bufferingRef.current = false;
       musicListening.pause();
@@ -376,6 +390,7 @@ export const PlayerProvider = ({ children }) => {
         musicListening.reset(audio.currentTime, { keepalive: true });
         sessionBlockedRef.current = true;
         playIntentRef.current = false; linkRenewalRef.current.reset();
+        nextPreparationRef.current.reset();
         ++playRequestRef.current; selectionAbortRef.current?.abort();
         mediaLoadingRef.current = false; audioPlayRef.current.cancel(); retryPositionRef.current = null;
         audio.pause(); activeMediaRef.current = null; pendingSeekRef.current = null;
@@ -389,6 +404,7 @@ export const PlayerProvider = ({ children }) => {
     };
     const onBuffering = () => {
       if (!activeMediaRef.current || (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source)) return;
+      nextPreparationRef.current.cancel();
       musicListening.pause(); bufferingRef.current = true; linkRenewalRef.current.waiting(); updateDeviceSession();
     };
     const handlers = { timeupdate: onTimeUpdate, loadedmetadata: onLoadedMetadata,
@@ -430,6 +446,7 @@ export const PlayerProvider = ({ children }) => {
 
   const playEpisode = async (episode, newPlaylist = null, options = {}) => {
     if (!episode || !user || sessionBlockedRef.current) return;
+    if (!options.preparationContext) nextPreparationRef.current.reset();
     if (!isMusic(episode)) updateMusicQueue({ type: 'reset' });
     const requestId = ++playRequestRef.current;
     linkRenewalRef.current.cancel();
@@ -461,13 +478,22 @@ export const PlayerProvider = ({ children }) => {
     let finalEpisode = { ...episode };
     let downloadedResponse;
     let expiresAt = null;
-    const requestedAt = Date.now();
+    let requestedAt = Date.now();
 
-    // Cached audio belongs to the signed-in owner. Streaming always resolves a
-    // fresh authorized media link and never falls back to an old public URL.
+    // Cached episode audio belongs to the signed-in owner. Music resolves an
+    // authorized link here or consumes a bounded same-session preparation.
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const resolved = await resolvePlayerMedia(episode, {
+      const contextMatches = () => prepareNextEnabledRef.current && options.preparationContext
+        && options.preparationContext.ownerId === authRef.current?.ownerId && options.preparationContext.token === authRef.current?.token
+        && options.preparationContext.quality === musicQualityRef.current && options.preparationContext.from === activeMediaRef.current?.episode.queueItemId
+        && options.preparationContext.requestId === activeMediaRef.current?.requestId && options.preparationContext.to === episode.queueItemId
+        && episode.queueItemId === musicQueueRef.current.currentId;
+      const prepared = contextMatches() ? await nextPreparationRef.current.take(options.preparationContext, controller.signal) : undefined;
+      if (controller.signal.aborted) throw new Error('Playback request cancelled');
+      const usePrepared = prepared && contextMatches();
+      requestedAt = usePrepared ? prepared.requestedAt : Date.now();
+      const resolved = usePrepared ? prepared.resolved : await resolvePlayerMedia(episode, {
         readDownload: id => readDownload(user.id || user._id, id),
         fetchEpisode: id => apiFetch(`${API_BASE_URL}/episodes/${id}`, { signal: controller.signal }),
         fetchTrack: id => apiFetch(`${API_BASE_URL}/music/tracks/${id}/playback?quality=${musicQualityRef.current}`, { signal: controller.signal }),
@@ -579,6 +605,7 @@ export const PlayerProvider = ({ children }) => {
     audioPlayRef.current.play(requestId);
   };
   const pausePlayback = () => {
+    nextPreparationRef.current.cancel();
     playIntentRef.current = false; linkRenewalRef.current.cancel();
     setIsReconnecting(false);
     ++playRequestRef.current; selectionAbortRef.current?.abort();
@@ -612,6 +639,7 @@ export const PlayerProvider = ({ children }) => {
 
   const seek = (time) => {
     if (!activeMediaRef.current?.ready || mediaLoadingRef.current || !Number.isFinite(time)) return;
+    nextPreparationRef.current.cancel();
     const limit = audioRef.current.duration;
     if (!Number.isFinite(limit) || limit <= 0) return;
     const clamped = Math.max(0, Math.min(time, limit));
@@ -671,8 +699,9 @@ export const PlayerProvider = ({ children }) => {
     if (isMusic(activeMediaRef.current?.episode || currentEpisode)) {
       if (nextQueueId(musicQueueRef.current, natural)) {
         const keepPaused = !natural && keepPlaybackPaused();
-        playMusicState(updateMusicQueue({ type: 'next', natural }), { restart: true, keepPaused });
-      }
+        const preparationContext = natural ? preparationKey() : null;
+        playMusicState(updateMusicQueue({ type: 'next', natural }), { restart: true, keepPaused, preparationContext });
+      } else nextPreparationRef.current.reset();
       return;
     }
     if (playlist.length === 0 || !currentEpisode) return;
@@ -697,6 +726,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const closePlayer = () => {
+    nextPreparationRef.current.reset();
     playIntentRef.current = false; linkRenewalRef.current.reset();
     setIsReconnecting(false);
     selectionAbortRef.current?.abort();
@@ -722,7 +752,27 @@ export const PlayerProvider = ({ children }) => {
     blobUrlRef.current = null;
   };
 
-  commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek,
+  const preparationKey = () => {
+    const media = activeMediaRef.current, auth = authRef.current, next = queueEntry(musicQueueRef.current, nextQueueId(musicQueueRef.current, true));
+    if (!media || !next || sessionBlockedRef.current || !auth?.token || media.ownerId !== auth.ownerId || !media.episode.queueItemId) return null;
+    return { ownerId: auth.ownerId, token: auth.token, quality: musicQualityRef.current, from: media.episode.queueItemId,
+      to: next.queueItemId, requestId: media.requestId, trackId: next.track._id };
+  };
+  const prepareNext = () => {
+    const media = activeMediaRef.current, key = preparationKey(), next = key && queueEntry(musicQueueRef.current, key.to);
+    // The final timeupdate/pause may precede ended. Keep the prepared response
+    // until the natural handoff instead of cancelling it at remaining=0.
+    if (isMusic(media?.episode) && atMusicBoundary(audioRef.current)) return;
+    if (!key || !shouldPrepareNext({ enabled: prepareNextEnabledRef.current, allowed: !!key, loading: mediaLoadingRef.current,
+      buffering: bufferingRef.current, media, audio: audioRef.current, next })) { nextPreparationRef.current.cancel(); return; }
+    nextPreparationRef.current.prepare(key, { ...next.track, queueItemId: next.queueItemId });
+  };
+  const changePrepareNext = enabled => {
+    if (typeof enabled !== 'boolean') return;
+    prepareNextEnabledRef.current = enabled; setPrepareNextEnabled(enabled); nextPreparationRef.current.reset();
+    try { saveNextPreparation(window.localStorage, enabled); } catch { /* Storage access is optional. */ }
+  };
+  commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek, prepareNext,
     renewMusic: ({ item, position, keepPaused }) => playEpisode(item, null, { position, keepPaused, linkRenewal: true }) };
   const chooseMusicQuality = value => {
     if (!['original', 'compatible', 'normalized'].includes(value) || sessionBlockedRef.current) return;
@@ -769,6 +819,8 @@ export const PlayerProvider = ({ children }) => {
         isReconnecting,
         musicQuality,
         chooseMusicQuality,
+        prepareNextEnabled,
+        changePrepareNext,
         setIsAuthorized,
         eqGains,
         eqPreset,

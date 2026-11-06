@@ -237,6 +237,13 @@ This document is the implementation checklist and progress record. Checked items
 - **Browser verified:** Actual PlayerProvider/MusicPlayer in an isolated simulated auth/API/media fixture: recover at 45 seconds onto a new source without changing the queue occurrence or duplicating the listening-start event; paused seek at 75 seconds; retained quality/pause; pending cancellation; denied source removal and explicit retry; Next while reconnecting and stale-response rejection; logout clearing and late-response denial. Final preview has no browser errors. The final build removes ignored fixture code. No production credentials, media/API requests or library writes are used for this simulation.
 - **Remaining/setup:** Deploy the frontend and test real expired media/range requests, long streams and physical Android/iOS/background behavior. Source replacement may buffer; gapless/seamless playback is not claimed. No new environment variables, backend migration, storage or auth changes are required. Guarded permanent cleanup, loudness/normalization, advanced transitions and the remaining Phase 6 hosted checks are still pending. See `MUSIC_STREAMING.md`. Offline work stays deferred.
 
+### 2026-11-06 — Change 25: Bounded next-song preparation
+
+- **Done locally:** Add an enabled-by-default Audio toggle to look up the natural next song during the final 15 seconds, without changing current playback or queue timing. Consume it once only for the same owner/session, quality, source request and exact queue occurrence.
+- **Done locally:** Keep one response in memory with a 15-second deadline, under-30-second age and at least 60-second expiry headroom. Cancel on pause/seek/buffering/error; reset on logout/page exit/close/manual selection. Failures/mismatches use normal lookup. Persist only the on/off preference.
+- **Verified:** All 147 frontend tests pass, including 12 preparation tests. Actual local player/browser testing with generated muted audio and simulated auth/API confirmed natural handoff without another lookup, disabled-setting behavior and logout cancellation despite a late response. Targeted lint and production build pass with existing context warnings/bundle advice.
+- **Limits/setup:** Brief capability reuse does not recheck backend profile/catalog state at the exact handoff. No backend/environment change is needed. Hosted/physical-phone acceptance, true gapless/crossfade, guarded cleanup and remaining Phase 6 checks stay pending. Offline stays deferred. See `MUSIC_TRANSITIONS.md`.
+
 ### 2026-11-06 — Change 24: Measured optional volume normalization
 
 - **Done locally:** Add the explicit `mp3-normalized-v1` job/profile and session-level Normalized MP3 audio choice. Original stays the default and is preserved. Measure the original stereo rendering, apply bounded fixed gain toward -14 LUFS with 2 dB pre-encode peak headroom and a 6 dB boost cap, then independently measure the encoded MP3. Publish only verified finite measurements and decoded true peak at/below -1 dBTP, with duration/size checks. Quiet/high-crest-factor files can stay quieter; no dynamics compression or invented target attainment is claimed.
@@ -495,6 +502,7 @@ Source references: `frontend/public/sw.js`, `frontend/public/manifest.json`, `fr
 - [x] Add loudness analysis and optional volume normalization with appropriate headroom.
   - Change 24 adds an opt-in measured Normalized MP3 copy with encoded true-peak verification, boost limits and original preservation. Hosted/device acceptance and album-level normalization remain pending.
 - [ ] Add gapless playback and configurable crossfade; preserve album transitions and disable crossfade where inappropriate.
+  - Change 25 adds bounded next-song response preparation and an Audio toggle. This reduces API lookup latency; true gapless/crossfade remains unimplemented.
 - [ ] Improve equalizer preference persistence and provide a clear reset action.
 - [x] Add synchronized lyrics from user-supplied or otherwise authorized sources, with a plain-text fallback.
   - Owner-supplied basic LRC/plain text, offset seeking and versioned editing are implemented; external lookup and hosted/device acceptance remain pending.

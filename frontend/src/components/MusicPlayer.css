@@ -44,3 +44,6 @@
 @media(max-width: 900px) { .music-mini-playlist { display: none !important; } }
 .music-player-status { position: absolute; bottom: calc(100% + 8px); left: 0; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); color: var(--text-secondary); font-size: .8rem; }
 .music-now-status { color: var(--text-secondary); font-size: .85rem; margin-top: 12px; }
+.music-transition-settings { padding: 10px; margin-bottom: 12px; }
+.music-transition-settings label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.music-transition-settings p { color: var(--text-secondary); font-size: .85rem; line-height: 1.6; }
