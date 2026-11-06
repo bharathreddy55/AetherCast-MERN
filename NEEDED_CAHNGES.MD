@@ -184,6 +184,15 @@ This document is the implementation checklist and progress record. Checked items
 - **Remaining setup/limits:** Deploy matching frontend/backend versions and verify unique lyrics/exclusion and pagination indexes. Test real lyrics saving/re-login/two-tab conflicts, track changes/offset seeking, phone/keyboard/reduced motion, actual history/mix playback, exclusions/restoration and logout. No new environment variables are required. Mixes support at most 2,000 active songs/5,000 exclusions and sample at most 1,000 sessions within 180 days; larger sets fail explicitly. Lyrics limits, scoring and detailed hosted acceptance are in `MUSIC_PERSONALIZATION.md`. Automatic lyrics/alignment, external AI, scoring preferences, aggregate statistics, larger-library support and hosted checks remain follow-ups. Offline work stays deferred.
 - **Next:** Online mobile playback and Media Session controls, retaining hosted/device acceptance and the fresh-credential policy.
 
+### 2026-11-06 — Change 18: Music device controls and retry safeguards
+
+- **Done locally:** Add a feature-detected Media Session bridge for music title/artist/album, playback state and finite duration/rate/position. Register supported Play, Pause, Stop, next/previous and relative/absolute seek actions; use live owner/media/queue refs, clamp seeks and respect queue boundaries/paused intent. Unsupported APIs fail independently. Keep private audio/artwork URLs, credentials and account fields out of OS metadata; artwork remains inside the app.
+- **Done locally:** Separate idempotent Play/Pause from the UI toggle, deduplicate pending play attempts and ignore stale play failures. Clear music metadata/handlers/position on close, podcast switch, lock/logout and disposal. Immediate page-lock/logout handling blocks commands, aborts pending resolution and detaches audio before a stale device action can restart it. Pending music requests remain cancellable by authorized Pause/Stop callbacks.
+- **Done locally:** Request inline media playback and metadata preload. Add 15-second media-resolution cancellation, abort replaced selections and retain an owner/track/occurrence-scoped in-memory position after failed music refreshes for explicit authorized retry. Preserve normal new-song/repeated-occurrence starts and podcast resume behavior. Do not auto-resume on reconnection or use failed/denied URLs as fallback. Conservatively pause on reported device changes without claiming reliable headset detection or requesting microphone access.
+- **Validation:** All 108 frontend tests pass. Production build, targeted lint with no errors and whitespace checks pass; existing PlayerContext fast-refresh/ref-cleanup warnings and the bundle-size advisory remain. Tests cover metadata privacy, command routing/bounds, pending cancellation, live state, unsupported APIs, buffering/paused states, cleanup/disposal, checkpoint isolation, duplicate play and stale/blocked attempts. Browser/media APIs are simulated. Backend source is unchanged; the previous 292 passing backend tests remain its latest verification.
+- **Remaining setup/verification:** Deploy the frontend and test on real desktop/Android/iOS browsers: lock-screen/headset commands, seeking, backgrounding, interruption, Bluetooth/device changes, slow/failed/expired media lookup, retry position, logout and back-cache locking. No new environment variables or database setup are required. Browser support and background policy vary; no authenticated live/device playback or deployment was verified in this batch. Detailed acceptance and limits are in `MUSIC_DEVICE_CONTROLS.md`. Seamless link renewal, reliable device-specific interruption policies and physical-device acceptance remain open. Offline/download work stays deferred.
+- **Next:** Media processing/artwork and browser audio-format quality, retaining outstanding hosted/device checks.
+
 ## Priority definitions
 
 - **P0 — Foundation:** Fix security, data durability, and playback correctness before extending the app.
@@ -308,6 +317,7 @@ Existing models are podcast-centric: `backend/src/models/Episode.js`, `backend/s
 - [ ] Separate play-start events from meaningful listening events so retries and failed starts do not inflate history or counts.
 - [ ] Persist volume, mute, equalizer, playback speed, and other relevant preferences.
 - [ ] Test Bluetooth/headphone and audio-device changes; avoid pausing for unrelated device changes.
+  - Reported device changes now cancel/pause through the current command path. Reliable identification of removed outputs versus unrelated hardware changes and real-device tests remain pending.
 
 Primary source: `frontend/src/context/PlayerContext.jsx`.
 
@@ -403,7 +413,8 @@ Source references: `frontend/public/sw.js`, `frontend/public/manifest.json`, `fr
 
 ## 12. Mobile and accessibility — P2
 
-- [ ] Add Media Session metadata and supported play, pause, seek, previous, and next actions.
+- [x] Add Media Session metadata and supported play, pause, seek, previous, and next actions.
+  - Music labels/actions/position and immediate cleanup are implemented with API feature detection. OS artwork omits private signed URLs; real-device availability remains unverified.
 - [ ] Test lock-screen controls, background playback, screen locking, incoming interruptions, and Bluetooth on real Android and iOS devices.
 - [ ] Provide sufficiently large touch targets, safe-area spacing, and readable layouts at small widths.
 - [ ] Label icon-only buttons and make menus, sliders, dialogs, and the queue keyboard-accessible.

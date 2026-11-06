@@ -108,7 +108,9 @@ Change 17 implements versioned owner-supplied plain/LRC lyrics with offsets and 
 
 **Acceptance:** imported lyrics follow seeks correctly; excluded tracks stay excluded; recommendation order is reproducible/testable and uses available media; core listening does not require a model API key.
 
-## Phase 5 — Mobile streaming and device controls
+## Phase 5 — Mobile streaming and device controls (supported-browser core implemented; real-device acceptance pending)
+
+Change 18 adds feature-detected music Media Session labels/actions/position, immediate lock/logout cleanup and explicit retry-position recovery with cancellable source lookups. See [MUSIC_DEVICE_CONTROLS.md](MUSIC_DEVICE_CONTROLS.md). Local simulated-API tests pass; lock-screen, Bluetooth, interruption and background behavior remain unverified on actual devices. No offline subsystem is introduced.
 
 - Add Media Session metadata/actions and test Android/iOS lock screen, headphones, backgrounding, interruption and seeking. Browser restrictions require real device results, not Android feature parity claims.
 - Verify clear playback failures and authorized retry after connectivity interruptions, without adding a music download/offline subsystem.
@@ -143,4 +145,4 @@ If remote AI is selected, call it from the backend, keep keys off the frontend, 
 
 Track implementation in `NEEDED_CAHNGES.MD`; this plan links to that checklist instead of creating a competing “done” list. For each batch, record changes, meaningful tests, remaining setup, and verified versus unverified hosted behavior; commit/push only the batch's own files. Preserve unrelated work in progress. Reference source is read-only research; original implementation remains the default, with any source reuse reviewed separately.
 
-Change 17 implements **owner-supplied lyrics and explainable library recommendations**, following grouped search and personal collections. Local tests/build pass; hosted acceptance remains pending. Recommended next: **online mobile playback and Media Session controls**, while retaining the outstanding hosted/device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.
+Change 18 implements **supported-browser music device controls and interruption/retry safeguards**, following lyrics, local mixes, search and personal collections. Local tests/build pass; hosted and physical-device acceptance remains pending. Recommended next: **media processing, artwork and browser audio-format quality**, while retaining the outstanding device checks and browsing polish. Queue restoration and aggregate listening statistics are later follow-ups; offline/download work is deferred. The owner can revise these priorities.
