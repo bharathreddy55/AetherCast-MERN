@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { createMediaLink } = require('./mediaLinks');
 const { parseMediaReference } = require('./mediaReferences');
+const { verifiedSongArtwork } = require('./verifiedSongArtwork');
 const badRequest = message => Object.assign(new Error(message), { status: 400 });
 const id = value => {
   if (typeof value !== 'string' || !mongoose.isObjectIdOrHexString(value)) throw badRequest('A valid music record ID is required');
@@ -105,11 +106,14 @@ function musicDto(resource, document) {
   if (resource === 'albums') return { _id: value._id, title: value.title, artists: (value.artistIds || []).filter(Boolean).map(artistLabel),
     isCompilation: value.isCompilation, coverAssetId: value.coverAssetId?._id || value.coverAssetId, coverImage: thumbnail(value.coverAssetId),
     releaseDate: value.releaseDate, genres: value.genres || [], language: value.language || '', description: value.description || '' };
+  const storedCover = thumbnail(value.coverAssetId) || thumbnail(value.albumId?.coverAssetId);
+  const verifiedCover = storedCover ? null : verifiedSongArtwork(value);
   return { _id: value._id, kind: 'track', title: value.title,
     artistCredits: (value.artistCredits || []).filter(credit => credit.artistId).map(credit => ({ artist: artistLabel(credit.artistId), role: credit.role })),
     album: value.albumId ? { _id: value.albumId._id || value.albumId, title: value.albumId.title || '' } : null,
     audioAssetId: value.audioAssetId?._id || value.audioAssetId, coverAssetId: value.coverAssetId?._id || value.coverAssetId,
-    coverImage: thumbnail(value.coverAssetId) || thumbnail(value.albumId?.coverAssetId), coverFullImage: cover(value.coverAssetId) || cover(value.albumId?.coverAssetId), duration: value.duration,
+    coverImage: storedCover || verifiedCover?.image || '', coverFullImage: cover(value.coverAssetId) || cover(value.albumId?.coverAssetId) || verifiedCover?.image || '',
+    coverSource: storedCover ? { kind: value.coverAssetId?.status === 'ready' ? 'track' : 'album', label: 'Your library artwork' } : verifiedCover?.source || null, duration: value.duration,
     discNumber: value.discNumber, trackNumber: value.trackNumber, genres: value.genres || [], language: value.language || '',
     releaseDate: value.releaseDate, explicit: value.explicit || false };
 }

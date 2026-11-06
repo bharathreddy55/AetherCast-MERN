@@ -2,6 +2,8 @@ const express = require('express');
 const { id } = require('../utils/musicCatalog');
 const controller = require('../controllers/musicController');
 const router = express.Router();
+const artworkLimit = require('express-rate-limit').rateLimit({ windowMs: 60000, max: 6, standardHeaders: true, legacyHeaders: false,
+  message: { success: false, message: 'Wait a minute before scanning more song covers.' } });
 router.get('/search', require('../controllers/musicSearchController').search);
 router.param('id', (_req, res, next, value) => {
   try { id(value); next(); }
@@ -12,6 +14,7 @@ for (const resource of ['artists', 'albums', 'tracks']) {
   router.route(`/${resource}/:id`).get(controller.get(resource)).patch(controller.update(resource)).delete(controller.remove(resource));
 }
 router.get('/tracks/:id/playback', controller.playback);
+router.post('/tracks/:id/artwork/recover', artworkLimit, require('../controllers/musicArtworkController').recover);
 router.route('/tracks/:id/processing').get(require('../controllers/mediaProcessingController').processing).post(require('../controllers/mediaProcessingController').processing);
 router.delete('/processing/:id', require('../controllers/mediaProcessingController').cancel);
 router.route('/tracks/:id/lyrics').get(require('../controllers/musicLyricsController').lyrics).put(require('../controllers/musicLyricsController').lyrics).delete(require('../controllers/musicLyricsController').lyrics);

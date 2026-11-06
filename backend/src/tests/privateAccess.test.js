@@ -267,6 +267,7 @@ test.each([
   ['get', '/api/music/albums'],
   ['get', '/api/music/tracks'],
   ['get', '/api/music/tracks/507f1f77bcf86cd799439011/playback'],
+  ['post', '/api/music/tracks/507f1f77bcf86cd799439011/artwork/recover'],
   ['get', '/api/music/assets/507f1f77bcf86cd799439011'],
   ['get', '/api/music/imports/config'],
   ['post', '/api/music/imports'],

@@ -5,6 +5,7 @@ const MediaAsset = require('../models/MediaAsset');
 const { inspectAudio, importLimits } = require('../utils/musicImportMetadata');
 const { analyzeAudio } = require('./audioAnalysis');
 const { readImportAsset, storeImportAsset } = require('./musicImportStorage');
+const { inspectArtwork } = require('../utils/embeddedArtwork');
 
 async function processImport(job, { analyze = analyzeAudio, read = readImportAsset, store = storeImportAsset } = {}) {
   const lease = { _id: job._id, ownerId: job.ownerId, status: 'processing', leaseToken: job.leaseToken };
@@ -18,15 +19,11 @@ async function processImport(job, { analyze = analyzeAudio, read = readImportAss
     if (!await MusicImport.exists(lease)) return;
     let coverAssetId = null;
     if (result.picture) {
-      const picture = Buffer.from(result.picture.data);
-      const png = picture.length >= 8 && picture.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-      const jpeg = picture.length >= 3 && picture[0] === 255 && picture[1] === 216 && picture[2] === 255;
-      if (picture.length <= 5 * 1024 * 1024 && (png || jpeg)) {
-        try {
-          const cover = await store(job.ownerId, picture, `cover.${png ? 'png' : 'jpg'}`, { kind: 'image', format: png ? 'png' : 'jpg', mimeType: png ? 'image/png' : 'image/jpeg', status: 'ready' });
-          coverAssetId = cover._id;
-        } catch { /* Artwork failure must not discard a valid original audio file. */ }
-      }
+      try {
+        const { bytes: picture, details } = inspectArtwork(result.picture.data);
+        const cover = await store(job.ownerId, picture, `cover.${details.format}`, details);
+        coverAssetId = cover._id;
+      } catch { /* Artwork failure must not discard a valid original audio file. */ }
     }
     if (!await MusicImport.exists(lease)) return;
     const technical = { duration: result.technical.duration, codec: result.technical.codec, status: 'ready' };
