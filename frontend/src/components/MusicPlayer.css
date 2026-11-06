@@ -42,3 +42,5 @@
 .music-library-player-error { position: fixed; bottom: 140px; right: 20px; z-index: 210; padding: 14px; border-radius: 12px; background: var(--bg-card); color: var(--text-primary); }
 .music-library-player-error button { padding: 8px; margin-left: 8px; }
 @media(max-width: 900px) { .music-mini-playlist { display: none !important; } }
+.music-player-status { position: absolute; bottom: calc(100% + 8px); left: 0; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); color: var(--text-secondary); font-size: .8rem; }
+.music-now-status { color: var(--text-secondary); font-size: .85rem; margin-top: 12px; }

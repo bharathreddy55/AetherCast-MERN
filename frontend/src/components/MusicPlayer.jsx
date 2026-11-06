@@ -14,7 +14,7 @@ import AppearanceToggle from './AppearanceToggle';
 import { audioTechnicalLabel } from '../lib/musicAudioInfo';
 
 function Transport({ compact = false }) {
-  const { isPlaying, currentTime, duration, volume, togglePlay, playNext, playPrevious, seek, changeVolume,
+  const { isPlaying, isReconnecting, currentTime, duration, volume, togglePlay, playNext, playPrevious, seek, changeVolume,
     musicQueue, toggleMusicShuffle, cycleMusicRepeat, hasNextMusic, hasPreviousMusic } = usePlayer();
   const [remaining, setRemaining] = useState(false);
   const previousVolume = useRef(volume || .8);
@@ -22,9 +22,9 @@ function Transport({ compact = false }) {
   const mute = () => changeVolume(volume ? 0 : previousVolume.current);
   return <div className={`music-transport ${compact ? 'compact' : ''}`}>
     <div className="music-player-buttons"><button aria-label="Shuffle songs" aria-pressed={musicQueue.shuffle} onClick={toggleMusicShuffle}><Shuffle size={18} /></button><button aria-label="Previous song" disabled={!hasPreviousMusic} onClick={playPrevious}><SkipBack size={22} /></button>
-      <button className="music-play-toggle" aria-label={isPlaying ? 'Pause song' : 'Play song'} onClick={togglePlay}>{isPlaying ? <Pause size={25} /> : <Play size={25} />}</button>
+      <button className="music-play-toggle" aria-label={isReconnecting ? 'Cancel reconnecting' : isPlaying ? 'Pause song' : 'Play song'} onClick={togglePlay}>{isPlaying || isReconnecting ? <Pause size={25} /> : <Play size={25} />}</button>
       <button aria-label="Next song" disabled={!hasNextMusic} onClick={() => playNext()}><SkipForward size={22} /></button><button aria-label={`Repeat: ${musicQueue.repeat}. Change repeat mode`} aria-pressed={musicQueue.repeat !== 'off'} onClick={cycleMusicRepeat}>{musicQueue.repeat === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}</button></div>
-    <div className="music-player-seek"><span>{formatMusicTime(currentTime)}</span><input aria-label="Song position" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} disabled={!duration} onChange={event => seek(Number(event.target.value))} /><button className="music-time-mode" aria-label={remaining ? 'Show total duration' : 'Show remaining time'} onClick={() => setRemaining(value => !value)}>{remaining ? `−${formatMusicTime(Math.max(0, duration - currentTime))}` : formatMusicTime(duration)}</button></div>
+    <div className="music-player-seek"><span>{formatMusicTime(currentTime)}</span><input aria-label="Song position" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} disabled={!duration || isReconnecting} onChange={event => seek(Number(event.target.value))} /><button className="music-time-mode" aria-label={remaining ? 'Show total duration' : 'Show remaining time'} onClick={() => setRemaining(value => !value)}>{remaining ? `−${formatMusicTime(Math.max(0, duration - currentTime))}` : formatMusicTime(duration)}</button></div>
     {!compact && <div className="music-player-volume"><button onClick={mute} aria-label={volume ? 'Mute music' : 'Unmute music'}>{volume ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><input aria-label="Music volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={event => changeVolume(Number(event.target.value))} /></div>}
   </div>;
 }
@@ -51,7 +51,7 @@ function QueuePanel() {
 }
 
 export default function MusicPlayer() {
-  const { currentEpisode: track, currentTime, volume, playlist, musicQueue, togglePlay, seek, changeVolume, closePlayer, playbackError, musicQuality, chooseMusicQuality } = usePlayer();
+  const { currentEpisode: track, currentTime, volume, playlist, musicQueue, togglePlay, seek, changeVolume, closePlayer, playbackError, isReconnecting, musicQuality, chooseMusicQuality } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [panel, setPanel] = useState('playing');
   const [playlistTrack, setPlaylistTrack] = useState(null);
@@ -88,6 +88,7 @@ export default function MusicPlayer() {
   return <>
     <section className="music-player" aria-label="Music player">
       {playbackError && !expanded && <p className="music-player-error" role="alert">{playbackError}</p>}
+      {isReconnecting && !expanded && <p className="music-player-status" role="status">Reconnecting…</p>}
       <button className="music-mini-info" onClick={() => open('playing')} aria-label={`Open Now Playing: ${track.title}`} aria-haspopup="dialog"><MusicArtwork src={track.coverImage} title={track.title} eager /><span><strong>{track.title}</strong><small>{artistNames(track)}</small></span></button>
       <Transport compact />
       <button className="music-mini-playlist" aria-label="Add current song to a playlist" title="Add to playlist" onClick={() => setPlaylistTrack(track)}><ListMusic size={19} /></button>
@@ -104,6 +105,7 @@ export default function MusicPlayer() {
           <div className="music-now-content"><div className="music-now-tabs" role="group" aria-label="Player view"><button aria-pressed={panel === 'playing'} onClick={() => setPanel('playing')}>Now playing</button><button aria-pressed={panel === 'media'} onClick={() => setPanel('media')}>Audio</button><button aria-pressed={panel === 'lyrics'} onClick={() => setPanel('lyrics')}>Lyrics</button><button aria-pressed={panel === 'queue'} onClick={() => setPanel('queue')}>Queue · {playlist.length}</button></div>
             {panel === 'playing' ? <><div className="music-now-metadata"><h3>{track.title}</h3><p>{artistNames(track)}</p>{track.album && <Link to={`/music?view=tracks&albumId=${encodeURIComponent(track.album._id)}`} onClick={() => setExpanded(false)}>{track.album.title}</Link>}{track.explicit && <small>Explicit</small>}</div><div className="music-player-library-actions"><button aria-pressed={library.saved.includes(track._id)} disabled={!library.ready || library.busy.includes(track._id)} onClick={() => void library.toggle(track._id)}><Heart size={18} fill={library.saved.includes(track._id) ? "currentColor" : "none"} />{library.saved.includes(track._id) ? "Liked" : "Like song"}</button><button onClick={() => setPlaylistTrack(track)}>Add to playlist</button></div><Transport /><p className="music-now-caption">{index >= 0 ? `Song ${index + 1} of ${playlist.length}` : 'Playing from your library'} · {audioTechnicalLabel(track.playback)}</p></> : panel === 'media' ? <><label className="music-audio-quality">Audio version<select value={musicQuality} onChange={event => chooseMusicQuality(event.target.value)}><option value="original">Original</option><option value="compatible">Compatible MP3</option></select></label><MusicProcessing key={track._id} track={track} /><Transport /></> : panel === 'lyrics' ? <><MusicLyrics key={track._id} track={track} /><Transport /></> : <QueuePanel />}
             {playbackError && <p className="music-now-error" role="alert">{playbackError}</p>}
+            {isReconnecting && <p className="music-now-status" role="status">Reconnecting…</p>}
           </div></div>
       </>}
     </dialog>

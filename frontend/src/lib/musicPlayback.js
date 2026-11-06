@@ -22,7 +22,7 @@ export async function resolvePlayerMedia(item, { fetchTrack, ...episodeOptions }
   if (!response.ok || !data.success || data.track?._id !== item._id || !data.track.audioUrl) {
     throw new Error(data.message || 'This song is unavailable.');
   }
-  return { episode: { ...data.track, kind: 'track', ...(item.queueItemId ? { queueItemId: item.queueItemId } : {}) }, downloadedResponse: null };
+  return { episode: { ...data.track, kind: 'track', ...(item.queueItemId ? { queueItemId: item.queueItemId } : {}) }, downloadedResponse: null, expiresIn: data.expiresIn };
 }
 export function formatMusicTime(value) {
   if (!Number.isFinite(value) || value < 0) return '0:00';

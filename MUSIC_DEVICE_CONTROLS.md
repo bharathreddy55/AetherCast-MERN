@@ -36,3 +36,7 @@ Record actual browser/OS versions and outcomes when running these acceptance che
 5. Switch to podcasts, close the player and log out. Old music metadata/actions must be cleared; retained device commands must not restart audio. A reload/new tab requires credentials again.
 
 Offline launch/downloads, queue restoration after a new sign-in, automatic reconnect playback, seamless mid-stream URL renewal, wake locks and native background services remain outside this batch. Next planned phase is media processing/artwork/audio-format quality, while hosted/device acceptance remains open.
+
+## Change 23 — Expiry-aware recovery
+
+Music now requests a fresh authorized source automatically for eligible near-expiry errors/stalls and on old-link seeking/resume, preserving the occurrence, position, quality and paused intent. Pending recovery can be cancelled, and logout/lock clears it. See [MUSIC_STREAMING.md](MUSIC_STREAMING.md) for bounded retries, actual-provider simulation evidence and remaining physical-device/hosted tests. This does not establish seamless or uninterrupted background playback on phones.

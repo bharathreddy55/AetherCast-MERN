@@ -118,7 +118,7 @@ Change 18 adds feature-detected music Media Session labels/actions/position, imm
 
 **Acceptance:** online music playback, supported lock-screen controls, interruption/retry, seeking and logout work on tested phones. Offline launch, new music downloads and offline synchronization are excluded from the active plan.
 
-## Phase 6 — Media processing and audio quality (conversion/thumbnail core implemented; quality/cleanup/hosted follow-ups remain)
+## Phase 6 — Media processing and audio quality (conversion/thumbnail and expiry-recovery core implemented; quality/cleanup/hosted follow-ups remain)
 
 Change 19 adds on-demand leased conversion/thumbnail jobs, preserved originals, explicit original/compatible playback, measured technical labels, bounded FFmpeg execution and a Docker deployment option. See [MUSIC_PROCESSING.md](MUSIC_PROCESSING.md). FFmpeg provisioning and hosted/device acceptance remain pending. Normalization, advanced transitions, seamless link renewal and permanent retained-object cleanup remain follow-ups within this phase.
 
@@ -154,3 +154,5 @@ Owner-requested Change 20 adds Acoustic Silence/Aura Nocturne light/dark mobile 
 Owner-requested Change 21 adds visually verified covers for the nine reference songs with strict metadata matching, front-cover selection on imports and owner-only embedded-cover recovery. See [MUSIC_ARTWORK.md](MUSIC_ARTWORK.md). Existing private covers retain priority; unmatched music stays unassigned. Production catalog/storage acceptance and the remaining Phase 6 scope are still pending.
 
 Change 22 adds the **read-only media retention report** for the next Phase 6 cleanup step. See [MEDIA_RETENTION.md](MEDIA_RETENTION.md). The paginated CLI protects originals and every observed catalog/import/job/thumbnail reference, and identifies older unreferenced derivatives for review. A real configured-database scan found five original assets and zero review candidates. Permanent cleanup still requires writer fencing, physical-object/alias/legacy-reference checks and a recovery/deletion workflow; the report does not delete media or complete Phase 6. With no current review candidates, prioritize streaming-link renewal as the next daily-use batch while those cleanup gates remain pending.
+
+Change 23 implements **bounded expiry-aware playback recovery**, including near-expiry errors/stalls and paused seeks/resumes, cancellation and preservation of queue/quality/listening identity. See [MUSIC_STREAMING.md](MUSIC_STREAMING.md) for limits and actual-provider simulation results. Real long-stream/range/phone acceptance remains pending; source replacement may buffer. Next Phase 6 quality work can evaluate loudness analysis and optional normalization; guarded permanent cleanup and gapless/crossfade remain unfinished.

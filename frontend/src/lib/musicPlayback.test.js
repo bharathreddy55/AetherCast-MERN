@@ -14,6 +14,13 @@ test('music always resolves fresh private playback without using episode APIs or
   assert.equal(result.episode.audioUrl, 'fresh');
   assert.equal(result.downloadedResponse, null);
 });
+
+test('music preserves authenticated link lifetime separately from track metadata and queue identity', async () => {
+  const result = await resolvePlayerMedia({ ...track, queueItemId: 'repeat' }, { fetchTrack: async () => ({ ok: true,
+    json: async () => ({ success: true, expiresIn: 900, track: { _id: track._id, audioUrl: 'fresh' } }) }) });
+  assert.equal(result.expiresIn, 900); assert.equal(result.episode.queueItemId, 'repeat');
+  assert.equal(result.episode.expiresIn, undefined);
+});
 test('denied, deleted, mismatched and unavailable songs never fall back to cached URLs', async () => {
   for (const [ok, data] of [[false, { message: 'Denied' }], [true, { success: false }],
     [true, { success: true, track: { _id: 'different', audioUrl: 'wrong' } }], [true, { success: true, track: { _id: track._id } }]]) {

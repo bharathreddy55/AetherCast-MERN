@@ -7,7 +7,8 @@ import { createProgressTracker, createProgressSender } from '../lib/playbackProg
 import { emptyMusicQueue, musicQueueReducer, musicEntries, queueEntry, orderedQueue, nextQueueId, previousQueueId, selectMusicOccurrence } from '../lib/musicQueue';
 import { createMusicListeningTracker, createMusicListeningSender } from '../lib/musicListening';
 import { createMusicMediaSession } from '../lib/musicMediaSession';
-import { recoveryPosition, createAudioPlayback } from '../lib/playbackRecovery';
+import { recoveryPosition, createAudioPlayback, playbackPausedIntent } from '../lib/playbackRecovery';
+import { createMusicLinkRenewal, musicLinkExpiry, musicLinkNeedsRenewal } from '../lib/musicLinkRenewal';
 
 const PlayerContext = createContext(null);
 
@@ -37,6 +38,7 @@ export const PlayerProvider = ({ children }) => {
   const [analyser, setAnalyser] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(true);
   const [playbackError, setPlaybackError] = useState('');
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [eqGains, setEqGains] = useState({ low: 0, mid: 0, high: 0 });
   const [eqPreset, setEqPreset] = useState('flat');
   
@@ -59,14 +61,26 @@ export const PlayerProvider = ({ children }) => {
   const mediaLoadingRef = useRef(false);
   const bufferingRef = useRef(false);
   const retryPositionRef = useRef(null);
+  const playIntentRef = useRef(false);
+  const linkRenewalRef = useRef(null);
   const audioPlayRef = useRef(null);
   if (!audioPlayRef.current) audioPlayRef.current = createAudioPlayback({
     getAudio: () => audioRef.current, canPlay: () => !sessionBlockedRef.current,
-    getRevision: () => playRequestRef.current, onError: setPlaybackError,
+    getRevision: () => playRequestRef.current, onError: message => { playIntentRef.current = false; setIsReconnecting(false); setPlaybackError(message); },
   });
   const updateDeviceSession = useCallback(() => mediaSessionRef.current?.update(), []);
   const authRef = useRef(null);
   authRef.current = { token, ownerId: user?.id || user?._id };
+  if (!linkRenewalRef.current) linkRenewalRef.current = createMusicLinkRenewal({
+    getSnapshot: () => {
+      const media = activeMediaRef.current, auth = authRef.current;
+      return { allowed: !sessionBlockedRef.current && !!auth?.token && media?.ownerId === auth?.ownerId
+          && (!media?.episode.queueItemId || media.episode.queueItemId === musicQueueRef.current.currentId),
+        media, audio: audioRef.current, loading: mediaLoadingRef.current, playIntent: playIntentRef.current, quality: musicQualityRef.current };
+    },
+    renew: options => commandsRef.current.renewMusic?.(options),
+    onFailure: () => { commandsRef.current.pause?.(); setIsReconnecting(false); setPlaybackError('Unable to refresh playback. Press play to retry.'); },
+  });
   useEffect(() => {
     sessionBlockedRef.current = !user || !token || authLoading;
     updateDeviceSession();
@@ -121,6 +135,7 @@ export const PlayerProvider = ({ children }) => {
       musicListening.reset(audio.currentTime, { keepalive: true });
       ++playRequestRef.current;
       selectionAbortRef.current?.abort();
+      playIntentRef.current = false; linkRenewalRef.current.reset();
       audio.pause();
       activeMediaRef.current = null;
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
@@ -135,6 +150,7 @@ export const PlayerProvider = ({ children }) => {
     audioPlayRef.current.cancel();
     mediaLoadingRef.current = false;
     retryPositionRef.current = null;
+    playIntentRef.current = false; linkRenewalRef.current.reset();
     musicQualityRef.current = 'original'; setMusicQuality('original');
     mediaSessionRef.current?.clear();
     void progressTracker.stop({ save: false });
@@ -157,6 +173,7 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(0);
     setDuration(0);
     setPlaybackError('');
+    setIsReconnecting(false);
   }, [user, authLoading, progressTracker, musicListening]);
   
   // Initialize analyser node securely on first playback interaction
@@ -288,7 +305,9 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     const audio = audioRef.current;
     const onTimeUpdate = () => {
-      if (activeMediaRef.current?.ready) setCurrentTime(audio.currentTime);
+      if (activeMediaRef.current?.ready && !audio.error && Number.isFinite(audio.currentTime)) {
+        activeMediaRef.current.lastPosition = audio.currentTime; setCurrentTime(audio.currentTime);
+      }
     };
     const onLoadedMetadata = () => {
       const media = activeMediaRef.current;
@@ -304,13 +323,16 @@ export const PlayerProvider = ({ children }) => {
         pendingSeekRef.current = null;
       }
       setCurrentTime(audio.currentTime);
+      media.lastPosition = audio.currentTime;
       updateDeviceSession();
     };
     const onPlaying = () => {
       if (!activeMediaRef.current || audio.paused) return;
       if (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source) return;
       setIsPlaying(true);
+      setIsReconnecting(false);
       bufferingRef.current = false;
+      playIntentRef.current = true; linkRenewalRef.current.playing();
       setPlaybackError('');
       if (isMusic(activeMediaRef.current.episode)) musicListening.playing(audio.currentTime);
       progressTracker.start();
@@ -318,6 +340,8 @@ export const PlayerProvider = ({ children }) => {
     };
     const onPause = () => {
       if (!audio.paused) return;
+      if (!mediaLoadingRef.current && !audio.error) playIntentRef.current = false;
+      linkRenewalRef.current.cancel();
       setIsPlaying(false);
       musicListening.pause();
       void progressTracker.stop();
@@ -326,18 +350,24 @@ export const PlayerProvider = ({ children }) => {
     const onEnded = () => {
       if (!activeMediaRef.current || !audio.ended) return;
       setIsPlaying(false);
+      playIntentRef.current = false; linkRenewalRef.current.cancel();
       musicListening.finish('completed', audio.currentTime);
       void progressTracker.stop({ completed: true });
       commandsRef.current.playNext?.({ natural: true });
       updateDeviceSession();
     };
     const onError = () => {
-      if (!activeMediaRef.current) return;
+      if (!activeMediaRef.current || !audio.error || mediaLoadingRef.current) return;
+      if (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source) return;
       setIsPlaying(false);
       bufferingRef.current = false;
       musicListening.pause();
       void progressTracker.stop();
-      setPlaybackError('Playback interrupted. Press play to refresh the media link, or try again when connected.');
+      if (!linkRenewalRef.current.interrupted()) {
+        playIntentRef.current = false; audio.pause();
+        setIsReconnecting(false);
+        setPlaybackError('Playback interrupted. Press play to refresh the media link, or try again when connected.');
+      }
       updateDeviceSession();
     };
     const onLifecycleSave = event => {
@@ -345,17 +375,22 @@ export const PlayerProvider = ({ children }) => {
       if (['pagehide', 'library-before-logout'].includes(event?.type)) {
         musicListening.reset(audio.currentTime, { keepalive: true });
         sessionBlockedRef.current = true;
+        playIntentRef.current = false; linkRenewalRef.current.reset();
         ++playRequestRef.current; selectionAbortRef.current?.abort();
         mediaLoadingRef.current = false; audioPlayRef.current.cancel(); retryPositionRef.current = null;
         audio.pause(); activeMediaRef.current = null; pendingSeekRef.current = null;
         audio.removeAttribute('src'); audio.load(); setIsPlaying(false);
+        setIsReconnecting(false);
         mediaSessionRef.current?.clear();
       }
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') onLifecycleSave();
     };
-    const onBuffering = () => { musicListening.pause(); bufferingRef.current = true; updateDeviceSession(); };
+    const onBuffering = () => {
+      if (!activeMediaRef.current || (audio.currentSrc && audio.currentSrc !== activeMediaRef.current.source)) return;
+      musicListening.pause(); bufferingRef.current = true; linkRenewalRef.current.waiting(); updateDeviceSession();
+    };
     const handlers = { timeupdate: onTimeUpdate, loadedmetadata: onLoadedMetadata,
       playing: onPlaying, pause: onPause, ended: onEnded, error: onError, waiting: onBuffering, stalled: onBuffering,
       seeked: updateDeviceSession, durationchange: updateDeviceSession, ratechange: updateDeviceSession };
@@ -397,11 +432,17 @@ export const PlayerProvider = ({ children }) => {
     if (!episode || !user || sessionBlockedRef.current) return;
     if (!isMusic(episode)) updateMusicQueue({ type: 'reset' });
     const requestId = ++playRequestRef.current;
+    linkRenewalRef.current.cancel();
+    if (!options.linkRenewal) linkRenewalRef.current.reset();
+    playIntentRef.current = !options.keepPaused;
+    setIsReconnecting(!!options.linkRenewal);
     const isSameEpisode = sameMedia(activeMediaRef.current?.episode, episode);
     const outgoing = activeMediaRef.current?.episode || retryPositionRef.current?.item;
-    const outgoingPosition = activeMediaRef.current ? audioRef.current.currentTime : retryPositionRef.current?.position || 0;
-    const resumePosition = recoveryPosition({ item: episode, active: activeMediaRef.current?.episode, audio: audioRef.current,
-      retry: retryPositionRef.current, ownerId: user.id || user._id, restart: options.restart });
+    const outgoingPosition = activeMediaRef.current ? audioRef.current.error && Number.isFinite(activeMediaRef.current.lastPosition)
+      ? Math.max(activeMediaRef.current.lastPosition, audioRef.current.currentTime || 0) : audioRef.current.currentTime : retryPositionRef.current?.position || 0;
+    const resumePosition = isMusic(episode) && Number.isFinite(options.position) ? Math.max(0, options.position)
+      : recoveryPosition({ item: episode, active: activeMediaRef.current?.episode, audio: audioRef.current,
+        retry: retryPositionRef.current, ownerId: user.id || user._id, restart: options.restart, lastPosition: activeMediaRef.current?.lastPosition });
     retryPositionRef.current = isMusic(episode) ? { ownerId: user.id || user._id,
       item: { _id: episode._id, kind: 'track', queueItemId: episode.queueItemId }, position: resumePosition } : null;
     selectionAbortRef.current?.abort();
@@ -419,6 +460,8 @@ export const PlayerProvider = ({ children }) => {
     
     let finalEpisode = { ...episode };
     let downloadedResponse;
+    let expiresAt = null;
+    const requestedAt = Date.now();
 
     // Cached audio belongs to the signed-in owner. Streaming always resolves a
     // fresh authorized media link and never falls back to an old public URL.
@@ -432,9 +475,12 @@ export const PlayerProvider = ({ children }) => {
       if (controller.signal.aborted) throw new Error('Playback request cancelled');
       finalEpisode = resolved.episode;
       downloadedResponse = resolved.downloadedResponse;
+      expiresAt = musicLinkExpiry(resolved.expiresIn, requestedAt);
     } catch (err) {
       if (requestId === playRequestRef.current) {
         mediaLoadingRef.current = false;
+        playIntentRef.current = false;
+        setIsReconnecting(false);
         activeMediaRef.current = null;
         mediaSessionRef.current?.clear();
         setPlaybackError(controller.signal.aborted ? 'Playback request timed out. Press play to retry.' : err.message || 'Unable to load media. Please try again.');
@@ -503,7 +549,7 @@ export const PlayerProvider = ({ children }) => {
       } else mediaUrl = window.getMediaUrl(finalEpisode.audioUrl);
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = downloadedResponse ? mediaUrl : null;
-      activeMediaRef.current = { episode: finalEpisode, ownerId: user.id || user._id, ready: false, requestId,
+      activeMediaRef.current = { episode: finalEpisode, ownerId: user.id || user._id, ready: false, requestId, expiresAt, lastPosition: startPosition, quality: musicQualityRef.current,
         source: new URL(mediaUrl, window.location.href).href };
       if (isMusic(finalEpisode)) musicListening.attach({ track: finalEpisode, ownerId: user.id || user._id, queueItemId: finalEpisode.queueItemId });
       pendingSeekRef.current = { requestId, position: startPosition };
@@ -525,6 +571,7 @@ export const PlayerProvider = ({ children }) => {
     }
 
     // Actual playing/pause events update state, not a potentially stale promise.
+    if (options.keepPaused) setIsReconnecting(false);
     if (!options.keepPaused) startAudioPlayback(requestId);
   };
 
@@ -532,6 +579,8 @@ export const PlayerProvider = ({ children }) => {
     audioPlayRef.current.play(requestId);
   };
   const pausePlayback = () => {
+    playIntentRef.current = false; linkRenewalRef.current.cancel();
+    setIsReconnecting(false);
     ++playRequestRef.current; selectionAbortRef.current?.abort();
     mediaLoadingRef.current = false; audioPlayRef.current.cancel();
     void progressTracker.stop(); audioRef.current.pause(); setIsPlaying(false);
@@ -545,7 +594,8 @@ export const PlayerProvider = ({ children }) => {
       return;
     }
     if (!activeMediaRef.current || !sameMedia(activeMediaRef.current.episode, selected) ||
-      (audioRef.current.paused && (audioRef.current.error || (!blobUrlRef.current && Date.now() - mediaLoadedAtRef.current > 12 * 60 * 1000)))) {
+      (audioRef.current.paused && (audioRef.current.error || (isMusic(selected) && musicLinkNeedsRenewal(activeMediaRef.current))
+        || (!blobUrlRef.current && !activeMediaRef.current.expiresAt && Date.now() - mediaLoadedAtRef.current > 12 * 60 * 1000)))) {
       void playEpisode(selected);
       return;
     }
@@ -556,15 +606,17 @@ export const PlayerProvider = ({ children }) => {
       audioCtxRef.current.resume();
     }
 
-    startAudioPlayback(++playRequestRef.current);
+    playIntentRef.current = true; startAudioPlayback(++playRequestRef.current);
   };
   const togglePlay = () => { if (mediaLoadingRef.current || audioPlayRef.current.pending() || !audioRef.current.paused) pausePlayback(); else playPlayback(); };
 
   const seek = (time) => {
-    if (!activeMediaRef.current?.ready || !Number.isFinite(time)) return;
+    if (!activeMediaRef.current?.ready || mediaLoadingRef.current || !Number.isFinite(time)) return;
     const limit = audioRef.current.duration;
     if (!Number.isFinite(limit) || limit <= 0) return;
     const clamped = Math.max(0, Math.min(time, limit));
+    if (isMusic(activeMediaRef.current.episode) && linkRenewalRef.current.seek(clamped)) return;
+    activeMediaRef.current.lastPosition = clamped;
     audioRef.current.currentTime = clamped;
     setCurrentTime(clamped);
     void savePlaybackProgress();
@@ -578,6 +630,7 @@ export const PlayerProvider = ({ children }) => {
     setVolume(val);
   };
 
+  const keepPlaybackPaused = () => playbackPausedIntent({ audio: audioRef.current, loading: mediaLoadingRef.current, playIntent: playIntentRef.current });
   const playMusicState = (state, options = {}) => {
     const entry = queueEntry(state);
     if (entry) void playEpisode({ ...entry.track, queueItemId: entry.queueItemId }, null, options);
@@ -607,7 +660,7 @@ export const PlayerProvider = ({ children }) => {
   const removeMusicQueueItem = id => {
     if (!queueEntry(musicQueueRef.current, id)) return;
     const active = musicQueueRef.current.currentId === id;
-    const keepPaused = audioRef.current.paused;
+    const keepPaused = keepPlaybackPaused();
     const state = updateMusicQueue({ type: 'remove', id });
     if (active) {
       if (state.currentId) playMusicState(state, { keepPaused, restart: true });
@@ -617,7 +670,7 @@ export const PlayerProvider = ({ children }) => {
   const playNext = ({ natural = false } = {}) => {
     if (isMusic(activeMediaRef.current?.episode || currentEpisode)) {
       if (nextQueueId(musicQueueRef.current, natural)) {
-        const keepPaused = !natural && audioRef.current.paused;
+        const keepPaused = !natural && keepPlaybackPaused();
         playMusicState(updateMusicQueue({ type: 'next', natural }), { restart: true, keepPaused });
       }
       return;
@@ -629,8 +682,13 @@ export const PlayerProvider = ({ children }) => {
 
   const playPrevious = () => {
     if (isMusic(activeMediaRef.current?.episode || currentEpisode)) {
-      if (audioRef.current.currentTime > 3 && activeMediaRef.current?.ready) { seek(0); return; }
-      if (previousQueueId(musicQueueRef.current)) playMusicState(updateMusicQueue({ type: 'previous' }), { restart: true, keepPaused: audioRef.current.paused });
+      const position = audioRef.current.error ? activeMediaRef.current?.lastPosition || 0 : audioRef.current.currentTime;
+      if (position > 3 && activeMediaRef.current?.ready) {
+        if (mediaLoadingRef.current || audioRef.current.error) void playEpisode(activeMediaRef.current.episode, null, { restart: true, keepPaused: keepPlaybackPaused() });
+        else seek(0);
+        return;
+      }
+      if (previousQueueId(musicQueueRef.current)) playMusicState(updateMusicQueue({ type: 'previous' }), { restart: true, keepPaused: keepPlaybackPaused() });
       return;
     }
     if (playlist.length === 0 || !currentEpisode) return;
@@ -639,6 +697,8 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const closePlayer = () => {
+    playIntentRef.current = false; linkRenewalRef.current.reset();
+    setIsReconnecting(false);
     selectionAbortRef.current?.abort();
     mediaLoadingRef.current = false; audioPlayRef.current.cancel(); retryPositionRef.current = null;
     mediaSessionRef.current?.clear();
@@ -662,11 +722,12 @@ export const PlayerProvider = ({ children }) => {
     blobUrlRef.current = null;
   };
 
-  commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek };
+  commandsRef.current = { playNext, play: playPlayback, pause: pausePlayback, stop: closePlayer, next: () => playNext(), previous: playPrevious, seek,
+    renewMusic: ({ item, position, keepPaused }) => playEpisode(item, null, { position, keepPaused, linkRenewal: true }) };
   const chooseMusicQuality = value => {
     if (!['original', 'compatible'].includes(value) || sessionBlockedRef.current) return;
     musicQualityRef.current = value; setMusicQuality(value);
-    if (isMusic(currentEpisode)) void playEpisode(currentEpisode, null, { keepPaused: audioRef.current.paused });
+    if (isMusic(currentEpisode)) void playEpisode(currentEpisode, null, { keepPaused: keepPlaybackPaused() });
   };
 
   return (
@@ -705,6 +766,7 @@ export const PlayerProvider = ({ children }) => {
         audioRef,
         isAuthorized,
         playbackError,
+        isReconnecting,
         musicQuality,
         chooseMusicQuality,
         setIsAuthorized,

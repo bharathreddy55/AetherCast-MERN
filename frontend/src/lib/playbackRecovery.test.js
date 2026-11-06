@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { recoveryPosition, createAudioPlayback } from './playbackRecovery.js';
+import { recoveryPosition, createAudioPlayback, playbackPausedIntent } from './playbackRecovery.js';
 const item = { kind: 'track', _id: 'song', queueItemId: 'occurrence' };
+test('track and quality changes during reconnection preserve intent rather than the error-paused element', () => {
+  assert.equal(playbackPausedIntent({ audio: { paused: true }, loading: true, playIntent: true }), false);
+  assert.equal(playbackPausedIntent({ audio: { paused: true }, loading: true, playIntent: false }), true);
+  assert.equal(playbackPausedIntent({ audio: { paused: false }, loading: false, playIntent: false }), false);
+  assert.equal(playbackPausedIntent({ audio: { paused: true }, loading: false, playIntent: true }), true);
+});
 test('refresh uses live position; failed refresh retry preserves only the same owner and occurrence in memory', () => {
   const options = { item, active: item, audio: { currentTime: 42, ended: false }, ownerId: 'owner' };
   assert.equal(recoveryPosition(options), 42);
@@ -13,6 +19,12 @@ test('refresh uses live position; failed refresh retry preserves only the same o
 });
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+test('manual error retry also preserves last known progress without resuming another occurrence or completed song', () => {
+  const options = { item, active: item, audio: { currentTime: 0, error: { code: 2 }, ended: false }, lastPosition: 42, ownerId: 'owner' };
+  assert.equal(recoveryPosition(options), 42);
+  assert.equal(recoveryPosition({ ...options, audio: { ...options.audio, ended: true } }), 0);
+  assert.equal(recoveryPosition({ ...options, item: { ...item, queueItemId: 'other' } }), 0);
+});
 test('duplicate play actions share a pending attempt and never toggle an already playing song', async () => {
   const work = deferred(); let calls = 0; const audio = { paused: true, play: () => { ++calls; return work.promise; } };
   const controls = createAudioPlayback({ getAudio: () => audio, canPlay: () => true, getRevision: () => 1, onError: () => {} });

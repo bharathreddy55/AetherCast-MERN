@@ -1,7 +1,13 @@
 import { isMusic, sameMedia, initialPlaybackPosition } from './musicPlayback.js';
-export function recoveryPosition({ item, active, audio, retry, ownerId, restart = false }) {
+export function playbackPausedIntent({ audio, loading, playIntent }) {
+  return loading ? !playIntent : audio.paused;
+}
+export function recoveryPosition({ item, active, audio, retry, ownerId, restart = false, lastPosition }) {
   if (restart) return 0;
-  if (sameMedia(item, active)) return initialPlaybackPosition(item, active, audio);
+  if (sameMedia(item, active)) {
+    const position = initialPlaybackPosition(item, active, audio);
+    return !audio.ended && audio.error && Number.isFinite(lastPosition) ? Math.max(position, lastPosition, 0) : position;
+  }
   if (isMusic(item) && retry?.ownerId === ownerId && sameMedia(item, retry.item)
     && item.queueItemId === retry.item.queueItemId && Number.isFinite(retry.position)) return Math.max(0, retry.position);
   return 0;
