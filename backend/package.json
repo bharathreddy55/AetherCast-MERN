@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --runInBand --detectOpenHandles"
+    "test": "jest --runInBand --detectOpenHandles",
+    "media:retention": "node src/scripts/mediaRetention.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

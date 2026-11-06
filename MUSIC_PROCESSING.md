@@ -55,6 +55,6 @@ Real local FFmpeg 7.1 converted a generated one-second WAV into MP3 with parsed 
 
 Hosted acceptance: provision FFmpeg, verify indexes/transactions/private generated objects, prepare examples of all six import formats, compare original/compatible playback and seeking, restart/cancel/retry work, test thumbnails on phone/desktop, verify deleted/foreign/missing media denial, confirm originals/checksums survive failures, and inspect CPU/RAM/temp disk/storage/bandwidth and backup restoration.
 
-Phase 6 still needs retained-object inventory/retention/cleanup with reference protection, long-stream/seamless renewal checks, more artwork sizes, loudness/normalization and gapless/crossfade evaluation. Optional integrations remain Phase 7; offline work stays deferred.
+Change 22 adds a bounded read-only database retention inventory with original/reference protection and review-only candidates. See [MEDIA_RETENTION.md](MEDIA_RETENTION.md) for the CLI and its limits. Physical-object inventory/aliases, writer fencing, quarantine/recovery and permanent cleanup remain unfinished. Phase 6 also needs long-stream/seamless renewal checks, more artwork sizes, loudness/normalization and gapless/crossfade evaluation. Optional integrations remain Phase 7; offline work stays deferred.
 
 Reference: [FFmpeg protocol restrictions](https://www.ffmpeg.org/ffmpeg-protocols.html). Actual flags/output were checked with the local encoder; hosted support still needs verification.
