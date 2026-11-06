@@ -5,7 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/aether-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="AetherCast — your private music library, made for everyday listening." />
-    <meta name="theme-color" content="#9333ea" />
+    <meta name="theme-color" content="#fafafa" />
+    <script>
+      (() => {
+        let preference = 'system';
+        try { const value = localStorage.getItem('theme'); if (['dark', 'light', 'system'].includes(value)) preference = value; } catch {}
+        const dark = preference === 'dark' || (preference === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#100d18' : '#fafafa';
+      })();
+    </script>
     <link rel="manifest" href="/manifest.json" />
     <title>AetherCast · Your music</title>
   </head>

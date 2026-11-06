@@ -157,7 +157,7 @@ function MainLayout() {
               </ProtectedRoute>
             } 
           />
-          <Route path="/library" element={<ProtectedRoute><MusicLibrary /></ProtectedRoute>} />
+          <Route path="/library" element={<ProtectedRoute><MusicCollections /></ProtectedRoute>} />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

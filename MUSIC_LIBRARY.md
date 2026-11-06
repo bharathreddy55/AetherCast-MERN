@@ -13,6 +13,7 @@ The app now opens **My Music** at `/music`. `/home` redirects there too. Use Son
 - The fixed music player provides artwork/credits, play/pause, previous/next, seeking, volume, queue position, album navigation and close controls. Mobile layout keeps transport controls visible.
 - Expanded Now Playing includes owner-supplied plain/LRC Lyrics. Your library mix provides explained local recommendations and song/artist exclusions. See [MUSIC_PERSONALIZATION.md](MUSIC_PERSONALIZATION.md) for timing, scoring and limits.
 - The Audio panel prepares compatible MP3/artwork jobs when the backend is enabled. Audio version selects the original or a ready compatible copy; actual format/codec/bitrate labels replace the fixed original-audio caption. See [MUSIC_PROCESSING.md](MUSIC_PROCESSING.md).
+- Acoustic Silence (light) and Aura Nocturne (dark) share a header/player toggle and Light/Dark/System settings. `/library` opens saved collections; `/music` remains the all-music view. Playlist details use real-track artwork collages and expandable edit controls. See [MOBILE_THEMES.md](MOBILE_THEMES.md).
 
 ## Playback rules
 

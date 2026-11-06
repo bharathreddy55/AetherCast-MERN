@@ -207,7 +207,7 @@ export default function Login() {
             type="submit"
             disabled={submitting}
             className="btn-primary auth-btn"
-            style={{ width: '100%', justifyContent: 'center', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '0.06em', borderRadius: 'var(--radius-default)', boxShadow: '0 4px 16px rgba(255, 122, 0, 0.2)' }}
+            style={{ width: '100%', justifyContent: 'center', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 700, letterSpacing: '0.06em', borderRadius: 'var(--radius-default)', boxShadow: 'var(--control-shadow)' }}
           >
             <LogIn size={18} />
             <span>{submitting ? 'SIGNING IN...' : 'SIGN IN'}</span>
@@ -280,7 +280,7 @@ export default function Login() {
                 type="submit" 
                 disabled={forgotSubmitting || forgotCooldown > 0}
                 className="btn-primary"
-                style={{ padding: '8px 16px', fontSize: '0.9rem', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.04em', borderRadius: 'var(--radius-default)', boxShadow: '0 4px 16px rgba(255, 122, 0, 0.2)' }}
+                style={{ padding: '8px 16px', fontSize: '0.9rem', textTransform: 'uppercase', fontFamily: 'var(--font-sans)', fontWeight: 600, letterSpacing: '0.04em', borderRadius: 'var(--radius-default)', boxShadow: 'var(--control-shadow)' }}
               >
                 {forgotSubmitting ? 'SENDING...' : (forgotCooldown > 0 ? `LOCKED (${formatCooldown(forgotCooldown)})` : 'SEND RESET LINK')}
               </button>

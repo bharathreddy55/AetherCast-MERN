@@ -7,7 +7,7 @@ import './Pages.css';
 
 export default function Settings() {
   const { user, token, updateLocalUser } = useAuth();
-  const { accent, setAccent, opacity, setOpacity, blur, setBlur } = useTheme();
+  const { preference, setPreference } = useTheme();
 
   // Profile Form States
   const [name, setName] = useState(user?.name || '');
@@ -55,7 +55,7 @@ export default function Settings() {
       } else {
         setError(data.message || 'Failed to update profile');
       }
-    } catch (err) {
+    } catch {
       setError('Server connection failed');
     } finally {
       setSubmitting(false);
@@ -92,7 +92,7 @@ export default function Settings() {
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '30px', alignItems: 'start' }}>
         {/* ── Panel 1: Theme Studio ── */}
         <div style={{
           background: 'var(--bg-card)',
@@ -115,77 +115,10 @@ export default function Settings() {
             </h3>
           </div>
 
-          {/* Accent color picker */}
-          <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
-            <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>Accent Color Theme</label>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '10px' }}>
-              {[
-                { key: 'purple', name: 'Neon Purple', color: '#9333ea' },
-                { key: 'cyan', name: 'Vibrant Cyan', color: '#0891b2' },
-                { key: 'emerald', name: 'Emerald Green', color: '#059669' },
-                { key: 'orange', name: 'Electric Orange', color: '#ea580c' },
-                { key: 'rose', name: 'Hot Rose', color: '#db2777' },
-                { key: 'blue', name: 'Royal Blue', color: '#2563eb' },
-                { key: 'amber', name: 'Amber Gold', color: '#d97706' },
-                { key: 'teal', name: 'Deep Teal', color: '#0d9488' },
-                { key: 'red', name: 'Crimson Red', color: '#dc2626' },
-                { key: 'lime', name: 'Vibrant Lime', color: '#65a30d' },
-                { key: 'fuchsia', name: 'Neon Fuchsia', color: '#c026d3' },
-                { key: 'indigo', name: 'Deep Indigo', color: '#4f46e5' },
-                { key: 'slate', name: 'Steel Slate', color: '#475569' }
-              ].map((th) => (
-                <button
-                  key={th.key}
-                  onClick={() => setAccent(th.key)}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: 'var(--radius-full, 50%)',
-                    background: th.color,
-                    border: accent === th.key ? '3px solid var(--color-primary)' : '2px solid var(--border-color)',
-                    boxShadow: accent === th.key ? '0 0 12px var(--color-primary)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s'
-                  }}
-                  title={th.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Opacity slider */}
-          <div style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Glass Translucency</label>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-primary)' }}>{Math.round(opacity * 100)}%</span>
-            </div>
-            <input
-              type="range"
-              min="0.05"
-              max="0.85"
-              step="0.05"
-              value={opacity}
-              onChange={(e) => setOpacity(Number(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
-            />
-          </div>
-
-          {/* Blur slider */}
-          <div style={{ marginBottom: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <label style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Backdrop Blur Radius</label>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-primary)' }}>{blur}px</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="30"
-              step="1"
-              value={blur}
-              onChange={(e) => setBlur(Number(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
-            />
-          </div>
+          <fieldset className="appearance-options"><legend>Appearance</legend>
+            <p>Choose your listening space. Your preference is saved on this device.</p>
+            {[['light', 'Acoustic Silence', 'Clean whites, charcoal controls and quiet surfaces.'], ['dark', 'Aura Nocturne', 'Deep violet surfaces with soft lavender controls.'], ['system', 'Use device setting', 'Follow your device’s light or dark appearance.']].map(([value, name, description]) => <label key={value} className={preference === value ? 'selected' : ''}><input type="radio" name="appearance" value={value} checked={preference === value} onChange={() => setPreference(value)} /><span><strong>{name}</strong><small>{description}</small></span><span aria-hidden="true" className={`appearance-swatch ${value}`} /></label>)}
+          </fieldset>
         </div>
 
         {/* ── Panel 2: Profile Settings ── */}

@@ -24,6 +24,7 @@ export default function MusicCollections() {
   const abortMutation = useCallback(() => mutation.current?.abort(), []);
   useEffect(() => { setBusy(false); return () => abortMutation(); }, [identity, abortMutation]);
   const data = result?.identity === identity ? result : null;
+  const coverTracks = (data?.items || []).filter(item => item.track).slice(0, 4).map(item => item.track);
   const refresh = () => setRevision(value => value + 1);
   useEffect(() => {
     const changed = () => setRevision(value => value + 1);
@@ -78,22 +79,25 @@ export default function MusicCollections() {
     const records = data.items.filter(item => item.record).map(item => item.record);
     playTrack(row.record, records, data.items.filter(item => item.record).findIndex(item => item._id === row._id));
   };
-  return <div className="music-collections">
-    <header><span className="badge-mono">YOUR PRIVATE LIBRARY</span><h1>{data?.playlist?.name || views[view]}</h1><p>Saved by you. Played by you.</p><button className="btn-secondary" disabled={busy} onClick={refresh}>Refresh</button></header>
-    <nav className="music-collection-tabs" aria-label="Personal music collections">{Object.entries(views).map(([key, label]) => <Link key={key} to={`/music/collections?view=${key}`} aria-current={view === key && !playlistId ? 'page' : undefined}>{label}</Link>)}<Link to="/music">All music</Link></nav>
+  return <div className={`music-collections ${playlistId ? 'playlist-detail' : ''}`}>
+    <header><span className="badge-mono">YOUR PRIVATE LIBRARY</span><h1>{playlistId ? 'Playlist' : 'Your library'}</h1>{!playlistId && <p>Saved by you. Played by you.</p>}<button className="btn-secondary" disabled={busy} onClick={refresh}>Refresh</button></header>
+    {!playlistId && <nav className="music-collection-tabs" aria-label="Personal music collections">{Object.entries(views).map(([key, label]) => <Link key={key} to={`/music/collections?view=${key}`} aria-current={view === key && !playlistId ? 'page' : undefined}>{label}</Link>)}<Link to="/music">All music</Link></nav>}
+    {playlistId && <Link className="playlist-back-link" to="/library">← Your library</Link>}
     {error && <div role="alert"><p>{error}</p><button className="btn-secondary" onClick={refresh}>Refresh library</button></div>}
     {notice && <p role="status">{notice}</p>}
-    {!playlistId && view === 'playlists' && <form className="music-playlist-form glass-panel" onSubmit={create}>
+    {!playlistId && view === 'playlists' && <details className="music-playlist-create"><summary>Create a playlist</summary><form className="music-playlist-form glass-panel" onSubmit={create}>
       <h2>Create a playlist</h2><label>Name<input className="form-input" required maxLength={200} value={name} disabled={busy} onChange={event => setName(event.target.value)} /></label>
       <label>Description<input className="form-input" maxLength={2000} value={description} disabled={busy} onChange={event => setDescription(event.target.value)} /></label><button className="btn-primary" disabled={busy || !name.trim()}>Create playlist</button>
-    </form>}
+    </form></details>}
     {!data && !error && <p role="status">Loading your collection…</p>}
     {data && (playlistId ? <>
+      <section className="music-playlist-hero" aria-label="Playlist overview"><div className={`music-playlist-mosaic ${coverTracks.length < 2 ? 'single' : ''}`} aria-hidden="true">{coverTracks.length ? coverTracks.map((track, index) => <MusicArtwork key={`${track._id}:${index}`} src={track.coverImage} title={track.title} />) : <MusicArtwork title={data.playlist.name} />}</div><span className="badge-mono">PRIVATE PLAYLIST</span><h2>{data.playlist.name}</h2>{data.playlist.description && <p>{data.playlist.description}</p>}<p>{data.items.length} entries</p><button className="btn-primary" disabled={!data.items.some(item => item.track)} onClick={() => playPlaylist()}><Play size={18} />Play playlist</button></section>
+      <details className="music-playlist-edit"><summary>Edit playlist</summary>
       <form className="music-playlist-form glass-panel" onSubmit={event => { event.preventDefault(); void edit({ operation: 'rename', name, description }); }}>
         <label>Playlist name<input className="form-input" required maxLength={200} value={name} disabled={busy} onChange={event => setName(event.target.value)} /></label>
         <label>Description<input className="form-input" maxLength={2000} value={description} disabled={busy} onChange={event => setDescription(event.target.value)} /></label>
         <div className="music-collection-actions"><button className="btn-secondary" disabled={busy || !name.trim()}>Save details</button><button type="button" className="btn-secondary" disabled={busy} onClick={deletePlaylist}>Delete playlist</button><button type="button" className="btn-primary" disabled={!data.items.some(item => item.track)} onClick={() => playPlaylist()}>Play playlist</button></div>
-      </form><p>{data.items.length} entries. Add songs using their playlist button in All Music or the player. Repeated songs have independent positions.</p>
+      </form></details><p>Add songs from All Music or the player. Repeated songs have independent positions.</p>
       <ol className="music-collection-list">{data.items.map((item, index) => <li key={item._id}>
         <button className="music-collection-play" aria-label={`Play ${item.track?.title || 'unavailable song'}`} disabled={!item.track} onClick={() => playPlaylist(item._id)}><Play size={18} /></button>
         <div className="music-collection-description"><strong>{item.track?.title || 'Unavailable song'}</strong><small>{item.track ? artistNames(item.track) : 'The original entry is retained; you can remove it.'}</small></div>
