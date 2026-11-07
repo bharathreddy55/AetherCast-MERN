@@ -10,6 +10,7 @@ import { createMusicMediaSession } from '../lib/musicMediaSession';
 import { recoveryPosition, createAudioPlayback, playbackPausedIntent } from '../lib/playbackRecovery';
 import { createMusicLinkRenewal, musicLinkExpiry, musicLinkNeedsRenewal } from '../lib/musicLinkRenewal';
 import { createNextMusicPreparation, shouldPrepareNext, readNextPreparation, saveNextPreparation, atMusicBoundary } from '../lib/nextMusicPreparation';
+import { readEqualizer, saveEqualizer, changeEqualizerBand, equalizerPreset } from '../lib/equalizer';
 
 const PlayerContext = createContext(null);
 
@@ -48,8 +49,9 @@ export const PlayerProvider = ({ children }) => {
   const [isAuthorized, setIsAuthorized] = useState(true);
   const [playbackError, setPlaybackError] = useState('');
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [eqGains, setEqGains] = useState({ low: 0, mid: 0, high: 0 });
-  const [eqPreset, setEqPreset] = useState('flat');
+  const [equalizer, setEqualizer] = useState(() => { try { return readEqualizer(window.localStorage); } catch { return equalizerPreset('flat'); } });
+  const equalizerRef = useRef(equalizer);
+  const { gains: eqGains, preset: eqPreset } = equalizer;
   
   const audioRef = useRef(null);
   if (!audioRef.current) {
@@ -203,18 +205,18 @@ export const PlayerProvider = ({ children }) => {
       const lowFilter = ctx.createBiquadFilter();
       lowFilter.type = 'lowshelf';
       lowFilter.frequency.value = 150; // low band frequency limit
-      lowFilter.gain.value = eqGains.low;
+      lowFilter.gain.value = equalizerRef.current.gains.low;
 
       const midFilter = ctx.createBiquadFilter();
       midFilter.type = 'peaking';
       midFilter.Q.value = 1.0;
       midFilter.frequency.value = 1000; // mid band frequency
-      midFilter.gain.value = eqGains.mid;
+      midFilter.gain.value = equalizerRef.current.gains.mid;
 
       const highFilter = ctx.createBiquadFilter();
       highFilter.type = 'highshelf';
       highFilter.frequency.value = 8000; // high band frequency limit
-      highFilter.gain.value = eqGains.high;
+      highFilter.gain.value = equalizerRef.current.gains.high;
 
       const source = ctx.createMediaElementSource(audioRef.current);
       
@@ -237,40 +239,16 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-  const changeEqualizer = (band, val) => {
-    setEqGains(prev => {
-      const newGains = { ...prev, [band]: val };
-      if (band === 'low' && lowFilterRef.current) {
-        lowFilterRef.current.gain.value = val;
-      } else if (band === 'mid' && midFilterRef.current) {
-        midFilterRef.current.gain.value = val;
-      } else if (band === 'high' && highFilterRef.current) {
-        highFilterRef.current.gain.value = val;
-      }
-      setEqPreset('custom');
-      return newGains;
-    });
+  const commitEqualizer = value => {
+    if (!value) return;
+    equalizerRef.current = value; setEqualizer(value);
+    if (lowFilterRef.current) lowFilterRef.current.gain.value = value.gains.low;
+    if (midFilterRef.current) midFilterRef.current.gain.value = value.gains.mid;
+    if (highFilterRef.current) highFilterRef.current.gain.value = value.gains.high;
+    try { saveEqualizer(window.localStorage, value); } catch { /* EQ still works without persistence. */ }
   };
-
-  const applyPreset = (presetName) => {
-    let gains = { low: 0, mid: 0, high: 0 };
-    if (presetName === 'bass-boost') {
-      gains = { low: 6, mid: 0, high: -2 };
-    } else if (presetName === 'voice-clarity') {
-      gains = { low: -4, mid: 4, high: 3 };
-    } else if (presetName === 'classic-podcast') {
-      gains = { low: 2, mid: 3, high: 1 };
-    } else if (presetName === 'music') {
-      gains = { low: 4, mid: -1, high: 4 };
-    }
-    
-    setEqPreset(presetName);
-    setEqGains(gains);
-
-    if (lowFilterRef.current) lowFilterRef.current.gain.value = gains.low;
-    if (midFilterRef.current) midFilterRef.current.gain.value = gains.mid;
-    if (highFilterRef.current) highFilterRef.current.gain.value = gains.high;
-  };
+  const changeEqualizer = (band, gain) => commitEqualizer(changeEqualizerBand(equalizerRef.current, band, gain));
+  const applyPreset = preset => commitEqualizer(equalizerPreset(preset));
 
   // Parse timestamps like [MM:SS] Subtitle Text
   const parseSubtitles = (transcriptText) => {

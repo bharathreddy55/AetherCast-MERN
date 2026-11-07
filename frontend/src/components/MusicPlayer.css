@@ -47,3 +47,10 @@
 .music-transition-settings { padding: 10px; margin-bottom: 12px; }
 .music-transition-settings label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .music-transition-settings p { color: var(--text-secondary); font-size: .85rem; line-height: 1.6; }
+.music-equalizer { padding: 10px; margin-bottom: 16px; }
+.music-equalizer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.music-equalizer-heading button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); cursor: pointer; }
+.music-equalizer-band { display: block; margin-top: 14px; }
+.music-equalizer-band span { display: flex; justify-content: space-between; gap: 12px; }
+.music-equalizer-band input { width: 100%; min-height: 44px; accent-color: var(--color-primary); }
+.music-equalizer p { color: var(--text-secondary); font-size: .85rem; line-height: 1.6; }

@@ -237,6 +237,13 @@ This document is the implementation checklist and progress record. Checked items
 - **Browser verified:** Actual PlayerProvider/MusicPlayer in an isolated simulated auth/API/media fixture: recover at 45 seconds onto a new source without changing the queue occurrence or duplicating the listening-start event; paused seek at 75 seconds; retained quality/pause; pending cancellation; denied source removal and explicit retry; Next while reconnecting and stale-response rejection; logout clearing and late-response denial. Final preview has no browser errors. The final build removes ignored fixture code. No production credentials, media/API requests or library writes are used for this simulation.
 - **Remaining/setup:** Deploy the frontend and test real expired media/range requests, long streams and physical Android/iOS/background behavior. Source replacement may buffer; gapless/seamless playback is not claimed. No new environment variables, backend migration, storage or auth changes are required. Guarded permanent cleanup, loudness/normalization, advanced transitions and the remaining Phase 6 hosted checks are still pending. See `MUSIC_STREAMING.md`. Offline work stays deferred.
 
+### 2026-11-07 — Change 28: Music equalizer controls and browser persistence
+
+- **Done locally:** Expose the existing three-band EQ in Now Playing → Audio with preset selection, labelled Bass/Mid/Treble sliders and Reset equalizer. Reset restores Flat/0 dB. Share settings with existing podcast controls; retain existing filter frequencies and preset values.
+- **Done locally:** Persist only validated preset/gain preferences under `audio.equalizer.v1`. Restore them before filter initialization, apply live changes without media/queue changes, and tolerate corrupt/blocked storage. Reject unknown bands/presets, mismatched named gains, nonfinite/out-of-range values and extra fields. Use a current-settings ref for rapid edits; move filter/storage side effects outside React state updater callbacks. No session or media identity is persisted.
+- **Verified:** All 153 frontend tests pass, including six EQ tests. Targeted lint has no errors and production build passes with existing context warnings/bundle-size advice. Source review confirms restored/live gains feed the existing audio filters. Backend is unchanged; its latest verification remains 380 passing tests and six FFmpeg-dependent skips.
+- **Remaining/setup:** Browser verification could not initialize even after tool reset. Visual/mobile, actual audible EQ/native playback and hosted acceptance remain pending; deploy the frontend and follow `MUSIC_EQUALIZER.md`. No backend/environment/migration/dependency setup is required. Backup restoration, guarded cleanup and true gapless/crossfade remain open; offline stays deferred.
+
 ### 2026-11-07 — Change 27: Shared-object protection in retention review
 
 - **Done locally:** Extend read-only retention reporting to version 2 with exact provider/bucket/object-key alias existence checks across all asset owners/statuses, excluding the current record. Shared derivatives stay protected; incomplete/malformed storage identities stay protected without unsafe lookups. Originals remain original. Hidden storage fields and other-owner IDs never enter report output.
@@ -517,7 +524,8 @@ Source references: `frontend/public/sw.js`, `frontend/public/manifest.json`, `fr
   - Change 24 adds an opt-in measured Normalized MP3 copy with encoded true-peak verification, boost limits and original preservation. Hosted/device acceptance and album-level normalization remain pending.
 - [ ] Add gapless playback and configurable crossfade; preserve album transitions and disable crossfade where inappropriate.
   - Change 25 adds bounded next-song response preparation and an Audio toggle. This reduces API lookup latency; true gapless/crossfade remains unimplemented.
-- [ ] Improve equalizer preference persistence and provide a clear reset action.
+- [x] Improve equalizer preference persistence and provide a clear reset action.
+  - Change 28 adds browser-local validated preferences and a music Audio reset button. Visual/physical-device/audio acceptance remains pending because browser verification was unavailable.
 - [x] Add synchronized lyrics from user-supplied or otherwise authorized sources, with a plain-text fallback.
   - Owner-supplied basic LRC/plain text, offset seeking and versioned editing are implemented; external lookup and hosted/device acceptance remain pending.
 - [x] Generate simple mixes from local genres, artists, favorites, recency, completion, and skips.
