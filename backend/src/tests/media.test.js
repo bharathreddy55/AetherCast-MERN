@@ -124,6 +124,38 @@ test('preserves an unsatisfiable cloud range response', async () => {
   expect(response.headers['content-range']).toBe('bytes */10');
 });
 
+test('cloud HEAD forwards the method and metadata without transferring a body', async () => {
+  const upstream = new Response(null, { headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': '9000000', 'Accept-Ranges': 'bytes' } });
+  const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValueOnce(Response.json({ public: false })).mockResolvedValueOnce(upstream);
+  const response = await request(app).head(createMediaLink('supabase://vox/audios/song.mp3'));
+  expect(response.status).toBe(200);
+  expect(response.headers['content-length']).toBe('9000000');
+  expect(response.headers['accept-ranges']).toBe('bytes');
+  expect(response.headers['cache-control']).toBe('private, no-store');
+  expect(response.text).toBeUndefined();
+  expect(fetchMock.mock.calls[1][1].method).toBe('HEAD');
+  expect(fetchMock.mock.calls[1][1].headers['Accept-Encoding']).toBe('identity');
+});
+
+test.each([404, 403, 500])('cloud storage failure %s cancels its body and never returns its private error', async status => {
+  const upstream = new Response('private provider details', { status });
+  const cancel = jest.spyOn(upstream.body, 'cancel');
+  jest.spyOn(global, 'fetch').mockResolvedValueOnce(Response.json({ public: false })).mockResolvedValueOnce(upstream);
+  const response = await request(app).get(createMediaLink('supabase://vox/audios/song.mp3'));
+  expect(response.status).toBe(status === 404 ? 404 : 502);
+  expect(response.body.message).toBe('Private media is unavailable.');
+  expect(response.text).not.toContain('private provider details');
+  expect(cancel).toHaveBeenCalledTimes(1);
+});
+
+test('expired cloud capability is rejected before any storage request', async () => {
+  const token = jwt.sign({ asset: 'supabase://vox/audios/song.mp3' }, secret, { algorithm: 'HS256', issuer: 'aethercast',
+    audience: 'library-media', subject: ownerId, expiresIn: '-1s' });
+  const fetchMock = jest.spyOn(global, 'fetch');
+  const response = await request(app).get(`/media/${token}`).set('Range', 'bytes=100-');
+  expect(response.status).toBe(401); expect(fetchMock).not.toHaveBeenCalled();
+});
+
 test('refuses uploads into a public bucket before writing an object', async () => {
   const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(Response.json({ public: true }));
   await expect(uploadToSupabase(Buffer.from('audio'), 'song.mp3', 'audio/mpeg')).rejects.toThrow('must be private');

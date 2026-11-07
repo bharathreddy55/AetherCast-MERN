@@ -32,6 +32,8 @@ If the playback API denies access, the track is unavailable, or the lookup fails
 
 ## Hosted/device acceptance still needed
 
+Change 26 adds backend private-cloud transfer inactivity limits and regression coverage. See [PRIVATE_MEDIA_TRANSFERS.md](PRIVATE_MEDIA_TRANSFERS.md). A healthy stream has no total-duration deadline, but a transfer with no chunk progress for 30 seconds is cancelled; a suspended/slow-reading browser can also reach this limit. Real provider/device acceptance below remains pending.
+
 Deploy the frontend and verify real Original/Compatible streams across the 15-minute link lifetime, then seek/resume and test actual expired range requests. Exercise network loss, revoked authorization, long pauses, rapid selection, device changes and iOS/Android background/lock-screen behavior. Confirm positions, pause intent, queue occurrence, quality and listening history, and check that denial never reuses old links. Budgeted retries can deliberately stop and leave manual Play available. No claim of successful hosted playback or deployment is made by local simulation.
 
 Remaining Phase 6 work includes physical-storage/alias review and guarded permanent cleanup, loudness/normalization, more artwork sizes and gapless/crossfade evaluation. Offline/download work remains deferred.

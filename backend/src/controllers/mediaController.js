@@ -1,7 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
-const { Readable } = require('stream');
-const { pipeline } = require('stream/promises');
+const { transferPrivateMedia } = require('../utils/mediaTransfer');
 const { verifyMediaLink } = require('../utils/mediaLinks');
 const { uploadsRoot } = require('../utils/mediaReferences');
 const { storageConfig, assertPrivateBucket, objectPath } = require('../utils/supabaseStorage');
@@ -46,7 +45,7 @@ exports.deliverMedia = async (req, res, next) => {
         await upstream.body?.cancel();
         return res.end();
       }
-      await pipeline(Readable.fromWeb(upstream.body), res);
+      await transferPrivateMedia(upstream.body, res, controller);
     } finally {
       clearTimeout(timeout);
       res.off('close', onClose);
