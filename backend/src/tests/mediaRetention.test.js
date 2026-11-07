@@ -1,5 +1,5 @@
 for (const name of ['MediaAsset', 'Track', 'Album', 'Artist', 'MusicImport', 'MediaProcessingJob']) {
-  jest.mock(`../models/${name}`, () => ({ find: jest.fn(), distinct: jest.fn() }));
+  jest.mock(`../models/${name}`, () => ({ find: jest.fn(), distinct: jest.fn(), exists: jest.fn() }));
 }
 const MediaAsset = require('../models/MediaAsset');
 const Track = require('../models/Track');
@@ -7,14 +7,14 @@ const Album = require('../models/Album');
 const Artist = require('../models/Artist');
 const MusicImport = require('../models/MusicImport');
 const MediaProcessingJob = require('../models/MediaProcessingJob');
-const { retentionItem, retentionOptions } = require('../utils/mediaRetention');
+const { retentionItem, retentionOptions, storageAliasFilter } = require('../utils/mediaRetention');
 const { mediaRetentionReport } = require('../services/mediaRetentionReport');
 const { runCli, parseArguments } = require('../scripts/mediaRetention');
 const owner = '507f1f77bcf86cd799439011', assetId = '507f191e810c19729de860ea', parent = '507f191e810c19729de860eb';
 const now = new Date('2026-11-06T00:00:00Z');
 const old = new Date('2026-09-01T00:00:00Z');
 const asset = extra => ({ _id: assetId, ownerId: owner, kind: 'audio', status: 'ready', byteSize: 100,
-  originalAssetId: parent, createdAt: old, updatedAt: old, ...extra });
+  originalAssetId: parent, createdAt: old, updatedAt: old, storageProvider: 'supabase', bucket: 'vox', objectKey: 'audios/example.mp3', ...extra });
 const query = data => {
   const result = { lean: jest.fn(async () => data) };
   for (const name of ['select', 'sort', 'limit', 'maxTimeMS']) result[name] = jest.fn(() => result);
@@ -24,6 +24,7 @@ const distinct = value => ({ maxTimeMS: jest.fn(async () => value) });
 beforeEach(() => {
   jest.clearAllMocks();
   MediaAsset.find.mockReturnValue(query([asset()]));
+  MediaAsset.exists.mockImplementation(() => distinct(null));
   for (const model of [MediaAsset, Track, Album, Artist, MusicImport, MediaProcessingJob]) model.distinct.mockImplementation(() => distinct([]));
 });
 
@@ -86,7 +87,7 @@ test('uses owner-scoped cursor pagination with bounded projections, results and 
   const result = await mediaRetentionReport(owner, { limit: 1, after: parent }, { now });
   expect(MediaAsset.find).toHaveBeenCalledWith({ ownerId: owner, _id: { $gt: parent } });
   expect(chain.limit).toHaveBeenCalledWith(2); expect(chain.sort).toHaveBeenCalledWith({ _id: 1 }); expect(chain.maxTimeMS).toHaveBeenCalledWith(5000);
-  expect(chain.select).toHaveBeenCalledWith('_id kind status byteSize originalAssetId createdAt updatedAt');
+  expect(chain.select).toHaveBeenCalledWith('_id kind status byteSize originalAssetId createdAt updatedAt storageProvider bucket +objectKey');
   expect(result.nextCursor).toBe(assetId); expect(result.summary.scanned).toBe(1);
   expect(Track.distinct.mock.calls.every(([, filter]) => filter.audioAssetId?.$in?.length === 1 || filter.coverAssetId?.$in?.length === 1)).toBe(true);
 });
@@ -96,6 +97,54 @@ test('empty pages do not launch reference scans or pretend to be full-library to
   const result = await mediaRetentionReport(owner, {}, { now });
   expect(result.items).toEqual([]); expect(result.scope).toBe('owner-page'); expect(result.summary.knownBytes).toBe(0);
   expect(Track.distinct).not.toHaveBeenCalled();
+  expect(MediaAsset.exists).not.toHaveBeenCalled();
+});
+
+test('an exact storage alias protects a derivative across every owner and status', async () => {
+  MediaAsset.exists.mockReturnValue(distinct({ _id: 'private-other-asset' }));
+  const report = await mediaRetentionReport(owner, {}, { now });
+  expect(report).toMatchObject({ version: 2, storageChecks: 'asset-record-aliases-only', summary: { protected: 1, review: 0, reviewBytes: 0 } });
+  expect(report.items[0]).toMatchObject({ category: 'protected', reasons: ['shared-storage-object'] });
+  expect(MediaAsset.exists).toHaveBeenCalledWith({ _id: { $ne: assetId }, storageProvider: 'supabase', bucket: 'vox', objectKey: 'audios/example.mp3' });
+  expect(JSON.stringify(report)).not.toContain('private-other-asset');
+  expect(MediaAsset.exists.mock.results[0].value.maxTimeMS).toHaveBeenCalledWith(5000);
+});
+
+test('storage identity uses exact provider/bucket/key and local keys ignore unused bucket fields', () => {
+  expect(storageAliasFilter(asset({ storageProvider: 'local', bucket: 'legacy-unused' }))).toEqual({ _id: { $ne: assetId }, storageProvider: 'local', objectKey: 'audios/example.mp3' });
+  expect(storageAliasFilter(asset({ bucket: 'other', objectKey: 'Audio/é song.mp3' }))).toMatchObject({ bucket: 'other', objectKey: 'Audio/é song.mp3' });
+});
+
+test('missing or malformed storage identity is protected without an unsafe lookup', async () => {
+  for (const extra of [{ objectKey: undefined }, { objectKey: '' }, { objectKey: { $ne: '' } }, { objectKey: '../secret' },
+    { objectKey: 'a//b' }, { objectKey: 'a\\b' }, { objectKey: 'a%20b' }, { objectKey: 'a?b' }, { objectKey: 'a#b' }, { objectKey: 'a\0b' },
+    { objectKey: 'a'.repeat(1025) }, { bucket: '' }, { bucket: '$bad' }, { bucket: {} }, { bucket: 'a'.repeat(101) }, { storageProvider: 'unknown' }]) {
+    MediaAsset.find.mockReturnValue(query([asset(extra)])); MediaAsset.exists.mockClear();
+    const result = await mediaRetentionReport(owner, {}, { now });
+    expect(result.items[0]).toMatchObject({ category: 'protected', reasons: ['storage-identity-unverified'] });
+    expect(MediaAsset.exists).not.toHaveBeenCalled();
+  }
+});
+
+test('an alias lookup failure aborts the entire report', async () => {
+  MediaAsset.exists.mockReturnValue({ maxTimeMS: async () => { throw new Error('alias check timed out'); } });
+  await expect(mediaRetentionReport(owner, {}, { now })).rejects.toThrow('alias check timed out');
+});
+
+test('alias queries cover only returned page records with at most four active checks', async () => {
+  const records = Array.from({ length: 10 }, (_, i) => asset({ _id: (BigInt('0x' + assetId) + BigInt(i)).toString(16) }));
+  MediaAsset.find.mockReturnValue(query(records));
+  let active = 0, peak = 0;
+  MediaAsset.exists.mockImplementation(() => ({ maxTimeMS: async () => {
+    active++; peak = Math.max(peak, active); await new Promise(setImmediate); active--; return null;
+  } }));
+  const report = await mediaRetentionReport(owner, { limit: 9 }, { now });
+  expect(report.items).toHaveLength(9); expect(MediaAsset.exists).toHaveBeenCalledTimes(9); expect(peak).toBe(4);
+});
+
+test('originals stay original when an alias exists or their storage identity is incomplete', async () => {
+  MediaAsset.find.mockReturnValue(query([asset({ originalAssetId: null, objectKey: undefined })]));
+  expect((await mediaRetentionReport(owner, {}, { now })).items[0]).toMatchObject({ category: 'original', reasons: expect.arrayContaining(['storage-identity-unverified']) });
 });
 
 test('query failures abort the report instead of treating unknown references as absent', async () => {

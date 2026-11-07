@@ -4,7 +4,7 @@ const Album = require('../models/Album');
 const Artist = require('../models/Artist');
 const MusicImport = require('../models/MusicImport');
 const MediaProcessingJob = require('../models/MediaProcessingJob');
-const { retentionOptions, retentionItem } = require('../utils/mediaRetention');
+const { retentionOptions, retentionItem, storageAliasFilter } = require('../utils/mediaRetention');
 const MAX_QUERY_MS = 5000;
 const referenceFields = [
   [Track, 'audioAssetId', 'track-audio'], [Track, 'coverAssetId', 'track-cover'],
@@ -19,9 +19,18 @@ async function mediaRetentionReport(ownerId, input = {}, { now = new Date() } = 
   if (!/^[a-f0-9]{24}$/i.test(String(ownerId)) || !Number.isFinite(new Date(now).getTime())) throw new Error('Invalid retention report identity or time');
   const filter = { ownerId, ...(options.after ? { _id: { $gt: options.after } } : {}) };
   const records = await MediaAsset.find(filter)
-    .select('_id kind status byteSize originalAssetId createdAt updatedAt').sort({ _id: 1 }).limit(options.limit + 1).maxTimeMS(MAX_QUERY_MS).lean();
+    .select('_id kind status byteSize originalAssetId createdAt updatedAt storageProvider bucket +objectKey').sort({ _id: 1 }).limit(options.limit + 1).maxTimeMS(MAX_QUERY_MS).lean();
   const page = records.slice(0, options.limit), ids = page.map(asset => asset._id);
   const references = new Map(ids.map(value => [String(value), []]));
+  // Bound fan-out and returned data even when many records share an object.
+  // Never turn a failed alias check into an apparent absence of aliases.
+  for (let start = 0; start < page.length; start += 4) {
+    await Promise.all(page.slice(start, start + 4).map(async asset => {
+      const filter = storageAliasFilter(asset), reasons = references.get(String(asset._id));
+      if (!filter) { reasons.push('storage-identity-unverified'); return; }
+      if (await MediaAsset.exists(filter).maxTimeMS(MAX_QUERY_MS)) reasons.push('shared-storage-object');
+    }));
+  }
   if (ids.length) {
     // Keep references from every status, including soft-deleted records and failed/
     // cancelled jobs: retries and restoration can still need those objects.
@@ -48,10 +57,10 @@ async function mediaRetentionReport(ownerId, input = {}, { now = new Date() } = 
       if (!Number.isSafeInteger(summary.knownBytes) || !Number.isSafeInteger(summary.reviewBytes)) throw new Error('Retention byte totals exceed the supported range');
     }
   }
-  return { version: 1, mode: 'review-only', deletionSupported: false, asOf: asOf.toISOString(), retentionDays: options.retentionDays,
+  return { version: 2, mode: 'review-only', deletionSupported: false, storageChecks: 'asset-record-aliases-only', asOf: asOf.toISOString(), retentionDays: options.retentionDays,
     scope: 'owner-page', summary, items, nextCursor: records.length > options.limit ? String(page.at(-1)._id) : null,
     limitations: ['Live database reference observations are not an atomic snapshot or deletion approval.',
-      'Object existence, storage aliases, cross-owner/legacy URL references and unregistered storage objects are not assessed.',
+      'Exact asset-record storage aliases are checked across owners; physical existence, filesystem aliases, legacy URL/cross-owner catalog references and unregistered objects are not assessed.',
       'Byte totals describe this page of asset records, can double-count shared objects and are not physical storage usage.',
       'Originals and all observed references are retained. Review entries need separate storage and reference checks before any future purge.'] };
 }

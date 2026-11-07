@@ -1,5 +1,18 @@
 const DAY_MS = 86400000;
 const validId = value => typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value);
+function storageAliasFilter(asset) {
+  const key = asset.objectKey;
+  if (!validId(String(asset._id)) || typeof key !== 'string' || !key || key.length > 1024
+    || /[\\%?#\x00-\x1f\x7f]/.test(key) || key.split('/').some(part => !part || part === '.' || part === '..')) return null;
+  const identity = { storageProvider: asset.storageProvider, objectKey: key };
+  if (asset.storageProvider === 'supabase') {
+    if (typeof asset.bucket !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(asset.bucket)) return null;
+    identity.bucket = asset.bucket;
+  } else if (asset.storageProvider !== 'local') return null;
+  // Deliberately global: another owner's alias must also protect the object.
+  // exists() returns only an internal ID; no other-owner data enters the report.
+  return { _id: { $ne: asset._id }, ...identity };
+}
 function retentionOptions(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => !['limit', 'after', 'retentionDays'].includes(key))) throw new Error('Unsupported retention options');
   const { limit = 50, after = '', retentionDays = 30 } = input;
@@ -25,4 +38,4 @@ function retentionItem(asset, references, now, retentionDays) {
     status: ['pending', 'processing', 'ready', 'failed'].includes(asset.status) ? asset.status : 'unknown',
     byteSize: sizeValid ? asset.byteSize : null, ageDays, category, reasons };
 }
-module.exports = { retentionOptions, retentionItem };
+module.exports = { retentionOptions, retentionItem, storageAliasFilter };
